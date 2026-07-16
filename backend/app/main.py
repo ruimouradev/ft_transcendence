@@ -1,8 +1,18 @@
 from fastapi import FastAPI
+from fastapi.routing import APIRoute
 from fastapi.middleware.cors import CORSMiddleware
+from app.models.database import init_db, engine
+from sqlmodel import Session
 # from app.platform.api import router as auth_router
 
-app = FastAPI(title="ft_transcendence Uno API")
+def custom_generate_unique_id(route: APIRoute) -> str:
+    return f"{route.tags[0]}-{route.name}"
+
+app = FastAPI(
+    title="Uno API",
+    openapi_url="/api/v1/openapi.json",
+    # generate_unique_id_function=custom_generate_unique_id
+)
 
 app.add_middleware(
     CORSMiddleware,
@@ -12,8 +22,12 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+@app.on_event("startup")
+def on_startup():
+    with Session(engine) as session:
+        init_db(session)
 # app.include_router(auth_router)
 
 @app.get("/")
 def home():
-    return {"status": "Backend is running..."}
+    return {"status": "Backend is running."}

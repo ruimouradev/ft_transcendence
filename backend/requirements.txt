@@ -1,11 +1,12 @@
 fastapi==0.136.3
 uvicorn==0.40.0
 sqlalchemy==2.0.45
+sqlmodel==0.0.38
 alembic==1.18.4
 argon2-cffi==25.1.0
 bcrypt==4.3.0
 pwdlib==0.3.0
-psycopg-binary==3.3.4
+psycopg==3.3.4
 python-multipart==0.0.32
 pyjwt==2.13.0
 pyotp==2.9.0
