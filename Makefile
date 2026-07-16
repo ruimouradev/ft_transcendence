@@ -43,10 +43,10 @@ clean_host_data: clean_compose
 clean: clean_compose clean_images clean_host_data
 
 ps:
-	docker compose -f ./srcs/docker-compose.yml ps
+	docker compose -f ./docker-compose.yml ps
 
 log:
-	docker compose -f ./srcs/docker-compose.yml logs
+	docker compose -f ./docker-compose.yml logs
 
 help:
 	@echo "Available Makefile targets:"
