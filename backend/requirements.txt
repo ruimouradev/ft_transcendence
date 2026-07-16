@@ -7,3 +7,5 @@ pyjwt==2.8.0
 pyotp==2.9.0
 httpx==0.27.0
 pydantic[email]==2.6.4
+pytest==9.1.1
+hypothesis==6.156.6
