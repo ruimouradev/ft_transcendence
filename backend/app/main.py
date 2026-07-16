@@ -3,7 +3,7 @@ from fastapi.routing import APIRoute
 from fastapi.middleware.cors import CORSMiddleware
 from app.models.database import init_db, engine
 from sqlmodel import Session
-# from app.platform.api import router as auth_router
+from app.platform.main import api_router
 
 def custom_generate_unique_id(route: APIRoute) -> str:
     return f"{route.tags[0]}-{route.name}"
@@ -26,7 +26,7 @@ app.add_middleware(
 def on_startup():
     with Session(engine) as session:
         init_db(session)
-# app.include_router(auth_router)
+app.include_router(api_router, prefix="/api/v1")
 
 @app.get("/")
 def home():
