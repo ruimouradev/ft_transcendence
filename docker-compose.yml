@@ -43,10 +43,16 @@ services:
     ports:
       - "8000:8000"
     environment:
+      - API_V1_STR=${API_V1_STR}
+      - ACCESS_TOKEN_EXPIRE_MINUTES=${ACCESS_TOKEN_EXPIRE_MINUTES}
+      - BACKEND_CORS_ORIGINS=${BACKEND_CORS_ORIGINS}
       - DATABASE_URL=${DATABASE_URL}
       - SECRET_KEY=${SECRET_KEY}
       - FIRST_SUPERUSER=${FIRST_SUPERUSER}
       - FIRST_SUPERUSER_PASSWORD=${FIRST_SUPERUSER_PASSWORD}
+      - FRONTEND_HOST=${FRONTEND_HOST}
+      - DMODE=${DMODE}
+      - PROJECT_NAME=${PROJECT_NAME}
     depends_on:
       db:
         condition: service_healthy
@@ -60,20 +66,20 @@ services:
       - ft_network
 
   frontend:
-    # build:
-    #   context: ./frontend
-    #   dockerfile: Dockerfile
-    image: node:22-alpine
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    # image: node:22-alpine
     container_name: frontend
     volumes:
       - ./frontend:/app
       - /app/node_modules
     environment:
       - WATCHPACK_POLLING=${WATCHPACK_POLLING}
-    working_dir: /app
+    # working_dir: /app
     ports:
       - "5173:5173"
-    command: sh -c "npm install && npm run dev -- --host"
+    # command: sh -c "npm install && npm run dev -- --host"
     healthcheck:
       test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:5173/"]
       interval: 5s

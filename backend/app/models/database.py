@@ -6,17 +6,15 @@ from app import crud
 from app.models.all import User, UserCreate
 from app.platform.config import settings
 
-DATABASE_URL = os.getenv("DATABASE_URL", "not set")
-print(f"Using database URL: {DATABASE_URL}")
-
-engine = create_engine(str(DATABASE_URL))
+if settings.DMODE == "dev":
+    engine = create_engine(settings.DATABASE_URL, echo=True)
+else:
+    engine = create_engine(settings.DATABASE_URL)
 
 def init_db(session: Session)-> None:
     SQLModel.metadata.create_all(engine)
 
-    user = session.exec(
-        select(User).where(User.email == settings.FIRST_SUPERUSER)
-    ).first()
+    user = session.exec(select(User).where(User.email == settings.FIRST_SUPERUSER)).first()
     if not user:
         user_in = UserCreate(
             email=settings.FIRST_SUPERUSER,
