@@ -47,6 +47,10 @@ _EFFECTS: dict[Value, Effect] = {
 }
 
 
+def effect_of(card: Card) -> Effect:
+    return _EFFECTS.get(card.value, Effect())
+
+
 def is_playable(card: Card, active_color: Color, top: Card):
     return (
         card.color == "wild"
