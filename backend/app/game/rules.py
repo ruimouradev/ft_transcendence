@@ -2,7 +2,7 @@ from dataclasses import dataclass
 
 import random
 
-from .contract import Card, Color, Value 
+from .contract import Card, Color, Value
 
 
 COLORS: tuple[Color, ...] = ("red", "yellow", "green", "blue")
@@ -17,9 +17,11 @@ VALUES: list[Value] = [
 ]
 
 
-def build_deck(rng: random.Random | None = None):
+def build_deck(rng: random.Random | None = None) -> list[Card]:
     shuffler = rng or random.Random()
-    deck_specs: list[tuple[Color, Value]] = [(c, v) for c in COLORS for v in VALUES]
+    deck_specs: list[tuple[Color, Value]] = [
+        (c, v) for c in COLORS for v in VALUES
+    ]
     for _ in range(4):
         # adding 4 cards wild (official name for changing color)
         # adding 4 cards +4 wild
@@ -33,25 +35,25 @@ def build_deck(rng: random.Random | None = None):
 
 
 @dataclass(frozen=True)
-class Effect:
+class CardEffect:
     draw: int = 0
     skip: bool = False
     reverse: bool = False
 
 
-_EFFECTS: dict[Value, Effect] = {
-    "skip": Effect(skip=True),
-    "reverse": Effect(reverse=True),
-    "+2": Effect(draw=2, skip=True),
-    "+4": Effect(draw=4, skip=True),
+_CARD_EFFECTS: dict[Value, CardEffect] = {
+    "skip": CardEffect(skip=True),
+    "reverse": CardEffect(reverse=True),
+    "+2": CardEffect(draw=2, skip=True),
+    "+4": CardEffect(draw=4, skip=True),
 }
 
 
-def effect_of(card: Card) -> Effect:
-    return _EFFECTS.get(card.value, Effect())
+def effect_of(card: Card) -> CardEffect:
+    return _CARD_EFFECTS.get(card.value, CardEffect())
 
 
-def is_playable(card: Card, active_color: Color, top: Card):
+def is_playable(card: Card, active_color: Color | None, top: Card) -> bool:
     return (
         card.color == "wild"
         or card.color == active_color
