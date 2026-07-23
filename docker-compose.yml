@@ -69,17 +69,14 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile
-    # image: node:22-alpine
     container_name: frontend
     volumes:
       - ./frontend:/app
       - /app/node_modules
     environment:
       - WATCHPACK_POLLING=${WATCHPACK_POLLING}
-    # working_dir: /app
     ports:
       - "5173:5173"
-    # command: sh -c "npm install && npm run dev -- --host"
     healthcheck:
       test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:5173/"]
       interval: 5s
