@@ -166,8 +166,6 @@ class GamePlayer(SQLModel, table=True):
     cards_left: int = 0
     is_connected: bool = True
 
-    # user: User = Relationship(back_populates="gameplayer")
-
 class UserStatistic(SQLModel, table=True):
 
     user_id: UUID = Field(primary_key=True, foreign_key="user.id")
