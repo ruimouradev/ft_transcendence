@@ -1,7 +1,7 @@
 services:
   db:
     image: postgres:18-alpine
-    container_name: ft_db
+    container_name: db
     environment:
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
@@ -12,7 +12,7 @@ services:
       - pgdata:/var/lib/postgresql
       - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres -d ft_transcendence"]
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
       interval: 5s
       timeout: 5s
       retries: 5
@@ -22,6 +22,7 @@ services:
 
   adminer:
     image: adminer
+    container_name: adminer
     restart: always
     ports:
       - "8081:8080"
@@ -36,14 +37,22 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile
-    container_name: ft_backend
+    container_name: backend
     volumes:
       - ./backend:/app
     ports:
       - "8000:8000"
     environment:
+      - API_V1_STR=${API_V1_STR}
+      - ACCESS_TOKEN_EXPIRE_MINUTES=${ACCESS_TOKEN_EXPIRE_MINUTES}
+      - BACKEND_CORS_ORIGINS=${BACKEND_CORS_ORIGINS}
       - DATABASE_URL=${DATABASE_URL}
       - SECRET_KEY=${SECRET_KEY}
+      - FIRST_SUPERUSER=${FIRST_SUPERUSER}
+      - FIRST_SUPERUSER_PASSWORD=${FIRST_SUPERUSER_PASSWORD}
+      - FRONTEND_HOST=${FRONTEND_HOST}
+      - DMODE=${DMODE}
+      - PROJECT_NAME=${PROJECT_NAME}
     depends_on:
       db:
         condition: service_healthy
@@ -57,20 +66,17 @@ services:
       - ft_network
 
   frontend:
-    # build:
-    #   context: ./frontend
-    #   dockerfile: Dockerfile
-    image: node:22-alpine
-    container_name: ft_frontend
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: frontend
     volumes:
       - ./frontend:/app
       - /app/node_modules
     environment:
       - WATCHPACK_POLLING=${WATCHPACK_POLLING}
-    working_dir: /app
     ports:
       - "5173:5173"
-    command: sh -c "npm install && npm run dev -- --host"
     healthcheck:
       test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:5173/"]
       interval: 5s
@@ -84,7 +90,7 @@ services:
     build:
       context: ./nginx
       dockerfile: Dockerfile
-    container_name: ft_nginx
+    container_name: nginx
     ports:
       - "8080:80"
       - "8443:443"

@@ -9,10 +9,6 @@ build:
 
 vinit:
 	@mkdir -p ${DBDATAPATH}
-# 	@sh ./srcs/requirements/tools/add_hosts.sh $(DOMAIN_NAME) $(STATIC_DOMAIN) $(ADMINER_DOMAIN)
-
-secrets:
-# 	@sh ./srcs/requirements/tools/create_secrets.sh
 	
 down:
 	docker compose -f ./docker-compose.yml down
@@ -43,17 +39,16 @@ clean_host_data: clean_compose
 clean: clean_compose clean_images clean_host_data
 
 ps:
-	docker compose -f ./srcs/docker-compose.yml ps
+	docker compose -f ./docker-compose.yml ps
 
 log:
-	docker compose -f ./srcs/docker-compose.yml logs
+	docker compose -f ./docker-compose.yml logs
 
 help:
 	@echo "Available Makefile targets:"
 	@echo "  all            - Create and run Inception services using Docker Compose."
 	@echo "  build          - Build Docker images without using cache."
 	@echo "  vinit          - Initialize host directories for persistent data."
-	@echo "  secrets        - Create Docker secrets from .env file."
 	@echo "  down           - Stop Inception services."
 	@echo "  clean          - Stop services, remove containers, images, and volumes and ⚠️ delete all persistent data ⚠️"
 	@echo "  clean_compose  - Stop services, remove containers, images, and volumes."
