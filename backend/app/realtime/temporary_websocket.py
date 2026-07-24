@@ -72,32 +72,80 @@ async def broadcast(room: Room) -> None:
             await p.ws.send_text(snapshot(room, p).model_dump_json())
 
 
+def draw_card(room: Room) -> Card:
+    if not room.deck:
+        # no discard pile is tracked here, so a spent deck is just rebuilt
+        room.deck = build_deck()
+    return room.deck.pop()
+
+
 def deal(room: Room) -> None:
     room.deck = build_deck()
     for p in room.players:
-        p.hand = [room.deck.pop() for _ in range(7)]
-    top = room.deck.pop()
+        p.hand = [draw_card(room) for _ in range(7)]
+    top = draw_card(room)
     while not top.value.isdigit():
         # a number as first discard keeps the opening screen simple
         room.deck.insert(0, top)
-        top = room.deck.pop()
+        top = draw_card(room)
     room.top = top
     room.active_color = top.color
     room.phase = "playing"
 
 
-def apply(room: Room, player: Player, action: PlayerAction):
+def apply(room: Room, player: Player, action: PlayerAction) -> Error | None:
     if isinstance(action, Join):
         return err(ErrorCode.INVALID_MESSAGE, "already joined")
 
-    if isinstance(action):
+    if isinstance(action, Start):
         if room.phase != "lobby":
-            return err(ErrorCode.GAME_ALREADY_STARTED")
+            return err(ErrorCode.GAME_ALREADY_STARTED, "game already started")
         if player is not room.players[0] or len(room.players) < 2:
-            return err(ErrorCode.INVALID_MESSAGE)
+            return err(ErrorCode.INVALID_MESSAGE, "need 2 to 4 players")
         deal(room)
         room.last = LastAction(player=player.id, kind="start")
         return None
 
+    if room.phase != "playing":
+        return err(ErrorCode.GAME_NOT_STARTED, "no game running")
+
+    if isinstance(action, Catch):
+        target = next(
+            (p for p in room.players if p.id == action.target), None
+        )
+        if target is None:
+            return err(ErrorCode.INVALID_CATCH, "no such player")
+        target.hand += [draw_card(room), draw_card(room)]
+        room.last = LastAction(player=player.id, kind="catch")
+        return None
+
     if player is not room.players[room.turn]:
-        return err(ErrorCode.NOT_YOUR_TURN)
+        return err(ErrorCode.NOT_YOUR_TURN, "wait for your turn")
+
+    if isinstance(action, Play):
+        card = next((c for c in player.hand if c.id == action.card), None)
+        if card is None:
+            return err(ErrorCode.CARD_NOT_IN_HAND, "not in your hand")
+        if card.color == "wild" and action.color in (None, "wild"):
+            return err(ErrorCode.COLOR_REQUIRED, "a wild needs a color")
+        player.hand.remove(card)
+        room.top = card
+        if card.color == "wild":
+            room.active_color = action.color
+        else:
+            room.active_color = card.color
+        player.uno = action.uno
+        room.last = LastAction(player=player.id, kind="play", card=card)
+        if not player.hand:
+            room.phase = "finished"
+            room.winner = player.id
+            return None
+    elif isinstance(action, Draw):
+        player.hand.append(draw_card(room))
+        room.last = LastAction(player=player.id, kind="draw")
+    else:
+        # nothing left in the action union but Pass
+        room.last = LastAction(player=player.id, kind="pass")
+
+    room.turn = (room.turn + 1) % len(room.players)
+    return None
