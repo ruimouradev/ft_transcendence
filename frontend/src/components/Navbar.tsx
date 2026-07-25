@@ -5,8 +5,10 @@ import {
   Users,
   Settings
 } from "lucide-react";
+import UserMenu from "./UserMenu";
 
 export default function Navbar() {
+
   return (
     <header className="h-20 flex items-center justify-between px-10 border-b border-white/10">
 
@@ -27,23 +29,7 @@ export default function Navbar() {
         <NavItem icon={<Settings />} text="Settings"/>
 
       </nav>
-
-      <div className="flex items-center gap-4">
-
-        <img
-          src="https://i.pravatar.cc/80"
-          className="w-12 h-12 rounded-full"
-        />
-
-        <div>
-          <div>Super Uno</div>
-          <div className="text-sm text-gray-400">
-            Level 8
-          </div>
-        </div>
-
-      </div>
-
+        <UserMenu />
     </header>
   );
 }
