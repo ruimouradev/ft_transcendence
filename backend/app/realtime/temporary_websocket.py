@@ -8,6 +8,7 @@ from app.game.contract import (
     LastAction, Phase, Play, PlayerAction, PrivateView, PublicPlayer,
     Start, parse_action,
 )
+from app.game.rules import build_deck
 
 
 @dataclass
@@ -72,22 +73,15 @@ async def broadcast(room: Room) -> None:
             await p.ws.send_text(snapshot(room, p).model_dump_json())
 
 
-def draw_card(room: Room) -> Card:
-    if not room.deck:
-        # no discard pile is tracked here, so a spent deck is just rebuilt
-        room.deck = build_deck()
-    return room.deck.pop()
-
-
 def deal(room: Room) -> None:
     room.deck = build_deck()
     for p in room.players:
-        p.hand = [draw_card(room) for _ in range(7)]
-    top = draw_card(room)
+        p.hand = [room.deck.pop() for _ in range(7)]
+    top = room.deck.pop()
     while not top.value.isdigit():
         # a number as first discard keeps the opening screen simple
         room.deck.insert(0, top)
-        top = draw_card(room)
+        top = room.deck.pop()
     room.top = top
     room.active_color = top.color
     room.phase = "playing"
@@ -115,7 +109,7 @@ def apply(room: Room, player: Player, action: PlayerAction) -> Error | None:
         )
         if target is None:
             return err(ErrorCode.INVALID_CATCH, "no such player")
-        target.hand += [draw_card(room), draw_card(room)]
+        target.hand += [room.deck.pop(), room.deck.pop()]
         room.last = LastAction(player=player.id, kind="catch")
         return None
 
@@ -141,11 +135,49 @@ def apply(room: Room, player: Player, action: PlayerAction) -> Error | None:
             room.winner = player.id
             return None
     elif isinstance(action, Draw):
-        player.hand.append(draw_card(room))
+        player.hand.append(room.deck.pop())
         room.last = LastAction(player=player.id, kind="draw")
     else:
-        # nothing left in the action union but Pass
         room.last = LastAction(player=player.id, kind="pass")
 
     room.turn = (room.turn + 1) % len(room.players)
     return None
+
+
+app = FastAPI()
+
+
+async def seat_player(ws: WebSocket, room: Room, action: Join) -> Player:
+    player = Player(id=f"p{len(room.players) + 1}", name=action.name, ws=ws)
+    room.players.append(player)
+    room.last = LastAction(player=player.id, kind="join")
+    await broadcast(room)
+    return player
+
+
+@app.websocket("/ws/game/{room_id}")
+async def game(ws: WebSocket, room_id: str) -> None:
+    await ws.accept()
+    room = rooms.setdefault(room_id, Room())
+    player: Player | None = None
+    try:
+        while True:
+            text = await ws.receive_text()
+            try:
+                action = parse_action(text)
+            except pydantic.ValidationError:
+                await reject(ws, ErrorCode.INVALID_MESSAGE, "not a valid message")
+                continue
+                
+            error = apply(room, player, action)
+            if error:
+                await ws.send_text(error.model_dump_json())
+            else:
+                await broadcast(room)
+    except WebSocketDisconnect:
+        if player:
+            player.connected = False
+            if all(not p.connected for p in room.players):
+                rooms.pop(room_id, None)
+            else:
+                await broadcast(room)
