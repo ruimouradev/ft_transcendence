@@ -1,3 +1,15 @@
+"""
+Temporary game server, it gives the frontend a websocket to talk to before
+the real one exists. No rules are checked, any card in your hand can be
+played. ***TO BE DELETED** once the real server is written.
+
+    cd backend && uvicorn app.realtime.temporary_websocket:app --port 8000
+
+Connect to /ws/game/<room> with any room id, the same id puts you in the
+same game. Connecting does not join you, the first message you send has to
+be a join.
+"""
+
 from dataclasses import dataclass, field
 
 import pydantic
@@ -168,7 +180,16 @@ async def game(ws: WebSocket, room_id: str) -> None:
             except pydantic.ValidationError:
                 await reject(ws, ErrorCode.INVALID_MESSAGE, "not a valid message")
                 continue
-                
+
+            if player is None:
+                if not isinstance(action, Join):
+                    await reject(ws, ErrorCode.INVALID_MESSAGE, "join first")
+                elif room.phase != "lobby" or len(room.players) >= 4:
+                    await reject(ws, ErrorCode.ROOM_FULL, "cannot join now")
+                else:
+                    player = await seat_player(ws, room, action)
+                continue
+
             error = apply(room, player, action)
             if error:
                 await ws.send_text(error.model_dump_json())
