@@ -10,6 +10,6 @@ export const HelloWorld=(props: HelloWorldProps)=>{
 	return (<div>
 				Hello World! {title}--{count}
 				<button onClick={()=>setCount(count+1)}>+</button>
-				{render?.()}
+				{render?.(count)}
 			</div>);
 }
