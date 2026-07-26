@@ -1,3 +1,9 @@
+"""
+The deck and the play rules. build_deck makes a full shuffled deck,
+effect_of gives a card's effect (draw, skip, reverse), and is_playable
+says whether a card matches the active color or the top value.
+"""
+
 from dataclasses import dataclass
 
 import random

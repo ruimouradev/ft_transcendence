@@ -1,3 +1,9 @@
+"""
+The message types the server and the client exchange. A player sends
+actions (join, start, play, draw, pass, catch), the server sends back the
+game state after each move, or an error when a move is refused.
+"""
+
 from enum import Enum
 
 from typing import Annotated, Literal
