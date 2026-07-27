@@ -53,6 +53,11 @@ services:
       - FRONTEND_HOST=${FRONTEND_HOST}
       - DMODE=${DMODE}
       - PROJECT_NAME=${PROJECT_NAME}
+      - MAIL_USERNAME=${MAIL_USERNAME}
+      - MAIL_PASSWORD=${MAIL_PASSWORD}
+      - MAIL_FROM=${MAIL_FROM}
+      - MAIL_PORT=${MAIL_PORT}
+      - MAIL_SERVER=${MAIL_SERVER}
     depends_on:
       db:
         condition: service_healthy

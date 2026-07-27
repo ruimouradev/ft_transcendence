@@ -47,6 +47,11 @@ class Settings(BaseSettings):
     FIRST_SUPERUSER_PASSWORD: str = "changethis"
     EMAILS_ENABLED: bool = True
     ALGORITHM: str = "HS256"
+    MAIL_USERNAME: str = "lisboa.42.transcendence@gmail.com"
+    MAIL_PASSWORD: str = "gjuemlbajsrdunyw"
+    MAIL_FROM: str = "lisboa.42.transcendence@gmail.com"
+    MAIL_PORT: int = 587
+    MAIL_SERVER: str = "smtp.gmail.com"
 
     def _check_default_secret(self, var_name: str, value: str | None) -> None:
         if value == "changethis":

@@ -15,11 +15,11 @@ class EmailSchema(BaseModel):
    email: List[EmailStr]
 
 conf = ConnectionConfig( 
-    MAIL_USERNAME="lisboa.42.transcendence@gmail.com", 
-    MAIL_PASSWORD="gjue mlba jsrd unyw", 
-    MAIL_FROM="lisboa.42.transcendence@gmail.com",
-    MAIL_PORT=587, 
-    MAIL_SERVER="smtp.gmail.com",
+    MAIL_USERNAME=settings.MAIL_USERNAME,
+    MAIL_PASSWORD=settings.MAIL_PASSWORD,
+    MAIL_FROM=settings.MAIL_FROM,
+    MAIL_PORT=settings.MAIL_PORT,
+    MAIL_SERVER=settings.MAIL_SERVER,
     MAIL_STARTTLS=True,
     MAIL_SSL_TLS=False,
     USE_CREDENTIALS=True,
@@ -55,17 +55,6 @@ def create_message(recipients: List[str], subject: str, body: str) -> MessageSch
         subtype=MessageType.html
     )
     return message
-
-async def send_email(email: str, template: str): 
-    message = create_message([email], "Fastapi-Mail 模块", template)
-    message = MessageSchema(
-        subject="Fastapi-Mail module",
-        recipients=[email],  # List of recipients, as many as you can pass
-        body=template, 
-        subtype=MessageType.html
-        )
-    fm = FastMail(conf) 
-    await fm.send_message(message)
 
 async def send_new_account_activation_email(email: EmailStr, username: str, token: str):
     """Send an account activation email to the user with a verification link."""
