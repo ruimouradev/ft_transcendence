@@ -8,6 +8,7 @@ from fastapi.responses import HTMLResponse
 from fastapi.security import OAuth2PasswordRequestForm
 
 from app import crud
+from app.platform.service import userservice
 from app.platform.deps import CurrentUser, SessionDep, get_current_active_superuser
 from app.platform import security
 from app.platform.config import settings

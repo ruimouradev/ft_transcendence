@@ -45,6 +45,8 @@ class Settings(BaseSettings):
 
     FIRST_SUPERUSER: EmailStr ="not set"
     FIRST_SUPERUSER_PASSWORD: str = "changethis"
+    EMAILS_ENABLED: bool = True
+    ALGORITHM: str = "HS256"
 
     def _check_default_secret(self, var_name: str, value: str | None) -> None:
         if value == "changethis":

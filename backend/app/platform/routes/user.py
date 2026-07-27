@@ -4,7 +4,6 @@ from typing import Any
 from fastapi import APIRouter, Depends, HTTPException
 from sqlmodel import col, delete, func, select
 
-from app import crud
 from app.platform.deps import (
     CurrentUser,
     SessionDep,
@@ -23,6 +22,14 @@ from app.models.all import (
     UserUpdate,
     UserUpdateMe,
 )
+
+from app.platform.service import userservice
+from app.platform.service.mailservice import (
+    verify_token,
+    create_verification_token,
+    send_new_account_activation_email,
+)
+from fastapi import BackgroundTasks
 
 router = APIRouter(prefix="/users", tags=["users"])
 
@@ -56,23 +63,26 @@ def create_user(*, session: SessionDep, user_in: UserCreate) -> Any:
     """
     Create new user.
     """
-    user = crud.get_user_by_email(session=session, email=user_in.email)
+    user = userservice.get_user_by_email(session=session, email=user_in.email)
     if user:
         raise HTTPException(
             status_code=400,
             detail="The user with this email already exists in the system.",
         )
 
-    user = crud.create_user(session=session, user_create=user_in)
-    if settings.emails_enabled and user_in.email:
-        email_data = generate_new_account_email(
-            email_to=user_in.email, username=user_in.email, password=user_in.password
-        )
-        send_email(
-            email_to=user_in.email,
-            subject=email_data.subject,
-            html_content=email_data.html_content,
-        )
+    user = userservice.create_user(session=session, user_create=user_in)
+    if settings.EMAILS_ENABLED and user_in.email:
+        token = create_verification_token(user_in.email)
+        background_tasks.add_task(send_new_account_activation_email, user_in.email, user_in.username, token)
+
+        # email_data = generate_new_account_email(
+        #     email_to=user_in.email, username=user_in.email, password=user_in.password
+        # )
+        # send_email(
+        #     email_to=user_in.email,
+        #     subject=email_data.subject,
+        #     html_content=email_data.html_content,
+        # )
     return user
 
 
@@ -85,7 +95,7 @@ def update_user_me(
     """
 
     if user_in.email:
-        existing_user = crud.get_user_by_email(session=session, email=user_in.email)
+        existing_user = userservice.get_user_by_email(session=session, email=user_in.email)
         if existing_user and existing_user.id != current_user.id:
             raise HTTPException(
                 status_code=409, detail="User with this email already exists"
@@ -142,20 +152,38 @@ def delete_user_me(session: SessionDep, current_user: CurrentUser) -> Any:
 
 
 @router.post("/signup", response_model=UserPublic)
-def register_user(session: SessionDep, user_in: UserRegister) -> Any:
+def register_user(session: SessionDep, user_in: UserRegister, background_tasks: BackgroundTasks) -> Any:
     """
     Create new user without the need to be logged in.
     """
-    user = crud.get_user_by_email(session=session, email=user_in.email)
+    user = userservice.get_user_by_email(session=session, email=user_in.email)
     if user:
         raise HTTPException(
             status_code=400,
             detail="The user with this email already exists in the system",
         )
     user_create = UserCreate.model_validate(user_in)
-    user = crud.create_user(session=session, user_create=user_create)
+    user = userservice.create_user(session=session, user_create=user_create)
+    if settings.EMAILS_ENABLED and user_in.email:
+        token = create_verification_token(user_in.email)
+        background_tasks.add_task(send_new_account_activation_email, user_in.email, user_in.full_name, token)
     return user
 
+@router.get("/verify-email", summary="Verify email address using token")
+def verify_email(session: SessionDep, token: str):
+    email = verify_token(token)
+    user = userservice.get_user_by_email(session=session, email=email)
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    if user.is_active:
+        return {"message": "Email already verified. No action needed."}
+
+    user.is_active = True
+    session.add(user)
+    session.commit()
+
+    return {"message": "Email verification successful! Account has been activated."}
 
 @router.get("/{user_id}", response_model=UserPublic)
 def read_user_by_id(
@@ -199,13 +227,13 @@ def update_user(
             detail="The user with this id does not exist in the system",
         )
     if user_in.email:
-        existing_user = crud.get_user_by_email(session=session, email=user_in.email)
+        existing_user = userservice.get_user_by_email(session=session, email=user_in.email)
         if existing_user and existing_user.id != user_id:
             raise HTTPException(
                 status_code=409, detail="User with this email already exists"
             )
 
-    db_user = crud.update_user(session=session, db_user=db_user, user_in=user_in)
+    db_user = userservice.update_user(session=session, db_user=db_user, user_in=user_in)
     return db_user
 
 
@@ -228,3 +256,4 @@ def delete_user(
     session.delete(user)
     session.commit()
     return Message(message="User deleted successfully")
+
