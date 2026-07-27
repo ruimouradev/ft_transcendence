@@ -46,16 +46,6 @@ def verify_token(token: str) -> str:
     except jwt.PyJWTError:
         raise HTTPException(status_code=400, detail="Invalid verification link. Please check your email and try again.")
 
-
-def create_message(recipients: List[str], subject: str, body: str) -> MessageSchema:
-    message = MessageSchema(
-        subject=subject,
-        recipients=recipients,
-        body=body,
-        subtype=MessageType.html
-    )
-    return message
-
 async def send_new_account_activation_email(email: EmailStr, username: str, token: str):
     """Send an account activation email to the user with a verification link."""
 

@@ -1,7 +1,7 @@
 import uuid
 from typing import Any
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, status, BackgroundTasks
 from sqlmodel import col, delete, func, select
 
 from app.platform.deps import (
@@ -29,7 +29,6 @@ from app.platform.service.mailservice import (
     create_verification_token,
     send_new_account_activation_email,
 )
-from fastapi import BackgroundTasks
 
 router = APIRouter(prefix="/users", tags=["users"])
 
@@ -160,8 +159,13 @@ def register_user(session: SessionDep, user_in: UserRegister, background_tasks: 
         background_tasks.add_task(send_new_account_activation_email, user_in.email, user_in.full_name, token)
     return user
 
-@router.get("/verify-email", summary="Verify email address using token")
+@router.get("/verify-email")
 def verify_email(session: SessionDep, token: str):
+    """
+    Verify the user's email address using the provided token.
+    If the token is valid, the user's account will be activated.
+    """
+
     email = verify_token(token)
     user = userservice.get_user_by_email(session=session, email=email)
     if not user:

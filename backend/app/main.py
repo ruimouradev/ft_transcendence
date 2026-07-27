@@ -34,7 +34,7 @@ def on_startup():
 
 app.include_router(api_router, prefix=f"{settings.API_V1_STR}")
 
-@app.get("/api/", tags=["Root"], include_in_schema=False)
+@app.get("/", tags=["Root"], include_in_schema=False)
 def home():
     return {"status": "Backend is running."}
 
