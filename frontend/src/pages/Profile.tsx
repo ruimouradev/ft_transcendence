@@ -21,6 +21,8 @@ import {
   Email as EmailIcon,
 } from '@mui/icons-material';
 
+import { useNavigate } from 'react-router-dom';
+
 interface UserProfile {
   name: string;
   email: string;
@@ -33,6 +35,7 @@ export default function ProfilePage() {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -46,6 +49,7 @@ export default function ProfilePage() {
       } catch (err: any) {
         if (axios.isAxiosError(err)) {
           setError(err.response?.data?.detail || 'Failed to load profile data.');
+          navigate('/login', { replace: true });
         } else {
           setError('An unexpected error occurred.');
         }

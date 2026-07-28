@@ -13,8 +13,8 @@ export default function Navbar() {
   return (
     <header className="h-20 flex items-center justify-between px-10 border-b border-white/10">
 
-      <div className="text-4xl font-black text-yellow-400">
-        UNO
+      <div className="text-4xl font-black text-yellow-400 colorful-text-animated">
+        UNO Online
       </div>
 
       <nav className="flex gap-8">

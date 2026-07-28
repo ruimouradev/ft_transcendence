@@ -10,9 +10,13 @@ import {
   Clock 
 } from 'lucide-react';
 
+import { useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+
 export default function FriendsPage() {
   const [activeTab, setActiveTab] = useState('all'); // 'all', 'pending', 'suggested'
   const [searchQuery, setSearchQuery] = useState('');
+  const navigate = useNavigate();
 
   // Mock Friends Data
   const [friends, setFriends] = useState([
@@ -49,6 +53,14 @@ export default function FriendsPage() {
     f.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
     f.handle.toLowerCase().includes(searchQuery.toLowerCase())
   );
+
+  useEffect(() => {
+    const hasToken = Boolean(localStorage.getItem("access_token"));
+    if (!hasToken) {
+      navigate("/login", { replace: true });
+    }
+    setSearchQuery('');
+  }, []);
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 p-4 sm:p-8">
