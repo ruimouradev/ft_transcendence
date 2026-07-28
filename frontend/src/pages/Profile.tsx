@@ -21,7 +21,6 @@ import {
   Email as EmailIcon,
 } from '@mui/icons-material';
 
-// 1. 定义用户 Profile 数据的 TypeScript 接口
 interface UserProfile {
   name: string;
   email: string;

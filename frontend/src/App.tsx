@@ -11,6 +11,8 @@ import SignUp from './pages/SignUp'
 import { AuthProvider } from './components/AuthContext'
 import ProfilePage from './pages/Profile'
 import Dashboard from './pages/Dashboard'
+import UnoGamePage from './pages/UnoGamePage'
+import FriendsPage from './pages/FriendsPage'
 // import SettingsPage from './pages/SettingsPage'
 // import NotFoundPage from './pages/NotFoundPage'
 
@@ -38,6 +40,8 @@ function App() {
       <Route path="login" element={<Login />} />
       <Route path="signup" element={<SignUp />} />
       <Route path="profile" element={<ProfilePage />} />
+      <Route path="play" element={<UnoGamePage />} />
+      <Route path="friends" element={<FriendsPage />} />
     </Route>
   </Routes>
 </AuthProvider>

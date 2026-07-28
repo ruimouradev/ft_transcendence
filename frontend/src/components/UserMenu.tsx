@@ -25,9 +25,9 @@ export default function UserMenu() {
   };
 
   const handleMenuAction = (action?: () => void) => {
-    setAnchorEl(null); // 关闭菜单
+    setAnchorEl(null);
     if (action) {
-      action(); // 执行对应的逻辑（跳转或登出）
+      action();
     }
   };
 
@@ -45,8 +45,19 @@ export default function UserMenu() {
   return (
     <div>
     {!isLoggedIn ? (<Box sx={{ display: 'flex', gap: 1 }}>
-            <LoginDrawer />
-            <SignUpDrawer />
+            {/* <LoginDrawer />
+            <SignUpDrawer /> */}
+            
+            <RouterLink to="/login" underline="none">
+            <Button variant="contained" color="primary">
+            sign in
+            </Button>
+            </RouterLink>
+            <RouterLink to="/signup" underline="none">
+            <Button variant="contained" color="secondary">
+            sign up
+            </Button>
+            </RouterLink>
         </Box>) : (<>
       <Button
         id={buttonId}

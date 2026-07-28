@@ -6,6 +6,7 @@ import {
   Settings
 } from "lucide-react";
 import UserMenu from "./UserMenu";
+import { Link } from "react-router-dom";
 
 export default function Navbar() {
 
@@ -17,16 +18,21 @@ export default function Navbar() {
       </div>
 
       <nav className="flex gap-8">
+        <Link to="/" className="flex items-center gap-2 hover:text-yellow-300 transition">
+          <NavItem icon={<Home />} text="Home"/>
+        </Link>
 
-        <NavItem icon={<Home />} text="Home"/>
+        <Link to="/play" className="flex items-center gap-2 hover:text-yellow-300 transition">
+          <NavItem icon={<Trophy />} text="Play"/>
+        </Link>
 
-        <NavItem icon={<Trophy />} text="Play"/>
-
-        <NavItem icon={<User />} text="Profile"/>
-
-        <NavItem icon={<Users />} text="Friends"/>
-
-        <NavItem icon={<Settings />} text="Settings"/>
+        <Link to="/profile" className="flex items-center gap-2 hover:text-yellow-300 transition">
+          <NavItem icon={<User />} text="Profile"/>
+        </Link>
+        <Link to="/friends" className="flex items-center gap-2 hover:text-yellow-300 transition">
+          <NavItem icon={<Users />} text="Friends"/>
+        </Link>
+        {/* <NavItem icon={<Settings />} text="Settings"/> */}
 
       </nav>
         <UserMenu />
