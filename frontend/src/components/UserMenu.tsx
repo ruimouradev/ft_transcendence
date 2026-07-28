@@ -8,6 +8,7 @@ import { useAuth } from './AuthContext';
 import Box from '@mui/material/Box';
 import LoginDrawer from './LoginDrawer';
 import SignUpDrawer from './SignUpDrawer';
+import { Link as RouterLink } from 'react-router-dom';
 
 export default function UserMenu() {
   const { isLoggedIn, logout } = useAuth();
@@ -22,12 +23,22 @@ export default function UserMenu() {
   const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
     setAnchorEl(event.currentTarget);
   };
+
+  const handleMenuAction = (action?: () => void) => {
+    setAnchorEl(null); // 关闭菜单
+    if (action) {
+      action(); // 执行对应的逻辑（跳转或登出）
+    }
+  };
+
   const handleClose = (event: React.MouseEvent<HTMLButtonElement>) => {
     setAnchorEl(null);
     console.log('Menu item clicked:', event.currentTarget.textContent);
     if (event.currentTarget.textContent === 'Logout') {
       logout();
       navigate('/');
+    }else if (event.currentTarget.textContent === 'Profile') {
+      navigate('/profile');
     }
   };
 
@@ -60,8 +71,8 @@ export default function UserMenu() {
             'aria-labelledby': buttonId,
           },
         }} >
-        <MenuItem link="/profile" onClick={handleClose}><Link href="/profile" underline="none">Profile</Link></MenuItem>
-        <MenuItem link="/account" onClick={handleClose}><Link href="/account" underline="none">My account</Link></MenuItem>
+        <MenuItem onClick={() => handleMenuAction(() => navigate('/profile'))}>Profile</MenuItem>
+        <MenuItem component={RouterLink} to="/dashboard" onClick={handleClose}>Dashboard</MenuItem>
         <MenuItem link="/logout" onClick={handleClose}>Logout</MenuItem>
       </Menu>
        </> )}

@@ -2,7 +2,7 @@ import os
 
 from sqlmodel import Session, create_engine, SQLModel, select
 
-from app import crud
+from app.platform.service import userservice
 from app.models.all import User, UserCreate
 from app.platform.config import settings
 
@@ -20,5 +20,6 @@ def init_db(session: Session)-> None:
             email=settings.FIRST_SUPERUSER,
             password=settings.FIRST_SUPERUSER_PASSWORD,
             is_superuser=True,
+            is_active=True
         )
-        user = crud.create_user(session=session, user_create=user_in)
+        user = userservice.create_user(session=session, user_create=user_in)

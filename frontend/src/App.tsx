@@ -9,6 +9,8 @@ import { Routes, Route } from 'react-router-dom'
 import Login from './pages/Login'
 import SignUp from './pages/SignUp'
 import { AuthProvider } from './components/AuthContext'
+import ProfilePage from './pages/Profile'
+import Dashboard from './pages/Dashboard'
 // import SettingsPage from './pages/SettingsPage'
 // import NotFoundPage from './pages/NotFoundPage'
 
@@ -17,14 +19,28 @@ function App() {
 
   return (
     // <Home></Home>
-    <AuthProvider>
-        <Routes>
-        <Route path="/" element={<Home />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/signup" element={<SignUp />} />
-        
-        </Routes>
-    </AuthProvider>
+    // <AuthProvider>
+    //     <Routes>
+    //       <Route path="/" element={<Home />}>
+    //         <Route index element={<Dashboard />} />
+    //         <Route path="/dashboard" element={<Dashboard />} />
+    //         <Route path="/login" element={<Login />} />
+    //         <Route path="/signup" element={<SignUp />} />
+    //         <Route path="profile" element={<ProfilePage />} />
+    //       </Route>
+    //     </Routes>
+    // </AuthProvider>
+<AuthProvider>
+  <Routes>
+    <Route path="/" element={<Home />}>
+      <Route index element={<Dashboard />} />
+      <Route path="dashboard" element={<Dashboard />} />
+      <Route path="login" element={<Login />} />
+      <Route path="signup" element={<SignUp />} />
+      <Route path="profile" element={<ProfilePage />} />
+    </Route>
+  </Routes>
+</AuthProvider>
   )
 }
 
