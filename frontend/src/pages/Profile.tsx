@@ -1,178 +1,238 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import axios from 'axios';
 import {
-  Box,
-  Card,
-  CardContent,
-  Avatar,
-  Typography,
-  Chip,
-  Divider,
-  CircularProgress,
-  Alert,
-  Stack,
-  Container,
+    Container,
+    Card,
+    CardContent,
+    Box,
+    Avatar,
+    Typography,
+    Alert,
+    CircularProgress,
+    Stack,
+    Chip,
+    Divider,
 } from '@mui/material';
 import {
-  CheckCircle as ActiveIcon,
-  Cancel as InactiveIcon,
-  AdminPanelSettings as AdminIcon,
-  Person as UserIcon,
-  Email as EmailIcon,
+    Email as EmailIcon,
+    SupervisorAccount as AdminIcon,
+    Person as UserIcon,
+    CheckCircle as ActiveIcon,
+    Cancel as InactiveIcon,
 } from '@mui/icons-material';
 
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../components/AuthContext';
 
 interface UserProfile {
-  name: string;
-  email: string;
-  avatar: string;
-  is_superuser: boolean;
-  is_active: boolean;
+    full_name: string;
+    email: string;
+    avatar: string;
+    is_superuser: boolean;
+    is_active: boolean;
 }
 
-export default function ProfilePage() {
-  const [profile, setProfile] = useState<UserProfile | null>(null);
-  const [loading, setLoading] = useState<boolean>(true);
-  const [error, setError] = useState<string | null>(null);
-  const navigate = useNavigate();
+export default function ProfileCard() {
+    const [profile, setProfile] = useState<UserProfile | null>(null);
+    const [loading, setLoading] = useState<boolean>(true);
+    const [error, setError] = useState<string | null>(null);
+    const navigate = useNavigate();
+    const { isLoggedIn, profileChanged, toggleProfileChanged } = useAuth();
 
-  useEffect(() => {
-    const fetchProfile = async () => {
-      try {
-        const response = await axios.get<UserProfile>('https://localhost:8443/api/v1/users/me', {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem('access_token')}`,
-          },
-        });
-        setProfile(response.data);
-      } catch (err: any) {
-        if (axios.isAxiosError(err)) {
-          setError(err.response?.data?.detail || 'Failed to load profile data.');
-          navigate('/login', { replace: true });
-        } else {
-          setError('An unexpected error occurred.');
+    const [uploading, setUploading] = useState(false);
+    const fileInputRef = useRef(null);
+    const handleAvatarClick = () => {
+        if (fileInputRef.current) {
+            fileInputRef.current.click();
         }
-      } finally {
-        setLoading(false);
-      }
     };
 
-    fetchProfile();
-  }, []);
+    useEffect(() => {
+        const fetchProfile = async () => {
+            try {
+                const response = await axios.get<UserProfile>('/api/v1/users/me', {
+                    headers: {
+                        Authorization: `Bearer ${localStorage.getItem('access_token')}`,
+                    },
+                });
+                setProfile(response.data);
+            } catch (err: any) {
+                if (axios.isAxiosError(err)) {
+                    setError(err.response?.data?.detail || 'Failed to load profile data.');
+                    navigate('/login', { replace: true });
+                } else {
+                    setError('An unexpected error occurred.');
+                }
+            } finally {
+                setLoading(false);
+            }
+        };
 
-  if (loading) {
-    return (
-      <Box display="flex" sx={{ justifyContent: "center", alignItems: "center", minHeight: "60vh" }}>
-        <CircularProgress />
-      </Box>
-    );
-  }
+        fetchProfile();
+    }, []);
 
-  if (error) {
-    return (
-      <Container maxWidth="sm" sx={{ mt: 4 }}>
-        <Alert severity="error">{error}</Alert>
-      </Container>
-    );
-  }
+    const handleFileUpload = async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
 
-  if (!profile) return null;
+        const tempPreviewUrl = URL.createObjectURL(file);
+        setProfile((prev) => ({ ...prev, avatar: tempPreviewUrl }));
 
-  return (
-    <Container maxWidth="sm" sx={{ mt: 6, mb: 6 }}>
-      <Card elevation={3} sx={{ borderRadius: 3, overflow: 'hidden' }}>
+        const formData = new FormData();
+        formData.append('file', file);
 
-        <Box sx={{ height: 120, bgcolor: 'primary.main' }} />
+        setUploading(true);
 
-        <CardContent sx={{ pt: 0, position: 'relative' }}>
-          <Box display="flex" sx={{ justifyContent:"center", mt: -7, mb: 2 }}>
-            <Avatar
-              src={profile.avatar}
-              alt={profile.name}
-              sx={{
-                width: 100,
-                height: 100,
-                border: '4px solid white',
-                boxShadow: 2,
-                fontSize: 36,
-                bgcolor: 'secondary.main',
-              }}
-            >
-              {profile.name ? profile.name.charAt(0).toUpperCase() : 'U'}
-            </Avatar>
-          </Box>
+        try {
+            const response = await axios.post('/api/v1/users/uploadfile', formData, {
+                headers: {
+                    'Content-Type': 'multipart/form-data',
+                    Authorization: `Bearer ${localStorage.getItem('access_token')}`,
+                },
+            });
 
-          <Stack sx={{ spacing: 1, alignItems: "center", textAlign: "center" }}>
-            <Typography variant="h5" component="h1" fontWeight="bold">
-              {profile.name}
-            </Typography>
+            const uploadedUrl = response.data?.url || tempPreviewUrl;
+            setProfile((prev) => ({ ...prev, avatar: uploadedUrl }));
+            toggleProfileChanged();
+        } catch (error) {
+            console.error('upload failed:', error);
+            alert('upload failed, please try again.');
+        } finally {
+            setUploading(false);
+        }
+    };
 
-            <Stack sx={{ direction: "row", alignItems: "center", spacing: 0.5 }} color="text.secondary">
-              <EmailIcon fontSize="small" />
-              <Typography variant="body1">{profile.email}</Typography>
-            </Stack>
-
-            <Stack direction="row" spacing={1} sx={{ mt: 2 }}>
-              {profile.is_superuser ? (
-                <Chip
-                  icon={<AdminIcon />}
-                  label="Superuser"
-                  color="secondary"
-                  variant="filled"
-                  size="small"
-                />
-              ) : (
-                <Chip
-                  icon={<UserIcon />}
-                  label="Standard User"
-                  variant="outlined"
-                  size="small"
-                />
-              )}
-
-              {profile.is_active ? (
-                <Chip
-                  icon={<ActiveIcon />}
-                  label="Active"
-                  color="success"
-                  variant="soft"
-                  size="small"
-                />
-              ) : (
-                <Chip
-                  icon={<InactiveIcon />}
-                  label="Inactive"
-                  color="error"
-                  variant="soft"
-                  size="small"
-                />
-              )}
-            </Stack>
-          </Stack>
-
-          <Divider sx={{ my: 3 }} />
-
-          <Stack spacing={2} sx={{ px: 2 }}>
-            <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-              <Typography color="text.secondary">Account Role</Typography>
-              <Typography fontWeight="medium">
-                {profile.is_superuser ? 'Administrator' : 'General User'}
-              </Typography>
+    if (loading) {
+        return (
+            <Box display="flex" sx={{ justifyContent: "center", alignItems: "center", minHeight: "60vh" }}>
+                <CircularProgress />
             </Box>
+        );
+    }
 
-            <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-              <Typography color="text.secondary">Account Status</Typography>
-              <Typography
-                fontWeight="medium"
-                color={profile.is_active ? 'success.main' : 'error.main'}
-              >
-                {profile.is_active ? 'Activated' : 'Pending Activation'}
-              </Typography>
-            </Box>
-          </Stack>
-        </CardContent>
-      </Card>
-    </Container>
-  );
-};
+    if (error) {
+        return (
+            <Container maxWidth="sm" sx={{ mt: 4 }}>
+                <Alert severity="error">{error}</Alert>
+            </Container>
+        );
+    }
+
+    if (!profile) return null;
+
+    return (
+        <Container maxWidth="sm" sx={{ mt: 6, mb: 6 }}>
+            <Card elevation={3} sx={{ borderRadius: 3, overflow: 'hidden' }}>
+
+                <Box sx={{ height: 120, bgcolor: 'primary.main' }} />
+
+                <CardContent sx={{ pt: 0, position: 'relative' }}>
+
+                    <Box display="flex" sx={{ justifyContent: 'center', mt: -7, mb: 2 }}>
+                        <Avatar
+                            src={profile.avatar}
+                            alt={profile.name}
+                            onClick={handleAvatarClick}
+                            sx={{
+                                width: 100,
+                                height: 100,
+                                border: '4px solid white',
+                                boxShadow: 2,
+                                fontSize: 36,
+                                bgcolor: 'secondary.main',
+                                cursor: 'pointer',
+                                opacity: uploading ? 0.6 : 1,
+                                transition: 'all 0.2s ease-in-out',
+                                '&:hover': {
+                                    transform: 'scale(1.04)',
+                                    boxShadow: 4,
+                                },
+                            }}
+                        >
+                            {profile.name ? profile.name.charAt(0).toUpperCase() : 'U'}
+                        </Avatar>
+
+                        <input
+                            type="file"
+                            ref={fileInputRef}
+                            accept="image/*"
+                            disabled={uploading}
+                            onChange={handleFileUpload}
+                            style={{ display: 'none' }}
+                        />
+                    </Box>
+
+                    <Stack spacing={1} sx={{ alignItems: 'center', textAlign: 'center' }}>
+                        <Typography variant="h5" component="h1" fontWeight="bold">
+                            {profile.name}
+                        </Typography>
+
+                        <Stack direction="row" spacing={0.5} sx={{ alignItems: 'center' }} color="text.secondary">
+                            <EmailIcon fontSize="small" />
+                            <Typography variant="body1">{profile.email}</Typography>
+                        </Stack>
+
+                        {/* 标签栏 */}
+                        <Stack direction="row" spacing={1} sx={{ mt: 2 }}>
+                            {profile.is_superuser ? (
+                                <Chip
+                                    icon={<AdminIcon />}
+                                    label="Superuser"
+                                    color="secondary"
+                                    variant="filled"
+                                    size="small"
+                                />
+                            ) : (
+                                <Chip
+                                    icon={<UserIcon />}
+                                    label="Standard User"
+                                    variant="outlined"
+                                    size="small"
+                                />
+                            )}
+
+                            {profile.is_active ? (
+                                <Chip
+                                    icon={<ActiveIcon />}
+                                    label="Active"
+                                    color="success"
+                                    variant="soft"
+                                    size="small"
+                                />
+                            ) : (
+                                <Chip
+                                    icon={<InactiveIcon />}
+                                    label="Inactive"
+                                    color="error"
+                                    variant="soft"
+                                    size="small"
+                                />
+                            )}
+                        </Stack>
+                    </Stack>
+
+                    <Divider sx={{ my: 3 }} />
+
+                    <Stack spacing={2} sx={{ px: 2 }}>
+                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <Typography color="text.secondary">Account Role</Typography>
+                            <Typography fontWeight="medium">
+                                {profile.is_superuser ? 'Administrator' : 'General User'}
+                            </Typography>
+                        </Box>
+
+                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <Typography color="text.secondary">Account Status</Typography>
+                            <Typography
+                                fontWeight="medium"
+                                color={profile.is_active ? 'success.main' : 'error.main'}
+                            >
+                                {profile.is_active ? 'Activated' : 'Pending Activation'}
+                            </Typography>
+                        </Box>
+                    </Stack>
+                </CardContent>
+            </Card>
+        </Container>
+    );
+}

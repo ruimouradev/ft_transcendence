@@ -13,6 +13,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return Boolean(localStorage.getItem('access_token'));
   });
 
+  const [profileChanged, setProfileChanged] = useState<boolean>(false);
+
   const login = (token: string) => {
     localStorage.setItem('access_token', token);
     setIsLoggedIn(true);
@@ -23,8 +25,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setIsLoggedIn(false);
   };
 
+  const toggleProfileChanged = () => {
+    setProfileChanged(prev => !prev);
+  };
+
   return (
-    <AuthContext.Provider value={{ isLoggedIn, login, logout }}>
+    <AuthContext.Provider value={{ isLoggedIn, profileChanged, toggleProfileChanged, login, logout }}>
       {children}
     </AuthContext.Provider>
   );

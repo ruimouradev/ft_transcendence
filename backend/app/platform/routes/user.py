@@ -1,8 +1,9 @@
 import uuid
 from typing import Any
 
-from fastapi import APIRouter, Depends, HTTPException, status, BackgroundTasks
+from fastapi import APIRouter, Depends, HTTPException, status, BackgroundTasks, UploadFile
 from sqlmodel import col, delete, func, select
+from pathlib import Path
 
 from app.platform.deps import (
     CurrentUser,
@@ -252,3 +253,31 @@ def delete_user(
     session.commit()
     return Message(message="User deleted successfully")
 
+#UploadFile
+@router.post("/uploadfile")
+async def upload_file(file: UploadFile, session: SessionDep, current_user: CurrentUser):
+    if file.content_type not in ["image/jpeg", "image/png"]:
+        return {"error": "Invalid file type. Only JPEG and PNG are allowed."}
+
+    uploaddir = Path("app/static/"+current_user.id.hex+"/")
+    uploaddir.mkdir(parents=True, exist_ok=True)
+    print(uploaddir)
+    MAX_SIZE = 3 * 1024 * 1024  # 3MB
+    size = 0
+    
+    while True:
+        chunk = await file.read(1024 * 1024)
+        if not chunk:
+            break
+        size += len(chunk)
+        if size > MAX_SIZE:
+            return {"error": "File size exceeds the limit of 3MB."}
+    
+    await file.seek(0)
+    content = await file.read()
+    
+    with open(uploaddir / file.filename, "wb") as f:
+        f.write(content)
+    print("====>", UserUpdate(avatar=f"/static/{current_user.id.hex}/{file.filename}"))
+    userservice.update_user(session=session, db_user=current_user, user_in=UserUpdate(avatar=f"/static/{current_user.id.hex}/{file.filename}"))
+    return {"filename": file.filename, "file_size": len(content), "url": f"https://localhost:8443/static/{current_user.id.hex}/{file.filename}"}
