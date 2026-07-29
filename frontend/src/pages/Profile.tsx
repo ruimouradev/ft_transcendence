@@ -24,14 +24,6 @@ import {
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../components/AuthContext';
 
-interface UserProfile {
-    full_name: string;
-    email: string;
-    avatar: string;
-    is_superuser: boolean;
-    is_active: boolean;
-}
-
 export default function ProfileCard() {
     const [error, setError] = useState<string | null>(null);
     const navigate = useNavigate();
@@ -45,38 +37,12 @@ export default function ProfileCard() {
         }
     };
 
-    // useEffect(() => {
-    //     const fetchProfile = async () => {
-    //         try {
-    //             const response = await axios.get<UserProfile>('/api/v1/users/me', {
-    //                 headers: {
-    //                     Authorization: `Bearer ${localStorage.getItem('access_token')}`,
-    //                 },
-    //                 withCredentials: true,
-    //             });
-    //             login(response.data);
-    //         } catch (err: any) {
-    //             if (axios.isAxiosError(err)) {
-    //                 setError(err.response?.data?.detail || 'Failed to load profile data.');
-    //                 navigate('/login', { replace: true });
-    //             } else {
-    //                 setError('An unexpected error occurred.');
-    //             }
-    //         } finally {
-    //             // setLoading(false);
-    //         }
-    //     };
-
-    //     fetchProfile();
-    // }, []);
-
     const handleFileUpload = async (e) => {
         const file = e.target.files[0];
         if (!file) return;
 
         const tempPreviewUrl = URL.createObjectURL(file);
-        login(user => ({ ...user, avatar: tempPreviewUrl }));
-
+        login({ ...user, avatar: tempPreviewUrl });
         const formData = new FormData();
         formData.append('file', file);
 
@@ -86,15 +52,18 @@ export default function ProfileCard() {
             const response = await axios.post('/api/v1/users/uploadfile', formData, {
                 headers: {
                     'Content-Type': 'multipart/form-data',
-                    Authorization: `Bearer ${localStorage.getItem('access_token')}`,
                 },
                 withCredentials: true,
             });
 
             const uploadedUrl = response.data?.url || tempPreviewUrl;
-            login(user => ({ ...user, avatar: uploadedUrl }));
+            login({ ...user, avatar: uploadedUrl });
         } catch (error) {
-            alert('upload failed, please try again.');
+            if (error.response.status == 403) {
+                navigate('/login');
+            } else {
+                setError('Failed to upload avatar. Please try again.');
+            }
         } finally {
             setUploading(false);
         }
