@@ -68,7 +68,7 @@ export default function SignUp() {
     if (formData.password !== formData.confirmPassword) {
       setError('Passwords do not match!');
       return;
-    }else if (formData.password.length < 8) {
+    } else if (formData.password.length < 8) {
       setError('Password must be at least 8 characters long.');
       return;
     } else if (!formData.email) {
@@ -83,38 +83,39 @@ export default function SignUp() {
     console.log('Form Submitted:', formData);
     // Add registration API call here
     try {
-        const params={
-          'email': formData.email,
-          'password': formData.password,
-          'full_name': formData.firstName+' '+formData.lastName
-        }
-        const response = await axios.post('/api/v1/users/signup', params);
-        if (response.data.id) {
-          navigate('/', { replace: true });
-        }
+      const params = {
+        'email': formData.email,
+        'password': formData.password,
+        'full_name': formData.firstName + ' ' + formData.lastName
+      }
+      const response = await axios.post('/api/v1/users/signup', params, { withCredentials: true });
+      if (response.data.id) {
+        navigate('/', { replace: true });
+      }
     } catch (error) {
-        if (axios.isAxiosError(error)) {
-            if (error.response) {
-              if (error.response.status === 422) {
-                const errorData = error.response.data as ErrorResponse;
-                const errorMessages = errorData.detail.map((err) => err.msg);
-                console.log('Error messages:', errorMessages);
-                setError(`login failed: ${errorMessages.join('\n')}`);
-              } else {
-                setError(`login failed: ${error.response.data.detail || 'Unknown error'}`);
-              }
-            } else if (error.request) {
-                setError('login failed: No response from server');
-            } else {
-                setError(`login failed: ${error.message}`);
-            }
+      if (axios.isAxiosError(error)) {
+        if (error.response) {
+          if (error.response.status === 422) {
+            const errorData = error.response.data as ErrorResponse;
+            const errorMessages = errorData.detail.map((err) => err.msg);
+            console.log('Error messages:', errorMessages);
+            setError(`login failed: ${errorMessages.join('\n')}`);
+          } else {
+            setError(`login failed: ${error.response.data.detail || 'Unknown error'}`);
+          }
+        } else if (error.request) {
+          setError('login failed: No response from server');
         } else {
-            setError('login failed: An unknown error occurred');
+          setError(`login failed: ${error.message}`);
         }
+      } else {
+        setError('login failed: An unknown error occurred');
+      }
     } finally {
-        // setLoading(false);
+      // setLoading(false);
     }
   };
+
   return (
     <Container component="main" maxWidth="xs" sx={{
       height: '100vh', display: 'flex', alignItems:
@@ -194,10 +195,10 @@ export default function SignUp() {
                         <IconButton onClick={() => setShowPassword(!showPassword)} edge="end">
                           {showPassword ? <VisibilityOff /> : <Visibility />}
                         </IconButton>
-                    </InputAdornment>
-                  ),
-                }
-              }}
+                      </InputAdornment>
+                    ),
+                  }
+                }}
               />
             </Grid>
             <Grid size={{ xs: 12 }}>
@@ -238,7 +239,7 @@ export default function SignUp() {
           }}>
             Sign Up
           </Button>
-          <Divider sx={{ my: 2 }}>OR</Divider>
+          {/* <Divider sx={{ my: 2 }}>OR</Divider>
           <Box sx={{ display: 'flex', gap: 2 }}>
             <Button
               fullWidth
@@ -258,10 +259,13 @@ export default function SignUp() {
             >
               GitHub
             </Button>
-          </Box>
+          </Box> */}
           <Grid container sx={{ justifyContent: "flex-end" }}>
             <Grid size={{ xs: 12 }}>
-              <Link href="/login" variant="body2" color="primary">
+              <Link href="#" onClick={(e) => {
+                e.preventDefault();
+                navigate('/login');
+              }} variant="body2" color="primary">
                 Already have an account? Sign in
               </Link>
             </Grid>

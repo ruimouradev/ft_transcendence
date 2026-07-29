@@ -33,11 +33,9 @@ interface UserProfile {
 }
 
 export default function ProfileCard() {
-    const [profile, setProfile] = useState<UserProfile | null>(null);
-    const [loading, setLoading] = useState<boolean>(true);
     const [error, setError] = useState<string | null>(null);
     const navigate = useNavigate();
-    const { isLoggedIn, profileChanged, toggleProfileChanged } = useAuth();
+    const { user, login } = useAuth();
 
     const [uploading, setUploading] = useState(false);
     const fileInputRef = useRef(null);
@@ -47,36 +45,37 @@ export default function ProfileCard() {
         }
     };
 
-    useEffect(() => {
-        const fetchProfile = async () => {
-            try {
-                const response = await axios.get<UserProfile>('/api/v1/users/me', {
-                    headers: {
-                        Authorization: `Bearer ${localStorage.getItem('access_token')}`,
-                    },
-                });
-                setProfile(response.data);
-            } catch (err: any) {
-                if (axios.isAxiosError(err)) {
-                    setError(err.response?.data?.detail || 'Failed to load profile data.');
-                    navigate('/login', { replace: true });
-                } else {
-                    setError('An unexpected error occurred.');
-                }
-            } finally {
-                setLoading(false);
-            }
-        };
+    // useEffect(() => {
+    //     const fetchProfile = async () => {
+    //         try {
+    //             const response = await axios.get<UserProfile>('/api/v1/users/me', {
+    //                 headers: {
+    //                     Authorization: `Bearer ${localStorage.getItem('access_token')}`,
+    //                 },
+    //                 withCredentials: true,
+    //             });
+    //             login(response.data);
+    //         } catch (err: any) {
+    //             if (axios.isAxiosError(err)) {
+    //                 setError(err.response?.data?.detail || 'Failed to load profile data.');
+    //                 navigate('/login', { replace: true });
+    //             } else {
+    //                 setError('An unexpected error occurred.');
+    //             }
+    //         } finally {
+    //             // setLoading(false);
+    //         }
+    //     };
 
-        fetchProfile();
-    }, []);
+    //     fetchProfile();
+    // }, []);
 
     const handleFileUpload = async (e) => {
         const file = e.target.files[0];
         if (!file) return;
 
         const tempPreviewUrl = URL.createObjectURL(file);
-        setProfile((prev) => ({ ...prev, avatar: tempPreviewUrl }));
+        login(user => ({ ...user, avatar: tempPreviewUrl }));
 
         const formData = new FormData();
         formData.append('file', file);
@@ -89,20 +88,19 @@ export default function ProfileCard() {
                     'Content-Type': 'multipart/form-data',
                     Authorization: `Bearer ${localStorage.getItem('access_token')}`,
                 },
+                withCredentials: true,
             });
 
             const uploadedUrl = response.data?.url || tempPreviewUrl;
-            setProfile((prev) => ({ ...prev, avatar: uploadedUrl }));
-            toggleProfileChanged();
+            login(user => ({ ...user, avatar: uploadedUrl }));
         } catch (error) {
-            console.error('upload failed:', error);
             alert('upload failed, please try again.');
         } finally {
             setUploading(false);
         }
     };
 
-    if (loading) {
+    if (uploading) {
         return (
             <Box display="flex" sx={{ justifyContent: "center", alignItems: "center", minHeight: "60vh" }}>
                 <CircularProgress />
@@ -118,7 +116,7 @@ export default function ProfileCard() {
         );
     }
 
-    if (!profile) return null;
+    if (!user) return null;
 
     return (
         <Container maxWidth="sm" sx={{ mt: 6, mb: 6 }}>
@@ -130,8 +128,8 @@ export default function ProfileCard() {
 
                     <Box display="flex" sx={{ justifyContent: 'center', mt: -7, mb: 2 }}>
                         <Avatar
-                            src={profile.avatar}
-                            alt={profile.name}
+                            src={user.avatar}
+                            alt={user.full_name}
                             onClick={handleAvatarClick}
                             sx={{
                                 width: 100,
@@ -149,7 +147,7 @@ export default function ProfileCard() {
                                 },
                             }}
                         >
-                            {profile.name ? profile.name.charAt(0).toUpperCase() : 'U'}
+                            {user.full_name ? user.full_name.charAt(0).toUpperCase() : 'U'}
                         </Avatar>
 
                         <input
@@ -164,17 +162,15 @@ export default function ProfileCard() {
 
                     <Stack spacing={1} sx={{ alignItems: 'center', textAlign: 'center' }}>
                         <Typography variant="h5" component="h1" fontWeight="bold">
-                            {profile.name}
+                            {user.full_name}
                         </Typography>
 
                         <Stack direction="row" spacing={0.5} sx={{ alignItems: 'center' }} color="text.secondary">
                             <EmailIcon fontSize="small" />
-                            <Typography variant="body1">{profile.email}</Typography>
+                            <Typography variant="body1">{user.email}</Typography>
                         </Stack>
-
-                        {/* 标签栏 */}
                         <Stack direction="row" spacing={1} sx={{ mt: 2 }}>
-                            {profile.is_superuser ? (
+                            {user.is_superuser ? (
                                 <Chip
                                     icon={<AdminIcon />}
                                     label="Superuser"
@@ -191,7 +187,7 @@ export default function ProfileCard() {
                                 />
                             )}
 
-                            {profile.is_active ? (
+                            {user.is_active ? (
                                 <Chip
                                     icon={<ActiveIcon />}
                                     label="Active"
@@ -211,13 +207,13 @@ export default function ProfileCard() {
                         </Stack>
                     </Stack>
 
-                    <Divider sx={{ my: 3 }} />
+                    {/* <Divider sx={{ my: 3 }} />
 
                     <Stack spacing={2} sx={{ px: 2 }}>
                         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                             <Typography color="text.secondary">Account Role</Typography>
                             <Typography fontWeight="medium">
-                                {profile.is_superuser ? 'Administrator' : 'General User'}
+                                {user.is_superuser ? 'Administrator' : 'General User'}
                             </Typography>
                         </Box>
 
@@ -225,12 +221,12 @@ export default function ProfileCard() {
                             <Typography color="text.secondary">Account Status</Typography>
                             <Typography
                                 fontWeight="medium"
-                                color={profile.is_active ? 'success.main' : 'error.main'}
+                                color={user.is_active ? 'success.main' : 'error.main'}
                             >
-                                {profile.is_active ? 'Activated' : 'Pending Activation'}
+                                {user.is_active ? 'Activated' : 'Pending Activation'}
                             </Typography>
                         </Box>
-                    </Stack>
+                    </Stack> */}
                 </CardContent>
             </Card>
         </Container>

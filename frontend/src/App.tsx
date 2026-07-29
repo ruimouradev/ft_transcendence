@@ -13,6 +13,8 @@ import ProfilePage from './pages/Profile'
 import Dashboard from './pages/Dashboard'
 import UnoGamePage from './pages/UnoGamePage'
 import FriendsPage from './pages/FriendsPage'
+import { ProtectedRoute } from './components/ProtectedRoute'
+import ChangePasswordCard from './components/ChangePasswordCard'
 // import SettingsPage from './pages/SettingsPage'
 // import NotFoundPage from './pages/NotFoundPage'
 
@@ -39,9 +41,14 @@ function App() {
       <Route path="dashboard" element={<Dashboard />} />
       <Route path="login" element={<Login />} />
       <Route path="signup" element={<SignUp />} />
-      <Route path="profile" element={<ProfilePage />} />
-      <Route path="play" element={<UnoGamePage />} />
-      <Route path="friends" element={<FriendsPage />} />
+
+      <Route element={<ProtectedRoute />}>
+        <Route path="profile" element={<ProfilePage />} />
+        <Route path="play" element={<UnoGamePage />} />
+        <Route path="friends" element={<FriendsPage />} />
+        <Route path="password" element={<ChangePasswordCard />} />
+      </Route>
+
     </Route>
   </Routes>
 </AuthProvider>

@@ -2,12 +2,9 @@ import * as React from 'react';
 import Button from '@mui/material/Button';
 import Menu from '@mui/material/Menu';
 import MenuItem from '@mui/material/MenuItem';
-import Link from '@mui/material/Link';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from './AuthContext';
 import Box from '@mui/material/Box';
-import LoginDrawer from './LoginDrawer';
-import SignUpDrawer from './SignUpDrawer';
 import { Link as RouterLink } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import axios from 'axios';
@@ -23,7 +20,7 @@ interface UserProfile {
 
 export default function UserMenu() {
     const [profile, setProfile] = useState<UserProfile | null>(null);
-    const { isLoggedIn, profileChanged, toggleProfileChanged, logout } = useAuth();
+    const { user, isAuthenticated, logout } = useAuth();
     const id = React.useId();
     const buttonId = `${id}-button`;
     const menuId = `${id}-menu`;
@@ -53,31 +50,32 @@ export default function UserMenu() {
         }
     };
 
-    useEffect(() => {
-        const fetchProfile = async () => {
-            try {
-                const response = await axios.get<UserProfile>('/api/v1/users/me', {
-                    headers: {
-                        Authorization: `Bearer ${localStorage.getItem('access_token')}`,
-                    },
-                });
-                setProfile(response.data);
-            } catch (err: any) {
-                if (axios.isAxiosError(err)) {
-                    navigate('/login', { replace: true });
-                } else {
-                    navigate('/login', { replace: true });
-                }
-            } finally {
-                // setLoading(false);
-            }
-        };
+    // useEffect(() => {
+    //     const fetchProfile = async () => {
+    //         try {
+    //             const response = await axios.get<UserProfile>('/api/v1/users/me', {
+    //                 headers: {
+    //                     Authorization: `Bearer ${localStorage.getItem('access_token')}`,
+    //                 },
+    //                 withCredentials: true,
+    //             });
+    //             setProfile(response.data);
+    //         } catch (err: any) {
+    //             if (axios.isAxiosError(err)) {
+    //                 navigate('/login', { replace: true });
+    //             } else {
+    //                 navigate('/login', { replace: true });
+    //             }
+    //         } finally {
+    //             // setLoading(false);
+    //         }
+    //     };
 
-        fetchProfile();
-    }, [isLoggedIn, profileChanged]);
+    //     fetchProfile();
+    // }, [isAuthenticated, profileChanged]);
 
     return (<div>
-            {!isLoggedIn ? (<Box sx={{ display: 'flex', gap: 1 }}>
+            {!isAuthenticated ? (<Box sx={{ display: 'flex', gap: 1 }}>
                 {/* <LoginDrawer />
             <SignUpDrawer /> */}
 
@@ -100,11 +98,11 @@ export default function UserMenu() {
                     onClick={handleClick}
                 >
                     <div className="flex items-center gap-4">
-                        <img src={profile?.avatar || defaultAvatar} className="w-12 h-12 rounded-full" />
+                        <img src={user?.avatar || defaultAvatar} className="w-12 h-12 rounded-full" />
                         <div>
-                            <div>{profile?.full_name}</div>
+                            <div>{user?.full_name}</div>
                             <div className="text-sm text-gray-400">
-                                {profile?.is_superuser ? 'Super User' : 'User'}
+                                {user?.is_superuser ? 'Super User' : 'User'}
                             </div>
                         </div>
                     </div>
@@ -116,7 +114,7 @@ export default function UserMenu() {
                         },
                     }} >
                     <MenuItem onClick={() => handleMenuAction(() => navigate('/profile'))}>Profile</MenuItem>
-                    <MenuItem component={RouterLink} to="/dashboard" onClick={handleClose}>Dashboard</MenuItem>
+                    <MenuItem component={RouterLink} to="/password" onClick={handleClose}>Password</MenuItem>
                     <MenuItem link="/logout" onClick={handleClose}>Logout</MenuItem>
                 </Menu>
             </>)}

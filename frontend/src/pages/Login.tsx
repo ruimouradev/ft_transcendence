@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
     Box,
     Button,
@@ -30,8 +30,6 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../components/AuthContext';
 
 export default function Login() {
-
-    const { login } = useAuth();
     const [formData, setFormData] = useState({
         email: '',
         password: '',
@@ -40,6 +38,7 @@ export default function Login() {
     const [showPassword, setShowPassword] = useState(false);
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
+    const {user, login } = useAuth();
 
     const navigate = useNavigate();
 
@@ -52,8 +51,8 @@ export default function Login() {
         if (error) setError('');
     };
 
-    const handleClickShowPassword = () => {
-        setShowPassword((prev) => !prev);
+    const navigateSignUp = () => {
+        navigate('/signup');
     };
 
     const handleSubmit = async (e) => {
@@ -72,11 +71,12 @@ export default function Login() {
             const response = await axios.post('/api/v1/login/access-token', params, {
                 headers: {
                     'Content-Type': 'application/x-www-form-urlencoded',
-                }
+                },
+                withCredentials: true,
             });
             if (response.data.token_type && response.data.access_token) {
-                login(response.data.access_token);
-                navigate('/', { replace: true });
+                login(response.data.user);
+                navigate('/dashboard', { replace: true });
             }
         } catch (error) {
             if (axios.isAxiosError(error)) {
@@ -97,7 +97,7 @@ export default function Login() {
             setLoading(false);
         }
     };
-
+    
     return (
         <Box sx={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', p: 2, }} >
             <Container component="main" maxWidth="xs">
@@ -214,12 +214,12 @@ export default function Login() {
                                 fullWidth
                                 variant="outlined"
                                 startIcon={<img src={myIcon} alt="42" style={{ width: 20, height: 20 }} />}
-                                onClick={() => alert('42 Login')}
+                                onClick={() => window.location.href = 'api/v1/auth/42/login'}
                                 sx={{ textTransform: 'none', borderRadius: 2 }}
                             >
                                 Login 42
                             </Button>
-                            <Button
+                            {/* <Button
                                 fullWidth
                                 variant="outlined"
                                 startIcon={<GitHubIcon />}
@@ -227,14 +227,15 @@ export default function Login() {
                                 sx={{ textTransform: 'none', borderRadius: 2 }}
                             >
                                 GitHub
-                            </Button>
+                            </Button> */}
                         </Box>
 
                         {/* Footer Sign Up Link */}
                         <Box sx={{ mt: 3, textAlign: 'center' }}>
                             <Typography variant="body2" color="text.secondary">
                                 Don't have an account?{' '}
-                                <Link href="/signup" underline="hover" sx={{ fontWeight: 600 }}>
+                                
+                                <Link href="#" onClick={(e) => { e.preventDefault(); navigate('/signup'); }} underline="hover" sx={{ fontWeight: 600 }}>
                                     Sign Up
                                 </Link>
                             </Typography>

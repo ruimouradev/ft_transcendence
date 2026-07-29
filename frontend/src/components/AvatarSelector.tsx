@@ -39,6 +39,7 @@ export default function AvatarSelector({ onSelectAvatar }) {
           'Content-Type': 'multipart/form-data',
           Authorization: `Bearer ${localStorage.getItem('access_token')}`,
         },
+        withCredentials: true,
       });
 
       const uploadedUrl = response.data?.url || tempPreviewUrl;

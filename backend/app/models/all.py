@@ -88,6 +88,9 @@ class Token(SQLModel):
     access_token: str
     token_type: str = "bearer"
 
+class TokenAndUser(Token):
+    user: UserPublic
+
 
 # Contents of JWT token
 class TokenPayload(SQLModel):
