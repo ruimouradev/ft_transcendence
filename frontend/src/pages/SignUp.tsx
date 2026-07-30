@@ -75,6 +75,10 @@ export default function SignUp() {
       setError('Email is required.');
       return;
     }
+    if (!formData.firstName || !formData.lastName) {
+      setError('First name and last name are required.');
+      return;
+    }
     if (!formData.agreeTerms) {
       setError('You must agree to the terms and conditions.');
       return;

@@ -1,6 +1,6 @@
 from typing import Any
 from sqlmodel import Session, select
-from app.models.all import User, UserCreate, UserUpdate
+from app.models.all import OAuthAccount, OAuthAccountCreate, OAuthAccountRead, User, UserCreate, UserUpdate
 from app.platform.security import get_password_hash
 
 def create_user(*, session: Session, user_create: UserCreate) -> User:
@@ -31,3 +31,15 @@ def get_user_by_email(*, session: Session, email: str) -> User | None:
     statement = select(User).where(User.email == email)
     session_user = session.exec(statement).first()
     return session_user
+
+def get_oauth_account_by_user_id(*, session: Session, user_id: str) -> OAuthAccount | None:
+    statement = select(OAuthAccount).where(OAuthAccount.user_id == user_id)
+    oauth_account = session.exec(statement).first()
+    return oauth_account
+
+def create_oauth_account(*, session: Session, oauth_account_create: OAuthAccountCreate) -> OAuthAccount:
+    db_obj = OAuthAccount.model_validate(oauth_account_create)
+    session.add(db_obj)
+    session.commit()
+    session.refresh(db_obj)
+    return db_obj

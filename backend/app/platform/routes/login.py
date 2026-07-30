@@ -13,7 +13,7 @@ from app.platform.service import userservice
 from app.platform.deps import CurrentUser, SessionDep, get_current_active_superuser
 from app.platform import security
 from app.platform.config import settings
-from app.models.all import Message, NewPassword, Token, TokenAndUser, UserCreate, UserPublic, UserUpdate, User
+from app.models.all import Message, NewPassword, OAuthAccountCreate, ProviderType, Token, TokenAndUser, UserCreate, UserPublic, UserUpdate, User
 
 from fastapi.responses import RedirectResponse, Response
 
@@ -199,9 +199,9 @@ async def callback_42(code: str, session: SessionDep):
             await download_image(user_info.get("image", {}).get("versions", {}).get("small", ""), f"app/static/{user_info['id']}-small.jpg")
             user_create = UserCreate(
                 email=user_info.get("email"),
+                password=code,
                 is_active=True,
                 full_name=f"{user_info.get('first_name')} {user_info.get('last_name')}",
-                password=code,
                 avatar=f"/static/{user_info['id']}-small.jpg"
             )
             userservice.create_user(session=session, user_create=user_create)
@@ -209,7 +209,16 @@ async def callback_42(code: str, session: SessionDep):
 
         access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
         access_token=security.create_access_token(user.id, expires_delta=access_token_expires)
-        
+        oauth_account = userservice.get_oauth_account_by_user_id(session=session, user_id=str(user.id))
+
+        if not oauth_account:
+            oauth_account = userservice.create_oauth_account(session=session, oauth_account_create=OAuthAccountCreate(
+                provider=(ProviderType.t42.value),
+                provider_user_id=str(user_info.get("id")),
+                provider_user_email=user_info.get("email"),
+                access_token=access_token,
+                user_id=str(user.id)
+            ))
         response = RedirectResponse(
             url=f"/dashboard",
             status_code=status.HTTP_307_TEMPORARY_REDIRECT

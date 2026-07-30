@@ -37,7 +37,6 @@ def verify_token(token: str) -> str:
     """ verify JWT Token for email verification and return the email if valid, otherwise raise HTTPException """
     try:
         payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
-        print(f"Decoded payload: {payload}")
         if payload.get("type") != "email_verification":
             raise HTTPException(status_code=400, detail="Invalid Token Type")
         return payload.get("sub")

@@ -31,7 +31,6 @@ class OAuth2PasswordBearerWithCookie(OAuth2):
 
     async def __call__(self, request: Request) -> Optional[str]:
         token = request.cookies.get("access_token")
-        print("===============token from cookie:", token)
         if token and token.startswith("Bearer "):
             token = token[7:]
 

@@ -261,7 +261,7 @@ async def upload_file(file: UploadFile, session: SessionDep, current_user: Curre
 
     uploaddir = Path("app/static/"+current_user.id.hex+"/")
     uploaddir.mkdir(parents=True, exist_ok=True)
-    print(uploaddir)
+
     MAX_SIZE = 3 * 1024 * 1024  # 3MB
     size = 0
     
@@ -278,6 +278,6 @@ async def upload_file(file: UploadFile, session: SessionDep, current_user: Curre
     
     with open(uploaddir / file.filename, "wb") as f:
         f.write(content)
-    print("====>", UserUpdate(avatar=f"/static/{current_user.id.hex}/{file.filename}"))
+
     userservice.update_user(session=session, db_user=current_user, user_in=UserUpdate(avatar=f"/static/{current_user.id.hex}/{file.filename}"))
     return {"filename": file.filename, "file_size": len(content), "url": f"https://localhost:8443/static/{current_user.id.hex}/{file.filename}"}
