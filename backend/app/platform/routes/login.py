@@ -1,7 +1,7 @@
 import jwt
 import httpx
 
-from datetime import timedelta
+from datetime import timedelta, datetime, timezone
 from typing import Annotated, Any
 
 from fastapi import APIRouter, Depends, HTTPException, status
@@ -16,6 +16,7 @@ from app.platform.config import settings
 from app.models.all import Message, NewPassword, OAuthAccountCreate, ProviderType, Token, TokenAndUser, UserCreate, UserPublic, UserUpdate, User
 
 from fastapi.responses import RedirectResponse, Response
+from jwt.exceptions import InvalidTokenError
 
 # from app.utils import (
 #     # generate_password_reset_token,
