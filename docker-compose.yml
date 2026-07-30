@@ -58,6 +58,10 @@ services:
       - MAIL_FROM=${MAIL_FROM}
       - MAIL_PORT=${MAIL_PORT}
       - MAIL_SERVER=${MAIL_SERVER}
+      - O42_CLIENT_ID=${O42_CLIENT_ID}
+      - O42_CLIENT_SECRET=${O42_CLIENT_SECRET}
+      - O42_REDIRECT_URI=${O42_REDIRECT_URI}
+      - O42_TOKEN_URL=${O42_TOKEN_URL}
     depends_on:
       db:
         condition: service_healthy

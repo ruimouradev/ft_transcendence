@@ -143,11 +143,10 @@ def logout(response: Response):
 @authRouter.get("/auth/42/login", tags=["auth"])
 async def login_42():
     # Redirect the user to the 42 OAuth2 authorization URL
-    client_id = "u-s4t2ud-4fd7d4328708d664e69bccd8373a6462d42d6ec68e69a42c929aa83b9436d076"
-    redirect_uri = "https://localhost:8443/api/v1/auth/42/callback"
+    client_id = settings.O42_CLIENT_ID
+    redirect_uri = settings.O42_REDIRECT_URI
     auth_url = f"https://api.intra.42.fr/oauth/authorize?client_id={client_id}&redirect_uri={redirect_uri}&response_type=code"
     return RedirectResponse(auth_url)
-    # return {"auth_url": auth_url}
 
 async def download_image(url: str, filename: str):
     async with httpx.AsyncClient() as client:
@@ -161,33 +160,43 @@ async def download_image(url: str, filename: str):
 @authRouter.get("/auth/42/callback", tags=["auth"])
 async def callback_42(code: str, session: SessionDep):
     # Exchange the authorization code for an access token
-    client_id = "u-s4t2ud-4fd7d4328708d664e69bccd8373a6462d42d6ec68e69a42c929aa83b9436d076"
-    client_secret = "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"
-    token_url = "https://api.intra.42.fr/oauth/token"
+    client_id = settings.O42_CLIENT_ID
+    client_secret = settings.O42_CLIENT_SECRET
+    token_url = settings.O42_TOKEN_URL
     data = {
         "grant_type": "authorization_code",
         "client_id": client_id,
         "client_secret": client_secret,
         "code": code,
-        "redirect_uri": "https://localhost:8443/api/v1/auth/42/callback"
+        "redirect_uri": f"{settings.O42_REDIRECT_URI}"
     }
     async with httpx.AsyncClient() as client:
         response = await client.post(token_url, data=data)
         response_data = response.json()
         access_token = response_data.get("access_token")
         if not access_token:
-            raise HTTPException(status_code=400, detail="Failed to obtain access token from 42 API")
+            response=RedirectResponse(
+                url="/login",
+                status_code=status.HTTP_307_TEMPORARY_REDIRECT
+            )
+            return response;
+            # raise HTTPException(status_code=400, detail="Failed to obtain access token from 42 API")
         
         # Use the access token to get user info
         user_info_url = "https://api.intra.42.fr/v2/me"
         headers = {"Authorization": f"Bearer {access_token}"}
         user_response = await client.get(user_info_url, headers=headers)
+        if user_response.status_code != 200:
+            response=RedirectResponse(
+				url="/login",
+				status_code=status.HTTP_307_TEMPORARY_REDIRECT
+			)
+            return response;
+
         user_info = user_response.json()
-        await download_image(user_info.get("image", {}).get("versions", {}).get("small", ""), f"app/static/{user_info['id']}-small.jpg")
-
         user=userservice.get_user_by_email(session=session, email=user_info.get("email"))
-
         if not user:
+            await download_image(user_info.get("image", {}).get("versions", {}).get("small", ""), f"app/static/{user_info['id']}-small.jpg")
             user_create = UserCreate(
                 email=user_info.get("email"),
                 is_active=True,
@@ -196,16 +205,16 @@ async def callback_42(code: str, session: SessionDep):
                 avatar=f"/static/{user_info['id']}-small.jpg"
             )
             userservice.create_user(session=session, user_create=user_create)
-        user=userservice.get_user_by_email(session=session, email=user_info.get("email"))
+            user=userservice.get_user_by_email(session=session, email=user_info.get("email"))
+
         access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
         access_token=security.create_access_token(user.id, expires_delta=access_token_expires)
-        # return {"local user": user}
+        
         response = RedirectResponse(
             url=f"/dashboard",
             status_code=status.HTTP_307_TEMPORARY_REDIRECT
         )
         
-        # Set secure HttpOnly cookie
         response.set_cookie(
             key="access_token",
             value=f"Bearer {access_token}",

@@ -52,6 +52,10 @@ class Settings(BaseSettings):
     MAIL_FROM: str = "lisboa.42.transcendence@gmail.com"
     MAIL_PORT: int = 587
     MAIL_SERVER: str = "smtp.gmail.com"
+    O42_CLIENT_ID: str ="need to be seted"
+    O42_CLIENT_SECRET: str = "changethis" 
+    O42_REDIRECT_URI : str = "changethis" 
+    O42_TOKEN_URL : str = "changethis" 
 
     def _check_default_secret(self, var_name: str, value: str | None) -> None:
         if value == "changethis":
