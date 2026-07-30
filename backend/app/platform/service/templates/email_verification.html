@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <style>
+        .container {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background-color: #f9f9f9;
+        }
+        .card {
+            max-width: 500px;
+            margin: 0 auto;
+            background: #ffffff;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .btn {
+            display: inline-block;
+            padding: 12px 24px;
+            background-color: #007bff;
+            color: #ffffff !important;
+            text-decoration: none;
+            border-radius: 4px;
+            font-weight: bold;
+            margin-top: 20px;
+        }
+        .footer {
+            margin-top: 30px;
+            font-size: 12px;
+            color: #888888;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="card">
+            <h2>Hello {{ username }}，welcome！</h2>
+            <p>Thank you for registering with our platform. Please click the button below to verify your email and activate your account:</p>
+            
+            <a href="{{ verify_url }}" class="btn" target="_blank">Verify My Email</a>
+            
+            <p class="footer">
+                This verification link will expire in {{ expire_minutes }} minutes.<br>
+                If you did not register with our platform, please ignore this email.
+            </p>
+        </div>
+    </div>
+</body>
+</html>

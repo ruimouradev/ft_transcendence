@@ -1,36 +1,16 @@
 import Navbar from "../components/Navbar";
-import Hero from "../components/Hero";
-import DailyChallenges from "../components/DailyChallenges";
-import FriendsPanel from "../components/FriendsPanel";
-import NewsPanel from "../components/NewsPanel";
 import Footer from "../components/Footer";
+import { Outlet } from "react-router-dom";
+import bgImg from "../assets/bg.jpeg"
 
 export default function Home() {
   return (
-    <div className="min-h-screen bg-[#0d1020] text-white">
-
+    <div className="min-h-screen bg-[#0d1020] text-white flex flex-col bg-slate-950" style={{ backgroundImage: `url(${bgImg})`, backgroundSize: 'cover', backgroundPosition: 'center' }}>
       <Navbar />
-
-      <Hero />
-
-      <main className="max-w-7xl mx-auto grid grid-cols-12 gap-6 px-8 pb-12">
-
-        <div className="col-span-4">
-          <DailyChallenges />
-        </div>
-
-        <div className="col-span-4">
-          <NewsPanel />
-        </div>
-
-        <div className="col-span-4">
-          <FriendsPanel />
-        </div>
-
+      <main className="flex-1 p-6">
+          <Outlet />
       </main>
-
       <Footer />
-
     </div>
   );
 }

@@ -45,6 +45,17 @@ class Settings(BaseSettings):
 
     FIRST_SUPERUSER: EmailStr ="not set"
     FIRST_SUPERUSER_PASSWORD: str = "changethis"
+    EMAILS_ENABLED: bool = True
+    ALGORITHM: str = "HS256"
+    MAIL_USERNAME: str = "lisboa.42.transcendence@gmail.com"
+    MAIL_PASSWORD: str = "change-me"
+    MAIL_FROM: str = "lisboa.42.transcendence@gmail.com"
+    MAIL_PORT: int = 587
+    MAIL_SERVER: str = "smtp.gmail.com"
+    O42_CLIENT_ID: str ="need to be seted"
+    O42_CLIENT_SECRET: str = "changethis" 
+    O42_REDIRECT_URI : str = "changethis" 
+    O42_TOKEN_URL : str = "changethis" 
 
     def _check_default_secret(self, var_name: str, value: str | None) -> None:
         if value == "changethis":

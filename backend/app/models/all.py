@@ -1,3 +1,4 @@
+from typing import Optional
 from uuid import UUID, uuid4
 from datetime import datetime, timezone
 
@@ -12,7 +13,7 @@ def get_datetime_utc() -> datetime:
 # Shared properties
 class UserBase(SQLModel):
     email: EmailStr = Field(unique=True, index=True, max_length=255)
-    is_active: bool = True
+    is_active: bool = False
     is_superuser: bool = False
     full_name: str | None = Field(default=None, max_length=255)
     avatar: str | None = Field(default=None, max_length=255)
@@ -27,7 +28,6 @@ class UserRegister(SQLModel):
     email: EmailStr = Field(max_length=255)
     password: str = Field(min_length=8, max_length=128)
     full_name: str | None = Field(default=None, max_length=255)
-
 
 # Properties to receive via API on update, all are optional
 class UserUpdate(UserBase):
@@ -66,6 +66,11 @@ class User(UserBase, table=True):
         }
     )
 
+    oauth_accounts: list["OAuthAccount"] = Relationship(
+        back_populates="user",
+        cascade_delete=True
+    )
+
 # Properties to return via API, id is always required
 class UserPublic(UserBase):
     id: UUID
@@ -82,10 +87,14 @@ class Message(SQLModel):
     message: str
 
 
+
 # JSON payload containing access token
 class Token(SQLModel):
     access_token: str
     token_type: str = "bearer"
+
+class TokenAndUser(Token):
+    user: UserPublic
 
 
 # Contents of JWT token
@@ -98,26 +107,35 @@ class NewPassword(SQLModel):
     new_password: str = Field(min_length=8, max_length=128)
 
 class ProviderType(str, Enum):
-    t42 = "42"
+    t42 = "t42"
     local = "local"
 
-class OAuthAccount(SQLModel, table=True):
-
-    id: UUID = Field(default_factory=uuid4, primary_key=True)
-
+class OAuthAccountBase(SQLModel):
     provider: ProviderType
     provider_user_id: str
     provider_user_email: str | None = None
 
+    user_id: UUID | None
+
+class OAuthAccountRead(OAuthAccountBase):
+    id: UUID
+    created_at: datetime | None = None
+
+class OAuthAccountCreate(OAuthAccountBase):
     access_token: str | None = None
     refresh_token: str | None = None
+
+class OAuthAccount(OAuthAccountCreate, table=True):
+
+    id: UUID = Field(default_factory=uuid4, primary_key=True)
 
     created_at: datetime | None = Field(
         default_factory=get_datetime_utc,
         sa_type=DateTime(timezone=True),
     )
 
-    user_id: UUID = Field(foreign_key="user.id")
+    user_id: UUID = Field(foreign_key="user.id",ondelete="CASCADE")
+    user: Optional[User] = Relationship(back_populates="oauth_accounts")
 
 class FriendshipStatus(str, Enum):
     PENDING = "pending"

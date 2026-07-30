@@ -5,45 +5,37 @@ import {
   Users,
   Settings
 } from "lucide-react";
+import UserMenu from "./UserMenu";
+import { Link } from "react-router-dom";
 
 export default function Navbar() {
+
   return (
     <header className="h-20 flex items-center justify-between px-10 border-b border-white/10">
 
-      <div className="text-4xl font-black text-yellow-400">
-        UNO
+      <div className="text-4xl font-black text-yellow-400 colorful-text-animated">
+        UNO Online
       </div>
 
       <nav className="flex gap-8">
+        <Link to="/" className="flex items-center gap-2 hover:text-yellow-300 transition">
+          <NavItem icon={<Home />} text="Home"/>
+        </Link>
 
-        <NavItem icon={<Home />} text="Home"/>
+        <Link to="/play" className="flex items-center gap-2 hover:text-yellow-300 transition">
+          <NavItem icon={<Trophy />} text="Play"/>
+        </Link>
 
-        <NavItem icon={<Trophy />} text="Play"/>
-
-        <NavItem icon={<User />} text="Profile"/>
-
-        <NavItem icon={<Users />} text="Friends"/>
-
-        <NavItem icon={<Settings />} text="Settings"/>
+        <Link to="/profile" className="flex items-center gap-2 hover:text-yellow-300 transition">
+          <NavItem icon={<User />} text="Profile"/>
+        </Link>
+        <Link to="/friends" className="flex items-center gap-2 hover:text-yellow-300 transition">
+          <NavItem icon={<Users />} text="Friends"/>
+        </Link>
+        {/* <NavItem icon={<Settings />} text="Settings"/> */}
 
       </nav>
-
-      <div className="flex items-center gap-4">
-
-        <img
-          src="https://i.pravatar.cc/80"
-          className="w-12 h-12 rounded-full"
-        />
-
-        <div>
-          <div>Super Uno</div>
-          <div className="text-sm text-gray-400">
-            Level 8
-          </div>
-        </div>
-
-      </div>
-
+        <UserMenu />
     </header>
   );
 }
