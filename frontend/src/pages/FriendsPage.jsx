@@ -12,11 +12,13 @@ import {
 
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../components/AuthContext';
 
 export default function FriendsPage() {
   const [activeTab, setActiveTab] = useState('all'); // 'all', 'pending', 'suggested'
   const [searchQuery, setSearchQuery] = useState('');
   const navigate = useNavigate();
+  const { user } = useAuth();
 
   // Mock Friends Data
   const [friends, setFriends] = useState([
@@ -55,12 +57,11 @@ export default function FriendsPage() {
   );
 
   useEffect(() => {
-    const hasToken = Boolean(localStorage.getItem("access_token"));
-    if (!hasToken) {
+    if (!user) {
       navigate("/login", { replace: true });
     }
     setSearchQuery('');
-  }, []);
+  }, [user]);
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 p-4 sm:p-8">
