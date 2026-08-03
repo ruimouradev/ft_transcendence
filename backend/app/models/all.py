@@ -197,3 +197,15 @@ class UserStatistic(SQLModel, table=True):
     total_score: int = 0
 
     updated_at: datetime = Field(default_factory=get_datetime_utc,sa_type=DateTime(timezone=True))
+
+
+class Friend(SQLModel):
+    id: UUID
+    name: str
+    handle: str
+    avatar: str | None = None
+    status: FriendshipStatus
+
+class FriendsSuggested(SQLModel):
+    data: list[Friend]
+    count: int = 0
