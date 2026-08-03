@@ -6,7 +6,6 @@ import {
     Box,
     Avatar,
     Typography,
-    Alert,
     CircularProgress,
     Stack,
     Chip,
@@ -25,9 +24,20 @@ import {
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../components/AuthContext';
 import { api } from '../client';
+import NotificationSnackbar from '../components/NotificationSnackbar';
+
+type NotificationState = {
+    open: boolean;
+    message: string;
+    severity: 'success' | 'error' | 'info' | 'warning';
+};
 
 export default function ProfileCard() {
-    const [error, setError] = useState<string | null>(null);
+    const [notification, setNotification] = useState<NotificationState>({
+        open: false,
+        message: '',
+        severity: 'success',
+    });
     const navigate = useNavigate();
     const { user, login } = useAuth();
 
@@ -59,7 +69,9 @@ export default function ProfileCard() {
         const file = e.target.files?.[0];
         if (!file) return;
 
+        const oldAvatarUrl = user?.avatar || '';
         const tempPreviewUrl = URL.createObjectURL(file);
+        
         login({ ...user, avatar: tempPreviewUrl });
         const formData = new FormData();
         formData.append('file', file);
@@ -76,11 +88,21 @@ export default function ProfileCard() {
 
             const uploadedUrl = response.data?.url || tempPreviewUrl;
             login({ ...user, avatar: uploadedUrl });
+            setNotification({
+                open: true,
+                message: 'Avatar updated successfully.',
+                severity: 'success',
+            });
         } catch (error: any) {
             if (error?.response?.status === 403) {
                 navigate('/login');
             } else {
-                setError('Failed to upload avatar. Please try again.');
+                login({ ...user, avatar: oldAvatarUrl });
+                setNotification({
+                    open: true,
+                    message: 'Failed to upload avatar. Please try again.',
+                    severity: 'error',
+                });
             }
         } finally {
             setUploading(false);
@@ -98,11 +120,20 @@ export default function ProfileCard() {
         try {
             await api.patch('/users/me', { full_name: newFullName }, { withCredentials: true });
         } catch (error) {
-            setError('Failed to update name. Please try again.');
+            setNotification({
+                open: true,
+                message: 'Failed to update name. Please try again.',
+                severity: 'error',
+            });
             return;
         }
         login({ ...user, full_name: newFullName || user.full_name });
         setIsEditingName(false);
+        setNotification({
+            open: true,
+            message: 'Name updated successfully.',
+            severity: 'success',
+        });
     };
 
     const handleNameCancel = () => {
@@ -127,18 +158,28 @@ export default function ProfileCard() {
         );
     }
 
-    if (error) {
-        return (
-            <Container maxWidth="sm" sx={{ mt: 4 }}>
-                <Alert severity="error">{error}</Alert>
-            </Container>
-        );
-    }
-
     if (!user) return null;
+
+    const handleSnackbarClose = (
+        _event?: React.SyntheticEvent | Event,
+        reason?: string,
+    ) => {
+        if (reason === 'clickaway') {
+            return;
+        }
+
+        setNotification((prev: NotificationState) => ({ ...prev, open: false }));
+    };
 
     return (
         <Container maxWidth="sm" sx={{ mt: 6, mb: 6 }}>
+            <NotificationSnackbar
+                open={notification.open}
+                message={notification.message}
+                severity={notification.severity}
+                onClose={handleSnackbarClose}
+            />
+
             <Card elevation={3} sx={{ borderRadius: 3, overflow: 'hidden' }}>
 
                 <Box sx={{ height: 120, bgcolor: 'primary.main' }} />
@@ -188,14 +229,14 @@ export default function ProfileCard() {
                                         label="First name"
                                         size="small"
                                         value={firstName}
-                                        onChange={(e) => setFirstName(e.target.value)}
+                                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFirstName(e.target.value)}
                                         sx={{ minWidth: 140 }}
                                     />
                                     <TextField
                                         label="Last name"
                                         size="small"
                                         value={lastName}
-                                        onChange={(e) => setLastName(e.target.value)}
+                                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => setLastName(e.target.value)}
                                         sx={{ minWidth: 140 }}
                                     />
                                 </Stack>
@@ -261,27 +302,6 @@ export default function ProfileCard() {
                             )}
                         </Stack>
                     </Stack>
-
-                    {/* <Divider sx={{ my: 3 }} />
-
-                    <Stack spacing={2} sx={{ px: 2 }}>
-                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                            <Typography color="text.secondary">Account Role</Typography>
-                            <Typography fontWeight="medium">
-                                {user.is_superuser ? 'Administrator' : 'General User'}
-                            </Typography>
-                        </Box>
-
-                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                            <Typography color="text.secondary">Account Status</Typography>
-                            <Typography
-                                fontWeight="medium"
-                                color={user.is_active ? 'success.main' : 'error.main'}
-                            >
-                                {user.is_active ? 'Activated' : 'Pending Activation'}
-                            </Typography>
-                        </Box>
-                    </Stack> */}
                 </CardContent>
             </Card>
         </Container>
