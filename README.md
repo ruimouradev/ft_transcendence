@@ -39,8 +39,6 @@ make log
 
 ## Services
 
-- Frontend: `http://localhost:5173`
-- Backend: `http://localhost:8000`
-- nginx HTTP redirect: `http://localhost:8080`
-- nginx HTTPS entrypoint: `https://localhost:8443`
-- Adminer: `http://localhost:8081`
+- Frontend: `https://localhost:8443`
+- Backend: `https://localhost:8443/docs`
+- Adminer: `https://localhost:8443/adminer`

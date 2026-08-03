@@ -58,7 +58,30 @@
 
 #center {
   display: flex;
-  flex-direction: column;
+  flex-direction: column;.colorful-text-1 {
+  font-size: 72px; /* 设置大一点，效果更明显 */
+  font-weight: bold;
+  font-family: sans-serif;
+
+  /* 1. 定义五彩渐变背景 */
+  background-image: linear-gradient(to right,
+      #ff0000, /* 红 */
+      #ff7f00, /* 橙 */
+      #ffff00, /* 黄 */
+      #00ff00, /* 绿 */
+      #0000ff, /* 蓝 */
+      #4b0082, /* 靛 */
+      #9400d3  /* 紫 */
+  );
+
+  /* 2. 将背景剪裁到文字 */
+  -webkit-background-clip: text; /* 用于 Chrome, Safari, Edge */
+  background-clip: text;
+
+  /* 3. 将文字本身设为透明 */
+  -webkit-text-fill-color: transparent; /* 用于 Chrome, Safari, Edge */
+  color: transparent;
+}
   gap: 25px;
   place-content: center;
   place-items: center;
@@ -82,7 +105,30 @@
       padding: 24px 20px;
     }
   }
+.colorful-text-1 {
+  font-size: 72px; /* 设置大一点，效果更明显 */
+  font-weight: bold;
+  font-family: sans-serif;
 
+  /* 1. 定义五彩渐变背景 */
+  background-image: linear-gradient(to right,
+      #ff0000, /* 红 */
+      #ff7f00, /* 橙 */
+      #ffff00, /* 黄 */
+      #00ff00, /* 绿 */
+      #0000ff, /* 蓝 */
+      #4b0082, /* 靛 */
+      #9400d3  /* 紫 */
+  );
+
+  /* 2. 将背景剪裁到文字 */
+  -webkit-background-clip: text; /* 用于 Chrome, Safari, Edge */
+  background-clip: text;
+
+  /* 3. 将文字本身设为透明 */
+  -webkit-text-fill-color: transparent; /* 用于 Chrome, Safari, Edge */
+  color: transparent;
+}
   .icon {
     margin-bottom: 16px;
     width: 22px;
@@ -136,7 +182,30 @@
     }
   }
 
-  @media (max-width: 1024px) {
+  @media (max-width: 1024px) {.colorful-text-1 {
+  font-size: 72px; /* 设置大一点，效果更明显 */
+  font-weight: bold;
+  font-family: sans-serif;
+
+  /* 1. 定义五彩渐变背景 */
+  background-image: linear-gradient(to right,
+      #ff0000, /* 红 */
+      #ff7f00, /* 橙 */
+      #ffff00, /* 黄 */
+      #00ff00, /* 绿 */
+      #0000ff, /* 蓝 */
+      #4b0082, /* 靛 */
+      #9400d3  /* 紫 */
+  );
+
+  /* 2. 将背景剪裁到文字 */
+  -webkit-background-clip: text; /* 用于 Chrome, Safari, Edge */
+  background-clip: text;
+
+  /* 3. 将文字本身设为透明 */
+  -webkit-text-fill-color: transparent; /* 用于 Chrome, Safari, Edge */
+  color: transparent;
+}
     margin-top: 20px;
     flex-wrap: wrap;
     justify-content: center;
@@ -180,5 +249,58 @@
   &::after {
     right: 0;
     border-right-color: var(--border);
+  }
+}
+
+.colorful-text-1 {
+  font-size: 32px; /* 设置大一点，效果更明显 */
+  font-weight: bold;
+  font-family: sans-serif;
+
+  /* 1. 定义五彩渐变背景 */
+  background-image: linear-gradient(to right,
+      #ff0000,
+      #ffff00,
+      #00ff00,
+      #0000ff
+  );
+
+  /* 2. 将背景剪裁到文字 */
+  -webkit-background-clip: text; /* 用于 Chrome, Safari, Edge */
+  background-clip: text;
+
+  /* 3. 将文字本身设为透明 */
+  -webkit-text-fill-color: transparent; /* 用于 Chrome, Safari, Edge */
+  color: transparent;
+}
+
+.colorful-text-animated {
+  font-size: 22px;
+  font-weight: bold;
+  font-family: sans-serif;
+
+  background-image: linear-gradient(to right,
+      /* #ff1493, #00bfff, #32cd32, #ff8c00, #ff1493 */
+    #ff0000,
+    #ffff00,
+    #00ff00,
+    #0000ff,
+    #ff5555
+  );
+  background-size: 200% auto;
+ 
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+  animation: rainbow-flow 60s linear infinite;
+}
+
+@keyframes rainbow-flow {
+  0% {
+    background-position: 0% center;
+  }
+  100% {
+    background-position: 200% center;
   }
 }
