@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import axios from 'axios';
+import { api } from '../client';
 
 // interface AuthContextType {
 //   isLoggedIn: boolean;
@@ -25,12 +25,6 @@ interface AuthContextType {
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
-
-// Configure Axios to ALWAYS send cookies with requests
-const api = axios.create({
-  baseURL: '/api/v1',
-  withCredentials: true,
-});
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);

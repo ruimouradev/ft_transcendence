@@ -1,5 +1,4 @@
 import React, { useState, useRef, useEffect } from 'react';
-import axios from 'axios';
 import {
     Container,
     Card,
@@ -25,6 +24,7 @@ import {
 
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../components/AuthContext';
+import { api } from '../client';
 
 export default function ProfileCard() {
     const [error, setError] = useState<string | null>(null);
@@ -67,7 +67,7 @@ export default function ProfileCard() {
         setUploading(true);
 
         try {
-            const response = await axios.post('/api/v1/users/uploadfile', formData, {
+            const response = await api.post('/users/uploadfile', formData, {
                 headers: {
                     'Content-Type': 'multipart/form-data',
                 },
@@ -91,10 +91,16 @@ export default function ProfileCard() {
         setIsEditingName(true);
     };
 
-    const handleNameSave = () => {
+    const handleNameSave = async () => {
         if (!user) return;
 
         const newFullName = [firstName.trim(), lastName.trim()].filter(Boolean).join(' ');
+        try {
+            await api.patch('/users/me', { full_name: newFullName }, { withCredentials: true });
+        } catch (error) {
+            setError('Failed to update name. Please try again.');
+            return;
+        }
         login({ ...user, full_name: newFullName || user.full_name });
         setIsEditingName(false);
     };
