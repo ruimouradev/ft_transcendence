@@ -11,7 +11,9 @@ import {
     CircularProgress,
     Stack,
     Chip,
-    Divider,
+    Tooltip,
+    TextField,
+    Button,
 } from '@mui/material';
 import {
     Email as EmailIcon,
@@ -30,15 +32,31 @@ export default function ProfileCard() {
     const { user, login } = useAuth();
 
     const [uploading, setUploading] = useState(false);
-    const fileInputRef = useRef(null);
+    const [isEditingName, setIsEditingName] = useState(false);
+    const [firstName, setFirstName] = useState('');
+    const [lastName, setLastName] = useState('');
+    const fileInputRef = useRef<HTMLInputElement | null>(null);
+
+    useEffect(() => {
+        if (!user?.full_name) {
+            setFirstName('');
+            setLastName('');
+            return;
+        }
+
+        const parts = user.full_name.trim().split(/\s+/);
+        setFirstName(parts[0] || '');
+        setLastName(parts.slice(1).join(' '));
+    }, [user?.full_name]);
+
     const handleAvatarClick = () => {
         if (fileInputRef.current) {
             fileInputRef.current.click();
         }
     };
 
-    const handleFileUpload = async (e) => {
-        const file = e.target.files[0];
+    const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
         if (!file) return;
 
         const tempPreviewUrl = URL.createObjectURL(file);
@@ -58,8 +76,8 @@ export default function ProfileCard() {
 
             const uploadedUrl = response.data?.url || tempPreviewUrl;
             login({ ...user, avatar: uploadedUrl });
-        } catch (error) {
-            if (error.response.status == 403) {
+        } catch (error: any) {
+            if (error?.response?.status === 403) {
                 navigate('/login');
             } else {
                 setError('Failed to upload avatar. Please try again.');
@@ -67,6 +85,32 @@ export default function ProfileCard() {
         } finally {
             setUploading(false);
         }
+    };
+
+    const handleNameDoubleClick = () => {
+        setIsEditingName(true);
+    };
+
+    const handleNameSave = () => {
+        if (!user) return;
+
+        const newFullName = [firstName.trim(), lastName.trim()].filter(Boolean).join(' ');
+        login({ ...user, full_name: newFullName || user.full_name });
+        setIsEditingName(false);
+    };
+
+    const handleNameCancel = () => {
+        if (!user?.full_name) {
+            setFirstName('');
+            setLastName('');
+            setIsEditingName(false);
+            return;
+        }
+
+        const parts = user.full_name.trim().split(/\s+/);
+        setFirstName(parts[0] || '');
+        setLastName(parts.slice(1).join(' '));
+        setIsEditingName(false);
     };
 
     if (uploading) {
@@ -96,6 +140,7 @@ export default function ProfileCard() {
                 <CardContent sx={{ pt: 0, position: 'relative' }}>
 
                     <Box display="flex" sx={{ justifyContent: 'center', mt: -7, mb: 2 }}>
+                    <Tooltip title={uploading ? "Uploading..." : "Click to change avatar"} arrow>
                         <Avatar
                             src={user.avatar}
                             alt={user.full_name}
@@ -118,7 +163,7 @@ export default function ProfileCard() {
                         >
                             {user.full_name ? user.full_name.charAt(0).toUpperCase() : 'U'}
                         </Avatar>
-
+                    </Tooltip>
                         <input
                             type="file"
                             ref={fileInputRef}
@@ -130,9 +175,44 @@ export default function ProfileCard() {
                     </Box>
 
                     <Stack spacing={1} sx={{ alignItems: 'center', textAlign: 'center' }}>
-                        <Typography variant="h5" component="h1" fontWeight="bold">
-                            {user.full_name}
-                        </Typography>
+                        {isEditingName ? (
+                            <Stack spacing={1} sx={{ width: '100%', alignItems: 'center' }}>
+                                <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1} sx={{ width: '100%', justifyContent: 'center' }}>
+                                    <TextField
+                                        label="First name"
+                                        size="small"
+                                        value={firstName}
+                                        onChange={(e) => setFirstName(e.target.value)}
+                                        sx={{ minWidth: 140 }}
+                                    />
+                                    <TextField
+                                        label="Last name"
+                                        size="small"
+                                        value={lastName}
+                                        onChange={(e) => setLastName(e.target.value)}
+                                        sx={{ minWidth: 140 }}
+                                    />
+                                </Stack>
+                                <Stack direction="row" spacing={1}>
+                                    <Button variant="contained" size="small" onClick={handleNameSave}>
+                                        Save
+                                    </Button>
+                                    <Button variant="outlined" size="small" onClick={handleNameCancel}>
+                                        Cancel
+                                    </Button>
+                                </Stack>
+                            </Stack>
+                        ) : (
+                            <Typography
+                                variant="h5"
+                                component="h1"
+                                fontWeight="bold"
+                                onDoubleClick={handleNameDoubleClick}
+                                sx={{ cursor: 'pointer', userSelect: 'none' }}
+                            >
+                                {user.full_name}
+                            </Typography>
+                        )}
 
                         <Stack direction="row" spacing={0.5} sx={{ alignItems: 'center' }} color="text.secondary">
                             <EmailIcon fontSize="small" />
