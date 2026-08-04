@@ -13,9 +13,10 @@ import {
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../components/AuthContext';
+import { api } from '../client';
 
 export default function FriendsPage() {
-  const [activeTab, setActiveTab] = useState('all'); // 'all', 'pending', 'suggested'
+  const [activeTab, setActiveTab] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
   const navigate = useNavigate();
   const { user } = useAuth();

@@ -51,7 +51,7 @@ class User(UserBase, table=True):
     hashed_password: str | None = Field(default=None, max_length=255)
     created_at: datetime | None = Field(
         default_factory=get_datetime_utc,
-        sa_type=DateTime(timezone=True),  # type: ignore
+        sa_type=DateTime(timezone=True),
     )
     # items: list["Item"] = Relationship(back_populates="owner", cascade_delete=True)
     sent_requests: list["Friendship"] = Relationship(
@@ -204,8 +204,10 @@ class Friend(SQLModel):
     name: str
     handle: str
     avatar: str | None = None
-    status: FriendshipStatus
+    status: FriendshipStatus | None = None
+    mutual: int | None = None
+    bio: str | None = None
 
-class FriendsSuggested(SQLModel):
+class Friends(SQLModel):
     data: list[Friend]
     count: int = 0
