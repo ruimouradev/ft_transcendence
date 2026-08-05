@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { 
   Search, 
   UserPlus, 
+  Unplug,
   MessageSquare, 
   MoreVertical, 
   Check, 
@@ -51,6 +52,25 @@ export default function FriendsPage() {
     setRequests(requests.filter((r) => r.id !== id));
   };
 
+  const handleSendRequest = (suggestion) => {
+    console.log(suggestion);
+    try {
+      api.post(`/friends/add/${suggestion.id}`)
+        .then((response) => {
+          console.log('Friend request sent:', response.data);
+          // Update the suggestion's status to "pending"
+          setSuggestions(suggestions.map((s) => 
+            s.id === suggestion.id ? { ...s, status: 'pending' } : s
+          ));
+        })
+        .catch((error) => {
+          console.error('Error sending friend request:', error);
+        });
+    } catch (error) {
+      console.error("Error sending friend request:", error);
+    }
+  }
+
   // Filter Friends by Search
   const filteredFriends = friends.filter((f) => 
     f.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
@@ -61,6 +81,24 @@ export default function FriendsPage() {
     if (!user) {
       navigate("/login", { replace: true });
     }
+
+    try {
+      const fetchFriendsData = async () => {
+        const friends_response = await api.get('/friends/all');
+        setFriends(friends_response.data.friends);
+
+        const requests_response = await api.get('/friends/pending');
+        setRequests(requests_response.data.requests);
+
+        const suggestions_response = await api.get('/friends/suggested');
+        setSuggestions(suggestions_response.data.suggestions);
+      };
+
+      fetchFriendsData();
+    } catch (error) {
+      console.error("Error fetching friends data:", error);
+    }
+    
     setSearchQuery('');
   }, [user]);
 
@@ -236,8 +274,8 @@ export default function FriendsPage() {
                   </div>
                 </div>
 
-                <button className="p-2.5 bg-blue-600/10 text-blue-400 hover:bg-blue-600/20 rounded-xl transition-colors">
-                  <UserPlus size={18} />
+                <button onClick={() => handleSendRequest(item)} disabled={item.status === "pending"} className="p-2.5 bg-blue-600/10 text-blue-400 hover:bg-blue-600/20 rounded-xl transition-colors">
+                  {item.status === "pending" ? <Unplug size={18} /> : <UserPlus size={18} />}
                 </button>
               </div>
             ))}

@@ -154,6 +154,7 @@ def register_user(session: SessionDep, user_in: UserRegister, background_tasks: 
             detail="The user with this email already exists in the system",
         )
     user_create = UserCreate.model_validate(user_in)
+    user_create.avatar = "/static/a00.jpeg"
     user = userservice.create_user(session=session, user_create=user_create)
     if settings.EMAILS_ENABLED and user_in.email:
         token = create_verification_token(user_in.email)

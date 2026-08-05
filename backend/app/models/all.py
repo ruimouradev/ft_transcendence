@@ -209,5 +209,13 @@ class Friend(SQLModel):
     bio: str | None = None
 
 class Friends(SQLModel):
-    data: list[Friend]
+    friends: list[Friend]
+    count: int = 0
+
+class Suggestions(SQLModel):
+    suggestions: list[Friend]
+    count: int = 0
+
+class Requests(SQLModel):
+    requests: list[Friend]
     count: int = 0

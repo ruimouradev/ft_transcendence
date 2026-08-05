@@ -87,7 +87,7 @@ export default function ProfileCard() {
             });
 
             const uploadedUrl = response.data?.url || tempPreviewUrl;
-            login({ ...user, avatar: uploadedUrl });
+            login({ ...user, avatar: uploadedUrl+`?v=${Date.now()}` });
             setNotification({
                 open: true,
                 message: 'Avatar updated successfully.',
