@@ -201,7 +201,7 @@ export default function FriendsPage() {
                                     <div className="flex items-start justify-between">
                                         <div className="relative">
                                             <img
-                                                src={friend.avatar}
+                                                src={friend.avatar+'?v='+Date.now()}
                                                 alt={friend.name}
                                                 className={`${friend.status === 'blocked' ? 'w-14 h-14 rounded-full object-cover border-2 border-slate-800 grayscale' : 'w-14 h-14 rounded-full object-cover border-2 border-slate-800'}`}
                                             />
@@ -236,7 +236,7 @@ export default function FriendsPage() {
                 {/* TAB 2: PENDING REQUESTS */}
                 {/* ------------------------------------------------------------------ */}
                 {activeTab === 'pending' && (
-                    <div className="space-y-3 max-w-2xl">
+                    <div className="space-y-3 max-w-4xl">
                         {requests.length === 0 ? (
                             <p className="text-slate-400 text-sm py-8 text-center bg-slate-900 rounded-2xl border border-slate-800">
                                 No pending requests right now.
@@ -248,7 +248,7 @@ export default function FriendsPage() {
                                     className="bg-slate-900 p-4 rounded-2xl border border-slate-800 flex items-center justify-between"
                                 >
                                     <div className="flex items-center gap-3">
-                                        <img src={req.avatar} alt={req.name} className="w-12 h-12 rounded-full object-cover" />
+                                        <img src={req.avatar+'?v='+Date.now()} alt={req.name} className="w-12 h-12 rounded-full object-cover" />
                                         <div>
                                             <h4 className="font-bold text-sm">{req.name}</h4>
                                             <p className="text-xs text-slate-400">{req.mutual} mutual friends</p>
@@ -260,7 +260,7 @@ export default function FriendsPage() {
                                             onClick={() => handleAcceptRequest(req)}
                                             className="p-2 bg-green-500/10 text-green-400 hover:bg-green-500/20 rounded-xl transition-colors"
                                             title="Accept"
-                                        >ShieldX
+                                        >
                                             <Check size={18} />
                                         </button>
                                         <button
@@ -285,7 +285,7 @@ export default function FriendsPage() {
                         {suggestions.map((item) => (
                             <div key={item.id} className="bg-slate-900 p-5 rounded-2xl border border-slate-800 flex items-center justify-between">
                                 <div className="flex items-center gap-3">
-                                    <img src={item.avatar} alt={item.name} className="w-12 h-12 rounded-full object-cover" />
+                                    <img src={item.avatar+'?v='+Date.now()} alt={item.name} className="w-12 h-12 rounded-full object-cover" />
                                     <div>
                                         <h4 className="font-bold text-sm">{item.name}</h4>
                                         <p className="text-xs text-slate-400">{item.mutual} mutual friends</p>

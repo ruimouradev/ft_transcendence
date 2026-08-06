@@ -104,19 +104,27 @@ async def accept_friend(friend_id: str, status: FriendshipStatus, session: Sessi
     '''
     Accept block/reject a friend request from another user.
     '''
-    friendship = session.exec(
-        select(Friendship).where(
-            (Friendship.addressee_id == current_user.id) & (Friendship.requester_id == friend_id)
-        )
-    ).first()
-    if not friendship:
-        raise HTTPException(status_code=404, detail="Friend request not found.")
     if status == FriendshipStatus.BLOCKED:
+        friendship = session.exec(
+                select(Friendship).where(or_(
+                    (Friendship.addressee_id == current_user.id) & (Friendship.requester_id == friend_id),
+                    (Friendship.requester_id == current_user.id) & (Friendship.addressee_id == friend_id)
+                ),Friendship.status == FriendshipStatus.ACCEPTED)
+            ).first()
+        if not friendship:
+            raise HTTPException(status_code=404, detail="Friend request not found.")
         if friendship.requester_id == current_user.id:
             friendship.blocked_by_req = not friendship.blocked_by_req
         elif friendship.addressee_id == current_user.id:
             friendship.blocked_by_add = not friendship.blocked_by_add
     else:
+        friendship = session.exec(
+                select(Friendship).where(
+                    (Friendship.addressee_id == current_user.id) & (Friendship.requester_id == friend_id)
+                )
+            ).first()
+        if not friendship:
+            raise HTTPException(status_code=404, detail="Friend request not found.")
         friendship.status = status
     session.add(friendship)
     session.commit()
