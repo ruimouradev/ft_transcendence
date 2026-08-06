@@ -16,7 +16,7 @@ export default function NotificationSnackbar({
     message,
     severity,
     onClose,
-    autoHideDuration = 4000,
+    autoHideDuration = 3000,
 }: NotificationSnackbarProps) {
     return (
         <Snackbar
