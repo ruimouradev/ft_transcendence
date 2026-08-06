@@ -46,7 +46,7 @@ export default function FriendsPage() {
     const handleBlockFriend = (friend) => {
         const new_status = friend.status === 'blocked' ? 'accepted' : 'blocked';
 
-        api.post(`/friends/${friend.id}/${new_status}`)
+        api.post(`/friends/${friend.id}/blocked`)
             .then((response) => {
                 setFriends(prevFriends =>
                     prevFriends.map(f =>

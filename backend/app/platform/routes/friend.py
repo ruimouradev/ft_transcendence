@@ -32,14 +32,20 @@ async def get_suggested_friends(session: SessionDep, current_user: CurrentUser):
 
 @router.get("/all", response_model=Friends)
 async def get_all_friends(session: SessionDep, current_user: CurrentUser, skip: int = 0, limit: int = 10):
-    statement = select(User).join(Friendship, or_(
+    statement = select(User, Friendship).join(Friendship, or_(
         (Friendship.requester_id == current_user.id) & (Friendship.addressee_id == User.id),
         (Friendship.addressee_id == current_user.id) & (Friendship.requester_id == User.id)
     )).where(Friendship.status == FriendshipStatus.ACCEPTED).offset(skip).limit(limit)
-    users = session.exec(statement).all()
+    result = session.exec(statement).all()
     friends = []
-    if users:
-        friends = [Friend(id=user.id, name=user.full_name, handle=user.full_name, avatar=user.avatar, status=FriendshipStatus.ACCEPTED) for user in users]
+    if result:
+        for user, friendship in result:
+            blocked = False
+            if friendship.requester_id == current_user.id:
+                blocked = bool(friendship.blocked_by_req)
+            elif friendship.addressee_id == current_user.id:
+                blocked = bool(friendship.blocked_by_add)
+            friends.append(Friend(id=user.id, name=user.full_name, handle=user.full_name, avatar=user.avatar, status=(FriendshipStatus.BLOCKED if blocked else FriendshipStatus.ACCEPTED)))
 
     return {"friends": friends, "count": len(friends)}
 
@@ -63,7 +69,7 @@ async def add_friend(friend_id: str, session: SessionDep, current_user: CurrentU
     friendship = session.exec(
         select(Friendship).where((Friendship.addressee_id == friend_id) , (Friendship.requester_id == current_user.id))
     ).first()
-    print("1================>",friendship)
+
     if friendship:
         if friendship.status == FriendshipStatus.PENDING or friendship.status == FriendshipStatus.ACCEPTED:
             raise HTTPException(status_code=400, detail="Friend request already sent or you are already friends.")
@@ -73,7 +79,7 @@ async def add_friend(friend_id: str, session: SessionDep, current_user: CurrentU
     friendship= session.exec(
         select(Friendship).where(Friendship.addressee_id == current_user.id , Friendship.requester_id == friend_id)
     ).first()
-    print("2================>",friendship)
+
     if friendship is None:
         new_friend = Friendship(
             requester_id=current_user.id,
@@ -105,8 +111,13 @@ async def accept_friend(friend_id: str, status: FriendshipStatus, session: Sessi
     ).first()
     if not friendship:
         raise HTTPException(status_code=404, detail="Friend request not found.")
-
-    friendship.status = status
+    if status == FriendshipStatus.BLOCKED:
+        if friendship.requester_id == current_user.id:
+            friendship.blocked_by_req = not friendship.blocked_by_req
+        elif friendship.addressee_id == current_user.id:
+            friendship.blocked_by_add = not friendship.blocked_by_add
+    else:
+        friendship.status = status
     session.add(friendship)
     session.commit()
     session.refresh(friendship)

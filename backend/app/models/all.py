@@ -151,6 +151,9 @@ class Friendship(SQLModel, table=True):
     requester_id: UUID = Field(foreign_key="user.id")
     addressee_id: UUID = Field(foreign_key="user.id")
 
+    blocked_by_req: bool = Field(default=False)
+    blocked_by_add: bool = Field(default=False)
+
     status: FriendshipStatus
 
     created_at: datetime | None = Field(
