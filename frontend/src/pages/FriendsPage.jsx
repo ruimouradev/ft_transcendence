@@ -3,16 +3,18 @@ import {
   Search, 
   UserPlus, 
   Unplug,
+  ShieldX,
   MessageSquare, 
   MoreVertical, 
   Check, 
   X, 
-  UserCheck, 
+  UserCheck,
   Clock 
 } from 'lucide-react';
 
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import Tooltip from "@mui/material/Tooltip";
 import { useAuth } from '../components/AuthContext';
 import { api } from '../client';
 
@@ -22,34 +24,55 @@ export default function FriendsPage() {
   const navigate = useNavigate();
   const { user } = useAuth();
 
-  // Mock Friends Data
-  const [friends, setFriends] = useState([
-    { id: 1, name: 'Alex Johnson', handle: '@alexj', avatar: 'https://i.pravatar.cc/150?img=11', status: 'online', bio: 'Full-stack dev & casual gamer 🎮' },
-    { id: 2, name: 'Sarah Parker', handle: '@sarahp', avatar: 'https://i.pravatar.cc/150?img=5', status: 'offline', bio: 'UI/UX Designer | Coffee lover ☕' },
-    { id: 3, name: 'David Chen', handle: '@dchen', avatar: 'https://i.pravatar.cc/150?img=3', status: 'online', bio: 'Exploring React & Next.js 🚀' },
-    { id: 4, name: 'Emma Watson', handle: '@emma_w', avatar: 'https://i.pravatar.cc/150?img=9', status: 'idle', bio: 'Digital nomad & photographer 📸' },
-  ]);
-
-  // Mock Friend Requests Data
-  const [requests, setRequests] = useState([
-    { id: 101, name: 'Michael Brown', handle: '@mbrown', avatar: 'https://i.pravatar.cc/150?img=12', mutual: 5 },
-    { id: 102, name: 'Jessica Taylor', handle: '@jtaylor', avatar: 'https://i.pravatar.cc/150?img=20', mutual: 12 },
-  ]);
-
-  // Mock Suggestions Data
-  const [suggestions, setSuggestions] = useState([
-    { id: 201, name: 'Liam Wilson', handle: '@liam_w', avatar: 'https://i.pravatar.cc/150?img=15', mutual: 8 },
-    { id: 202, name: 'Sophia Martinez', handle: '@sophiam', avatar: 'https://i.pravatar.cc/150?img=24', mutual: 3 },
-  ]);
+  const [friends, setFriends] = useState([]);
+  const [requests, setRequests] = useState([]);
+  const [suggestions, setSuggestions] = useState([]);
 
   // Handlers for Friend Requests
   const handleAcceptRequest = (request) => {
-    setFriends([...friends, { ...request, status: 'online', bio: 'New connection!' }]);
-    setRequests(requests.filter((r) => r.id !== request.id));
+    api.post(`/friends/${request.id}/accepted`)
+    .then((response) => {
+        console.log('Friend request accepted:', response.data);
+        // Update the friends list and remove the request from pending
+        setFriends([...friends, { ...request, status: 'online', bio: 'New connection!' }]);
+        setRequests(requests.filter((r) => r.id !== request.id));
+    })
+    .catch((error) => {
+        console.error('Error accepting friend request:', error);
+    });
+
+  };
+
+  const handleBlockFriend = (friend) => {
+    const new_status = friend.status==='blocked' ? 'accepted' : 'blocked';
+
+    api.post(`/friends/${friend.id}/${new_status}`)
+    .then((response) => {
+        setFriends(prevFriends =>
+                    prevFriends.map(f =>
+                        friend.id === f.id
+                            ? { ...f, status: new_status }
+                            : f
+                    )
+        );
+        console.log('Friend status updated:', response.data);
+        
+    })
+    .catch((error) => {
+        console.error('Error blocking friend:', error);
+    });
   };
 
   const handleDeclineRequest = (id) => {
-    setRequests(requests.filter((r) => r.id !== id));
+    api.post(`/friends/${id}/rejected`)
+    .then((response) => {
+        console.log('Friend request declined:', response.data);
+        // Remove the request from pending
+        setRequests(requests.filter((r) => r.id !== id));
+    })
+    .catch((error) => {
+        console.error('Error declining friend request:', error);
+    });
   };
 
   const handleSendRequest = (suggestion) => {
@@ -171,7 +194,7 @@ export default function FriendsPage() {
         {/* TAB 1: ALL FRIENDS GRID */}
         {/* ------------------------------------------------------------------ */}
         {activeTab === 'all' && (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             {filteredFriends.map((friend) => (
               <div 
                 key={friend.id} 
@@ -183,7 +206,7 @@ export default function FriendsPage() {
                       <img 
                         src={friend.avatar} 
                         alt={friend.name} 
-                        className="w-14 h-14 rounded-full object-cover border-2 border-slate-800"
+                        className={`${friend.status === 'blocked' ? 'w-14 h-14 rounded-full object-cover border-2 border-slate-800 grayscale' : 'w-14 h-14 rounded-full object-cover border-2 border-slate-800'}`}
                       />
                       {/* Status Indicator Dot */}
                       <span className={`absolute bottom-0 right-0 w-3.5 h-3.5 rounded-full border-2 border-slate-900 ${
@@ -191,23 +214,28 @@ export default function FriendsPage() {
                         friend.status === 'idle' ? 'bg-yellow-500' : 'bg-slate-500'
                       }`} />
                     </div>
-
-                    <button className="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800 transition-colors">
-                      <MoreVertical size={18} />
-                    </button>
+                    <div className="mt-3">
+                        <h3 className="font-bold text-base">{friend.name}</h3>
+                        <p className="text-xs text-slate-400">{friend.handle}</p>
+                        <p className="text-xs text-slate-300 mt-2 line-clamp-2">{friend.bio}</p>
+                    </div>
+                    <Tooltip title={friend.status==="accepted" ? "Message" : ""}>
+                        <button className={` ${friend.status === 'blocked' ? 'bg-gray-500' : 'bg-blue-800 hover:bg-blue-500'} p-1 rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors`}>
+                            <MessageSquare size={18} />
+                        </button>
+                    </Tooltip>
+                    <Tooltip title={friend.status === 'blocked' ? 'Unblock Friend' : 'Block Friend'}>
+                        <button onClick={() => handleBlockFriend(friend)} className={`p-1 rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors ${friend.status === 'blocked' ? 'bg-red-500' : 'bg-blue-800 hover:bg-red-500'}`}>
+                            <ShieldX size={18} />
+                        </button>
+                    </Tooltip>
                   </div>
 
-                  <div className="mt-3">
+                  {/* <div className="mt-3">
                     <h3 className="font-bold text-base">{friend.name}</h3>
                     <p className="text-xs text-slate-400">{friend.handle}</p>
                     <p className="text-xs text-slate-300 mt-2 line-clamp-2">{friend.bio}</p>
-                  </div>
-                </div>
-
-                <div className="mt-5 pt-4 border-t border-slate-800/80 flex gap-2">
-                  <button className="flex-1 bg-blue-600 hover:bg-blue-500 py-2 rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors">
-                    <MessageSquare size={14} /> Message
-                  </button>
+                  </div> */}
                 </div>
               </div>
             ))}
@@ -242,7 +270,7 @@ export default function FriendsPage() {
                       onClick={() => handleAcceptRequest(req)}
                       className="p-2 bg-green-500/10 text-green-400 hover:bg-green-500/20 rounded-xl transition-colors"
                       title="Accept"
-                    >
+                    >ShieldX
                       <Check size={18} />
                     </button>
                     <button 

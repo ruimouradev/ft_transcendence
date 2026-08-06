@@ -20,11 +20,13 @@ async def get_suggested_friends(session: SessionDep, current_user: CurrentUser):
     user_requested = session.exec(
         select(User).join(Friendship, and_(User.id == Friendship.addressee_id, Friendship.status == FriendshipStatus.PENDING,Friendship.requester_id == current_user.id))
     ).all()
+
     friends = []
     if user_requested:
-        friends = [Friend(id=user.id, name=user.full_name, handle=user.full_name, avatar=user.avatar, status=FriendshipStatus.PENDING) for user in user_requested]
+        friends.extend([Friend(id=user.id, name=user.full_name, handle=user.full_name, avatar=user.avatar, status=FriendshipStatus.PENDING) for user in user_requested])
     if users:
-        friends = [Friend(id=user.id, name=user.full_name, handle=user.full_name, avatar=user.avatar, status=None) for user in users]
+        friends.extend([Friend(id=user.id, name=user.full_name, handle=user.full_name, avatar=user.avatar, status=None) for user in users])
+
     return {"suggestions": friends, "count": len(friends)}
 
 
