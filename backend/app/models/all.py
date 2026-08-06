@@ -17,6 +17,7 @@ class UserBase(SQLModel):
     is_superuser: bool = False
     full_name: str | None = Field(default=None, max_length=255)
     avatar: str | None = Field(default=None, max_length=255)
+    use2fa: bool = False
 
 
 # Properties to receive via API on creation
