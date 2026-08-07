@@ -1,50 +1,63 @@
-import React, { createContext, useContext, useEffect, useState, useRef } from 'react';
+import React, { createContext, useContext, useEffect, useState, useRef, useCallback } from 'react';
 import { useAuth } from './AuthContext'; // Import your AuthContext hook
 
+type ConnectionStatus = 'ONLINE' | 'OFFLINE' | 'RECONNECTING';
+
 interface WebSocketContextType {
-  status: 'ONLINE' | 'OFFLINE';
+  status: ConnectionStatus;
   lastMessage: any;
   sendMessage: (data: any) => void;
 }
 
 const WebSocketContext = createContext<WebSocketContextType | null>(null);
 
+const MAX_RECONNECT_ATTEMPTS = 5;
+const BASE_RECONNECT_DELAY = 1000; // 1 second
+const HEARTBEAT_INTERVAL = 10000; // 10 seconds
+
 export const WebSocketProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { user, isAuthenticated, isLoading } = useAuth(); // Get auth state
-  const [status, setStatus] = useState<'ONLINE' | 'OFFLINE'>('OFFLINE');
+  const { user, isAuthenticated, isLoading } = useAuth();
+  const [status, setStatus] = useState<ConnectionStatus>('OFFLINE');
   const [lastMessage, setLastMessage] = useState<any>(null);
 
   const socketRef = useRef<WebSocket | null>(null);
   const heartbeatIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const reconnectAttemptsRef = useRef<number>(0);
+  const isManuallyClosedRef = useRef<boolean>(false);
 
-  useEffect(() => {
-    // 🛑 Do NOT attempt to connect if Auth is still checking or if the user is logged out
-    if (isLoading || !isAuthenticated || !user) {
-      // Cleanup existing socket if user logs out
-      if (socketRef.current) {
-        socketRef.current.close();
-        socketRef.current = null;
-      }
-      setStatus('OFFLINE');
-      return;
+  // 清理所有定时器和连接的辅助函数
+  const cleanup = useCallback(() => {
+    if (heartbeatIntervalRef.current) {
+      clearInterval(heartbeatIntervalRef.current);
+      heartbeatIntervalRef.current = null;
     }
+    if (reconnectTimeoutRef.current) {
+      clearTimeout(reconnectTimeoutRef.current);
+      reconnectTimeoutRef.current = null;
+    }
+  }, []);
 
-    // 1. Establish WebSocket Connection using user.id
-    // Note: Since you use HttpOnly cookies, the browser automatically sends the session/auth cookie!
+  const connect = useCallback(() => {
+    if (!user) return;
+
+    cleanup();
+
     const wsUrl = `wss://${window.location.hostname}:8443/ws/game/${user.id}`;
     const ws = new WebSocket(wsUrl);
     socketRef.current = ws;
 
     ws.onopen = () => {
       setStatus('ONLINE');
-      console.log(`WebSocket connected for user: ${user.full_name} (${user.id})`);
+      reconnectAttemptsRef.current = 0; // reset reconnect attempts on successful connection
+      console.log(`WebSocket connected for user: ${user.full_name || user.id}`);
 
-      // 2. Start heartbeat ping every 10 seconds
+      // Start heartbeat interval
       heartbeatIntervalRef.current = setInterval(() => {
         if (ws.readyState === WebSocket.OPEN) {
           ws.send(JSON.stringify({ type: 'PING' }));
         }
-      }, 10000);
+      }, HEARTBEAT_INTERVAL);
     };
 
     ws.onmessage = (event) => {
@@ -56,20 +69,73 @@ export const WebSocketProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       }
     };
 
-    ws.onclose = () => {
+    ws.onclose = (event) => {
+      cleanup();
+
+      // if the closure was initiated by the user (manual logout or unmount), do not attempt to reconnect
+      if (isManuallyClosedRef.current) {
+        setStatus('OFFLINE');
+        console.log('WebSocket connection closed manually.');
+        return;
+      }
+
+      // if the closure was normal (code 1000 or 1001), do not attempt to reconnect
+      if (event.code === 1000 || event.code === 1001) {
+        setStatus('OFFLINE');
+        console.log(`WebSocket closed cleanly (code: ${event.code}).`);
+        return;
+      }
+
+      // when the closure was abnormal, attempt to reconnect with exponential backoff
+      if (reconnectAttemptsRef.current < MAX_RECONNECT_ATTEMPTS) {
+        setStatus('RECONNECTING');
+        reconnectAttemptsRef.current += 1;
+
+        const delay = BASE_RECONNECT_DELAY * Math.pow(2, reconnectAttemptsRef.current - 1);
+        console.warn(
+          `WebSocket abnormal closure (code: ${event.code}). Reconnecting in ${delay / 1000}s (Attempt ${reconnectAttemptsRef.current}/${MAX_RECONNECT_ATTEMPTS})...`
+        );
+
+        reconnectTimeoutRef.current = setTimeout(() => {
+          connect();
+        }, delay);
+      } else {
+        setStatus('OFFLINE');
+        console.error('Max WebSocket reconnection attempts reached. Giving up.');
+      }
+    };
+
+    ws.onerror = (err) => {
+      console.error('WebSocket Error:', err);
+    };
+  }, [user, cleanup]);
+
+  useEffect(() => {
+    // 🛑 when unlogged in or user is null, close the connection and cleanup
+    if (isLoading || !isAuthenticated || !user) {
+      isManuallyClosedRef.current = true;
+      cleanup();
+      if (socketRef.current) {
+        socketRef.current.close(1000, 'User logged out or unauthorized');
+        socketRef.current = null;
+      }
+      console.log('set off line;WebSocket connection closed due to logout or unauthenticated state.');
       setStatus('OFFLINE');
-      if (heartbeatIntervalRef.current) clearInterval(heartbeatIntervalRef.current);
-      console.log('WebSocket disconnected.');
-    };
+      return;
+    }
 
-    ws.onerror = (err) => console.error('WebSocket Error:', err);
+    isManuallyClosedRef.current = false;
+    connect();
 
-    // Clean up when user logs out or leaves app
     return () => {
-      if (heartbeatIntervalRef.current) clearInterval(heartbeatIntervalRef.current);
-      ws.close();
+      isManuallyClosedRef.current = true;
+      console.log('WebSocketProvider unmounting, cleaning up...');
+      cleanup();
+      if (socketRef.current) {
+        socketRef.current.close(1000, 'Provider unmounted');
+      }
     };
-  }, [user, isAuthenticated, isLoading]); // Re-runs when user updates or logs in!
+  }, [user, isAuthenticated, isLoading, connect, cleanup]);
 
   const sendMessage = (data: any) => {
     if (socketRef.current && socketRef.current.readyState === WebSocket.OPEN) {
@@ -91,79 +157,3 @@ export const useWebSocket = () => {
   if (!context) throw new Error('useWebSocket must be used within WebSocketProvider');
   return context;
 };
-
-// import React, { createContext, useContext, useEffect, useState, useRef } from 'react';
-
-// const WebSocketContext = createContext(null);
-
-// export const WebSocketProvider = ({ children }) => {
-//   const [status, setStatus] = useState('OFFLINE');
-//   const [lastMessage, setLastMessage] = useState(null);
-//   const socketRef = useRef(null);
-//   const heartbeatIntervalRef = useRef(null);
-
-//   // Replace with actual user ID from your authentication state
-//   const userId = useRef(`player_${Math.floor(Math.random() * 1000)}`).current;
-
-//   useEffect(() => {
-//     // 1. Establish single persistent WebSocket instance
-//     const wsUrl = `wss://${window.location.hostname}:8443/ws/game/${userId}`;
-//     const ws = new WebSocket(wsUrl);
-//     socketRef.current = ws;
-
-//     ws.onopen = () => {
-//       setStatus('ONLINE');
-//       console.log('Global WebSocket connected');
-
-//       // 2. Start global heartbeat ping every 10s
-//       heartbeatIntervalRef.current = setInterval(() => {
-//         if (ws.readyState === WebSocket.OPEN) {
-//           ws.send(JSON.stringify({ type: 'PING' }));
-//         }
-//       }, 10000);
-//     };
-
-//     ws.onmessage = (event) => {
-//       const data = JSON.parse(event.data);
-//       setLastMessage(data);
-//     };
-
-//     ws.onclose = () => {
-//       setStatus('OFFLINE');
-//       clearInterval(heartbeatIntervalRef.current);
-//       console.log('Global WebSocket disconnected');
-//     };
-
-//     ws.onerror = (err) => console.error('WebSocket Error:', err);
-
-//     // Clean up ONLY when the user closes/refreshes the browser tab
-//     return () => {
-//       clearInterval(heartbeatIntervalRef.current);
-//       ws.close();
-//     };
-//   }, [userId]);
-
-//   // Method to send messages over the persistent connection
-//   const sendMessage = (data) => {
-//     if (socketRef.current && socketRef.current.readyState === WebSocket.OPEN) {
-//       socketRef.current.send(JSON.stringify(data));
-//     } else {
-//       console.warn('Cannot send message: WebSocket is not open.');
-//     }
-//   };
-
-//   return (
-//     <WebSocketContext.Provider value={{ status, lastMessage, sendMessage, userId }}>
-//       {children}
-//     </WebSocketContext.Provider>
-//   );
-// };
-
-// // Custom Hook to access WebSocket state anywhere in the app
-// export const useWebSocket = () => {
-//   const context = useContext(WebSocketContext);
-//   if (!context) {
-//     throw new Error('useWebSocket must be used within a WebSocketProvider');
-//   }
-//   return context;
-// };

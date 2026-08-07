@@ -206,7 +206,7 @@ export default function FriendsPage() {
                                                 className={`${friend.status === 'blocked' ? 'w-14 h-14 rounded-full object-cover border-2 border-slate-800 grayscale' : 'w-14 h-14 rounded-full object-cover border-2 border-slate-800'}`}
                                             />
                                             {/* Status Indicator Dot */}
-                                            <span className={`absolute bottom-0 right-0 w-3.5 h-3.5 rounded-full border-2 border-slate-900 ${friend.status === 'online' ? 'bg-green-500' :
+                                            <span className={`absolute bottom-0 right-0 w-3.5 h-3.5 rounded-full border-2 border-slate-900 ${friend.online ? 'bg-green-500' :
                                                     friend.status === 'idle' ? 'bg-yellow-500' : 'bg-slate-500'
                                                 }`} />
                                         </div>

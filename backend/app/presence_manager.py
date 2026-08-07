@@ -26,6 +26,7 @@ class InMemoryPresenceManager:
 
     def update_heartbeat(self, user_id: str):
         self.last_seen[user_id] = time.time()
+        self.statuses[user_id] = "ONLINE"
 
     async def disconnect(self, user_id: str, grace_period: int = 15):
         if user_id in self.active_connections:
@@ -50,22 +51,22 @@ class InMemoryPresenceManager:
     def get_status(self, user_id: str) -> str:
         return self.statuses.get(user_id, "OFFLINE")
 
+    def is_online(self, user_id: str) -> bool:
+        return self.get_status(user_id) == "ONLINE"
+
+    def log_user_statuses(self) -> Dict[str, str]:
+        for user_id, status in self.statuses.items():
+            logger.info(f"log user status=======================> User {user_id} status: {status}")
+
     async def handle_message(self, user_id: str, data: Dict[str, Any]):
         msg_type = data.get("type")
 
-        if msg_type == "PING":
-            self.update_heartbeat(user_id)
-            # Send PONG back to the client
-            await self.send_personal_message(user_id, {"type": "PONG", "user_id": user_id})
-
-        elif msg_type == "PLAY_CARD":
+        if msg_type == "PLAY_CARD":
             card = data.get("card")
-            print(f"=======================>User {user_id} played card: {card}")
             logger.info(f"logger=======================>User {user_id} played card: {card}")
             # Handle UNO game logic or broadcast to other players...
 
         else:
-            print(f"=======================>Unknown message type received from {user_id}: {data}")
             logger.warning(f"logger=======================>Unknown message type received from {user_id}: {data}")
 
     async def send_personal_message(self, user_id: str, message: Dict[str, Any]):

@@ -69,7 +69,7 @@ async def websocket_endpoint(websocket: WebSocket, user_id: str):
             data = await websocket.receive_json()
             if data.get("type") == "PING":
                 presence_manager.update_heartbeat(user_id)
-                logger.info(f"=======================> Received PING from user {user_id}. Updated last_seen.")
+                logger.info(f"=======================> Received PING from user {user_id}.")
                 await websocket.send_json({"type": "PONG", "user_id": user_id})
             else:
                 await presence_manager.handle_message(user_id, data)

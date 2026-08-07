@@ -1,4 +1,5 @@
 from datetime import datetime, timezone
+import logging
 
 from fastapi import APIRouter, Depends, HTTPException
 from sqlmodel import Session, select, and_, or_
@@ -9,6 +10,7 @@ from app.presence_manager import presence_manager
 
 
 router = APIRouter(prefix="/friends", tags=["friends"])
+logger = logging.getLogger("uvicorn.error")
 
 @router.get("/suggested", response_model=Suggestions)
 async def get_suggested_friends(session: SessionDep, current_user: CurrentUser):
@@ -48,7 +50,7 @@ async def get_all_friends(session: SessionDep, current_user: CurrentUser, skip: 
                 blocked = bool(friendship.blocked_by_req)
             elif friendship.addressee_id == current_user.id:
                 blocked = bool(friendship.blocked_by_add)
-            friends.append(Friend(id=user.id, name=user.full_name, handle=user.full_name, avatar=user.avatar, status=(FriendshipStatus.BLOCKED if blocked else FriendshipStatus.ACCEPTED), online=presence_manager.get_status(user.id) == "ONLINE"))
+            friends.append(Friend(id=user.id, name=user.full_name, handle=user.full_name, avatar=user.avatar, status=(FriendshipStatus.BLOCKED if blocked else FriendshipStatus.ACCEPTED), online=presence_manager.is_online(str(user.id))))
 
     return {"friends": friends, "count": len(friends)}
 
