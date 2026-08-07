@@ -1,3 +1,5 @@
+import datetime
+
 from fastapi import APIRouter, Depends, HTTPException
 from sqlmodel import Session, select, and_, or_
 from app.platform.deps import CurrentUser, SessionDep
@@ -126,6 +128,8 @@ async def accept_friend(friend_id: str, status: FriendshipStatus, session: Sessi
         if not friendship:
             raise HTTPException(status_code=404, detail="Friend request not found.")
         friendship.status = status
+        if status == FriendshipStatus.ACCEPTED:
+            friendship.accepted_at = datetime.utcnow()
     session.add(friendship)
     session.commit()
     session.refresh(friendship)

@@ -15,6 +15,7 @@ import UnoGamePage from './pages/UnoGamePage'
 import FriendsPage from './pages/FriendsPage'
 import { ProtectedRoute } from './components/ProtectedRoute'
 import ChangePasswordCard from './components/ChangePasswordCard'
+import UnoDashboard from './pages/UnoDashboard'
 // import SettingsPage from './pages/SettingsPage'
 // import NotFoundPage from './pages/NotFoundPage'
 
@@ -22,18 +23,6 @@ function App() {
   const [count, setCount] = useState(0)
 
   return (
-    // <Home></Home>
-    // <AuthProvider>
-    //     <Routes>
-    //       <Route path="/" element={<Home />}>
-    //         <Route index element={<Dashboard />} />
-    //         <Route path="/dashboard" element={<Dashboard />} />
-    //         <Route path="/login" element={<Login />} />
-    //         <Route path="/signup" element={<SignUp />} />
-    //         <Route path="profile" element={<ProfilePage />} />
-    //       </Route>
-    //     </Routes>
-    // </AuthProvider>
 <AuthProvider>
   <Routes>
     <Route path="/" element={<Home />}>
@@ -47,6 +36,7 @@ function App() {
         <Route path="play" element={<UnoGamePage />} />
         <Route path="friends" element={<FriendsPage />} />
         <Route path="password" element={<ChangePasswordCard />} />
+        <Route path="statistics" element={<UnoDashboard />} />
       </Route>
 
     </Route>
