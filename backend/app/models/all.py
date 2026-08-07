@@ -211,6 +211,7 @@ class Friend(SQLModel):
     status: FriendshipStatus | None = None
     mutual: int | None = None
     bio: str | None = None
+    online: bool | None = None
 
 class Friends(SQLModel):
     friends: list[Friend]

@@ -1,10 +1,11 @@
-import datetime
+from datetime import datetime, timezone
 
 from fastapi import APIRouter, Depends, HTTPException
 from sqlmodel import Session, select, and_, or_
 from app.platform.deps import CurrentUser, SessionDep
 from app.models.all import Friends, Suggestions, Requests, Friend, FriendshipStatus, Friendship, User
 from uuid import uuid4
+from app.presence_manager import presence_manager
 
 
 router = APIRouter(prefix="/friends", tags=["friends"])
@@ -47,7 +48,7 @@ async def get_all_friends(session: SessionDep, current_user: CurrentUser, skip: 
                 blocked = bool(friendship.blocked_by_req)
             elif friendship.addressee_id == current_user.id:
                 blocked = bool(friendship.blocked_by_add)
-            friends.append(Friend(id=user.id, name=user.full_name, handle=user.full_name, avatar=user.avatar, status=(FriendshipStatus.BLOCKED if blocked else FriendshipStatus.ACCEPTED)))
+            friends.append(Friend(id=user.id, name=user.full_name, handle=user.full_name, avatar=user.avatar, status=(FriendshipStatus.BLOCKED if blocked else FriendshipStatus.ACCEPTED), online=presence_manager.get_status(user.id) == "ONLINE"))
 
     return {"friends": friends, "count": len(friends)}
 
@@ -129,7 +130,7 @@ async def accept_friend(friend_id: str, status: FriendshipStatus, session: Sessi
             raise HTTPException(status_code=404, detail="Friend request not found.")
         friendship.status = status
         if status == FriendshipStatus.ACCEPTED:
-            friendship.accepted_at = datetime.utcnow()
+            friendship.accepted_at = datetime.now(timezone.utc)
     session.add(friendship)
     session.commit()
     session.refresh(friendship)
