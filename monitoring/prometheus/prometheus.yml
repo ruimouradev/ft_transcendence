@@ -1,0 +1,3 @@
+# Scrape interval, rule_files pointing to alerts.yml, and three scrape
+# jobs: the backend (/metrics on backend:8000), the postgres exporter
+# (postgres-exporter:9187) and prometheus itself.

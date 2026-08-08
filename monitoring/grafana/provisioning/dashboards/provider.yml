@@ -1,0 +1,2 @@
+# One file provider loading every dashboard json from
+# /var/lib/grafana/dashboards.
