@@ -1,3 +1,25 @@
-# Scrape interval, rule_files pointing to alerts.yml, and three scrape
-# jobs: the backend (/metrics on backend:8000), the postgres exporter
-# (postgres-exporter:9187) and prometheus itself.
+# What prometheus watches and how often.
+
+global:
+  scrape_interval: 15s
+  # how often the alert rules are checked
+  evaluation_interval: 15s
+
+rule_files:
+  # path inside the container where compose mounts monitoring/prometheus
+  - /etc/prometheus/alerts.yml
+
+scrape_configs:
+  - job_name: backend
+    metrics_path: /metrics
+    static_configs:
+      - targets: ["backend:8000"]
+
+  - job_name: postgres
+    static_configs:
+      - targets: ["postgres-exporter:9187"]
+
+  # prometheus watches itself, so its own health shows up too
+  - job_name: prometheus
+    static_configs:
+      - targets: ["localhost:9090"]

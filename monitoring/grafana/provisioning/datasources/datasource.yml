@@ -1,2 +1,11 @@
-# One datasource, Prometheus at http://prometheus:9090, marked as
-# default.
+# Read once at startup, connects grafana to prometheus.
+
+apiVersion: 1
+
+datasources:
+  - name: Prometheus
+    type: prometheus
+    # grafana queries prometheus, so it can stay unexposed
+    access: proxy
+    url: http://prometheus:9090
+    isDefault: true
