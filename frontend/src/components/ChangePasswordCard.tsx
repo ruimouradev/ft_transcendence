@@ -13,6 +13,7 @@ import {
   CircularProgress,
 } from '@mui/material';
 import LockIcon from '@mui/icons-material/Lock';
+import { api } from '../client.ts';
 
 export default function ChangePasswordCard() {
   const [currentPassword, setCurrentPassword] = useState('');
@@ -39,33 +40,43 @@ export default function ChangePasswordCard() {
       return;
     }
 
+    if (currentPassword.length < 8) {
+      setError('Current password must be at least 8 characters long');
+      return;
+    }
+
+    if (currentPassword === newPassword) {
+      setError('New password must be different from the current password');
+      return;
+    }
+
     setLoading(true);
 
-    try {
-      const response = await axios.patch(
-        '/api/v1/users/me/password',
-        {
-          current_password: currentPassword,
-          new_password: newPassword,
-        },
-        { withCredentials: true }
-      );
-
-      setSuccess(response.data.message || 'Password changed successfully!');
-      
-      // Reset form
-      setCurrentPassword('');
-      setNewPassword('');
-      setConfirmPassword('');
-    } catch (err: any) {
-      if (axios.isAxiosError(err)) {
-        setError(err.response?.data?.detail || 'Failed to change password.');
-      } else {
-        setError('An unexpected error occurred.');
+    api.patch(
+      '/users/me/password',
+      {
+        current_password: currentPassword,
+        new_password: newPassword,
       }
-    } finally {
-      setLoading(false);
-    }
+    )
+      .then((response) => {
+        setSuccess(response.data.message || 'Password changed successfully!');
+        
+        // Reset form
+        setCurrentPassword('');
+        setNewPassword('');
+        setConfirmPassword('');
+      })
+      .catch((err) => {
+        if (axios.isAxiosError(err)) {
+          setError(err.response?.data?.detail || 'Failed to change password.');
+        } else {
+          setError('An unexpected error occurred.');
+        }
+      })
+      .finally(() => {
+        setLoading(false);
+      });
   };
 
   return (

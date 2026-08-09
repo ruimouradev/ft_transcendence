@@ -3,6 +3,7 @@ import {
   Trophy,
   User,
   Users,
+  Podium,
   Settings
 } from "lucide-react";
 import UserMenu from "./UserMenu";
@@ -26,6 +27,10 @@ export default function Navbar() {
           <NavItem icon={<Trophy />} text="Play"/>
         </Link>
 
+        <Link to="/statistics" className="flex items-center gap-2 hover:text-yellow-300 transition">
+          <NavItem icon={<Podium />} text="Statistics"/>
+        </Link>
+        
         <Link to="/profile" className="flex items-center gap-2 hover:text-yellow-300 transition">
           <NavItem icon={<User />} text="Profile"/>
         </Link>

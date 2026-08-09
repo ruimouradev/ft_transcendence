@@ -1,11 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import axios from 'axios';
 
-// interface AuthContextType {
-//   isLoggedIn: boolean;
-//   logout: () => void;
-//   login: (token: string) => void;
-// }
+import { api } from '../client';
 
 interface User {
   id: number;
@@ -26,12 +21,6 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
-// Configure Axios to ALWAYS send cookies with requests
-const api = axios.create({
-  baseURL: '/api/v1',
-  withCredentials: true,
-});
-
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
@@ -41,6 +30,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   useEffect(() => {
     const checkAuthStatus = async () => {
       try {
+        console.log('Checking auth status...');
         // Request current user info using HttpOnly cookie
         const response = await api.get<User>('/users/me');
         setUser(response.data);
@@ -92,38 +82,3 @@ export const useAuth = () => {
   if (!context) throw new Error('useAuth must be used within AuthProvider');
   return context;
 };
-
-// export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-
-//   const [isLoggedIn, setIsLoggedIn] = useState<boolean>(() => {
-//     return Boolean(localStorage.getItem('access_token'));
-//   });
-
-//   const [profileChanged, setProfileChanged] = useState<boolean>(false);
-
-//   const login = (token: string) => {
-//     localStorage.setItem('access_token', token);
-//     setIsLoggedIn(true);
-//   };
-
-//   const logout = () => {
-//     localStorage.removeItem('access_token');
-//     setIsLoggedIn(false);
-//   };
-
-//   const toggleProfileChanged = () => {
-//     setProfileChanged(prev => !prev);
-//   };
-
-//   return (
-//     <AuthContext.Provider value={{ isLoggedIn, profileChanged, toggleProfileChanged, login, logout }}>
-//       {children}
-//     </AuthContext.Provider>
-//   );
-// };
-
-// export const useAuth = () => {
-//   const context = useContext(AuthContext);
-//   if (!context) throw new Error('useAuth must be used within AuthProvider');
-//   return context;
-// };

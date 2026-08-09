@@ -10,6 +10,9 @@ build:
 vinit:
 	@mkdir -p ${DBDATAPATH}
 	
+miniserve:
+	docker compose -f ./docker-compose.yml up db backend frontend adminer nginx
+
 down:
 	docker compose -f ./docker-compose.yml down
 	@echo "[INFO] Docker containers stopped and removed."

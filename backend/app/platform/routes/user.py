@@ -154,6 +154,7 @@ def register_user(session: SessionDep, user_in: UserRegister, background_tasks: 
             detail="The user with this email already exists in the system",
         )
     user_create = UserCreate.model_validate(user_in)
+    user_create.avatar = "/static/a00.jpeg"
     user = userservice.create_user(session=session, user_create=user_create)
     if settings.EMAILS_ENABLED and user_in.email:
         token = create_verification_token(user_in.email)
@@ -257,7 +258,12 @@ def delete_user(
 @router.post("/uploadfile")
 async def upload_file(file: UploadFile, session: SessionDep, current_user: CurrentUser):
     if file.content_type not in ["image/jpeg", "image/png"]:
-        return {"error": "Invalid file type. Only JPEG and PNG are allowed."}
+        raise HTTPException(status_code=400, detail="Invalid file type. Only JPEG and PNG are allowed.")
+        # return {"error": "Invalid file type. Only JPEG and PNG are allowed."}
+    if file.content_type == "image/jpeg":
+        avatar_filename = f"avatar.jpg"
+    if file.content_type == "image/png" :
+        avatar_filename = f"avatar.png"
 
     uploaddir = Path("app/static/"+current_user.id.hex+"/")
     uploaddir.mkdir(parents=True, exist_ok=True)
@@ -271,13 +277,26 @@ async def upload_file(file: UploadFile, session: SessionDep, current_user: Curre
             break
         size += len(chunk)
         if size > MAX_SIZE:
-            return {"error": "File size exceeds the limit of 3MB."}
+            raise HTTPException(status_code=400, detail="File size exceeds the limit of 3MB.")
+            # return {"error": "File size exceeds the limit of 3MB."}
     
     await file.seek(0)
     content = await file.read()
     
-    with open(uploaddir / file.filename, "wb") as f:
+    with open(uploaddir / avatar_filename, "wb") as f:
         f.write(content)
 
-    userservice.update_user(session=session, db_user=current_user, user_in=UserUpdate(avatar=f"/static/{current_user.id.hex}/{file.filename}"))
-    return {"filename": file.filename, "file_size": len(content), "url": f"https://localhost:8443/static/{current_user.id.hex}/{file.filename}"}
+    userservice.update_user(session=session, db_user=current_user, user_in=UserUpdate(avatar=f"/static/{current_user.id.hex}/{avatar_filename}"))
+    return {"filename": avatar_filename, "file_size": len(content), "url": f"https://localhost:8443/static/{current_user.id.hex}/{avatar_filename}"}
+
+
+@router.get("/online", response_model=UsersPublic)
+def get_online_users(session: SessionDep, current_user: CurrentUser) -> Any:
+    """
+    Retrieve online users.
+    """
+    statement = select(User).where(User.is_active == True)
+    users = session.exec(statement).all()
+
+    users_public = [UserPublic.model_validate(user) for user in users]
+    return UsersPublic(data=users_public, count=len(users_public))
