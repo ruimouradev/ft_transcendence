@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useEffect, useState, useRef, useCallback } from 'react';
-import { useAuth } from './AuthContext'; // Import your AuthContext hook
+import { useAuth } from './AuthContext';
 
 type ConnectionStatus = 'ONLINE' | 'OFFLINE' | 'RECONNECTING';
 
@@ -21,12 +21,11 @@ export const WebSocketProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   const [lastMessage, setLastMessage] = useState<any>(null);
 
   const socketRef = useRef<WebSocket | null>(null);
-  const heartbeatIntervalRef = useRef<NodeJS.Timeout | null>(null);
-  const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const heartbeatIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const reconnectTimeoutRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const reconnectAttemptsRef = useRef<number>(0);
   const isManuallyClosedRef = useRef<boolean>(false);
 
-  // 清理所有定时器和连接的辅助函数
   const cleanup = useCallback(() => {
     if (heartbeatIntervalRef.current) {
       clearInterval(heartbeatIntervalRef.current);
@@ -39,7 +38,7 @@ export const WebSocketProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   }, []);
 
   const connect = useCallback(() => {
-    if (!user) return;
+    if (!user?.id) return;
 
     cleanup();
 
@@ -108,11 +107,11 @@ export const WebSocketProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     ws.onerror = (err) => {
       console.error('WebSocket Error:', err);
     };
-  }, [user, cleanup]);
+  }, [user?.id, cleanup]);
 
   useEffect(() => {
     // 🛑 when unlogged in or user is null, close the connection and cleanup
-    if (isLoading || !isAuthenticated || !user) {
+    if (isLoading || !user?.id) {
       isManuallyClosedRef.current = true;
       cleanup();
       if (socketRef.current) {
@@ -135,7 +134,7 @@ export const WebSocketProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         socketRef.current.close(1000, 'Provider unmounted');
       }
     };
-  }, [user, isAuthenticated, isLoading, connect, cleanup]);
+  }, [user?.id, isAuthenticated, isLoading, connect, cleanup]);
 
   const sendMessage = (data: any) => {
     if (socketRef.current && socketRef.current.readyState === WebSocket.OPEN) {

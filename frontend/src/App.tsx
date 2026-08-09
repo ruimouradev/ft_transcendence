@@ -11,8 +11,6 @@ import FriendsPage from './pages/FriendsPage'
 import { ProtectedRoute } from './components/ProtectedRoute'
 import ChangePasswordCard from './components/ChangePasswordCard'
 import UnoDashboard from './pages/UnoDashboard'
-// import SettingsPage from './pages/SettingsPage'
-// import NotFoundPage from './pages/NotFoundPage'
 
 function App() {
     const [count, setCount] = useState(0)
