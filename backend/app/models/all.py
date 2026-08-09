@@ -17,6 +17,7 @@ class UserBase(SQLModel):
     is_superuser: bool = False
     full_name: str | None = Field(default=None, max_length=255)
     avatar: str | None = Field(default=None, max_length=255)
+    use2fa: bool = False
 
 
 # Properties to receive via API on creation
@@ -51,7 +52,7 @@ class User(UserBase, table=True):
     hashed_password: str | None = Field(default=None, max_length=255)
     created_at: datetime | None = Field(
         default_factory=get_datetime_utc,
-        sa_type=DateTime(timezone=True),  # type: ignore
+        sa_type=DateTime(timezone=True),
     )
     # items: list["Item"] = Relationship(back_populates="owner", cascade_delete=True)
     sent_requests: list["Friendship"] = Relationship(
@@ -151,6 +152,9 @@ class Friendship(SQLModel, table=True):
     requester_id: UUID = Field(foreign_key="user.id")
     addressee_id: UUID = Field(foreign_key="user.id")
 
+    blocked_by_req: bool = Field(default=False)
+    blocked_by_add: bool = Field(default=False)
+
     status: FriendshipStatus
 
     created_at: datetime | None = Field(
@@ -197,3 +201,26 @@ class UserStatistic(SQLModel, table=True):
     total_score: int = 0
 
     updated_at: datetime = Field(default_factory=get_datetime_utc,sa_type=DateTime(timezone=True))
+
+
+class Friend(SQLModel):
+    id: UUID
+    name: str
+    handle: str
+    avatar: str | None = None
+    status: FriendshipStatus | None = None
+    mutual: int | None = None
+    bio: str | None = None
+    online: bool | None = None
+
+class Friends(SQLModel):
+    friends: list[Friend]
+    count: int = 0
+
+class Suggestions(SQLModel):
+    suggestions: list[Friend]
+    count: int = 0
+
+class Requests(SQLModel):
+    requests: list[Friend]
+    count: int = 0
