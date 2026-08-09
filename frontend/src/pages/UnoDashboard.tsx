@@ -22,14 +22,13 @@ import {
   Tooltip,
 } from '@mui/material';
 
-// 1. UNO 暗黑主题
 const unoTheme = createTheme({
   palette: {
     mode: 'dark',
-    primary: { main: '#f44336' },   // UNO 红色
-    secondary: { main: '#ffeb3b' }, // UNO 黄色
-    success: { main: '#4caf50' },   // UNO 绿色
-    info: { main: '#2196f3' },      // UNO 蓝色
+    primary: { main: '#f44336' },   // UNO red
+    secondary: { main: '#ffeb3b' }, // UNO yellow
+    success: { main: '#4caf50' },   // UNO green
+    info: { main: '#2196f3' },      // UNO blue
     background: {
       default: '#0f172a',
       paper: '#1e293b',
@@ -58,7 +57,6 @@ const unoTheme = createTheme({
   },
 });
 
-// 2. 模拟数据：排行榜
 const leaderboardData = [
   { rank: 1, name: 'FireUno', level: 48, wins: 1250, winRate: '78%' },
   { rank: 2, name: 'StarPlayer', level: 45, wins: 1180, winRate: '76%' },
@@ -71,7 +69,6 @@ const leaderboardData = [
   { rank: 215, name: 'PlayerUno_99 (You)', level: 15, wins: 287, winRate: '69.66%', isCurrent: true },
 ];
 
-// 3. 模拟数据：详细对局历史
 const matchHistoryData = [
   { id: '#UNO-9082', result: 'WIN', duration: '4m 12s', players: 4, score: '+150 XP', date: '2026-08-07 11:20' },
   { id: '#UNO-9079', result: 'WIN', duration: '6m 45s', players: 2, score: '+220 XP', date: '2026-08-07 10:15' },
@@ -82,14 +79,13 @@ const matchHistoryData = [
 ];
 
 export default function UnoDashboard() {
-  // activeView 状态: 'summary' (饼图), 'all' (全部对局), 'wins' (仅胜场), 'losses' (仅败场)
+  // activeView state: 'summary' (pie chart), 'all' (all matches), 'wins' (only wins), 'losses' (only losses)
   const [activeView, setActiveView] = useState('summary');
 
-  // 根据当前视图筛选比赛记录
   const filteredMatches = matchHistoryData.filter((match) => {
     if (activeView === 'wins') return match.result === 'WIN';
     if (activeView === 'losses') return match.result === 'LOSS';
-    return true; // 'all' 或其他
+    return true; 
   });
 
   return (
@@ -115,11 +111,11 @@ export default function UnoDashboard() {
 
         <Grid container spacing={1}>
           
-          <Grid item xs={12} md={4}>
+          <Grid size={{xs:12, md:4}}>
             <Stack spacing={3}>
               <Paper sx={{ p: 3, background: 'linear-gradient(135deg, #1e293b 0%, #0f172a 100%)' }}>
-                <Grid container spacing={2} alignItems="center">
-                  <Grid item>
+                <Grid container spacing={2} sx={{ alignItems: 'center' }}>
+                  <Grid>
                     <Avatar
                       sx={{
                         width: 64,
@@ -133,8 +129,8 @@ export default function UnoDashboard() {
                       U
                     </Avatar>
                   </Grid>
-                  <Grid item xs>
-                    <Box display="flex" alignItems="center" gap={1}>
+                  <Grid size={{ xs: 12, sm: 8 }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                       <Typography variant="h6">PlayerUno_99</Typography>
                       <Chip
                         label="Lvl 15"
@@ -153,7 +149,7 @@ export default function UnoDashboard() {
                 </Grid>
               </Paper>
               <Grid container spacing={1}>
-                <Grid item xs={6}>
+                <Grid size={{ xs: 3 }}>
                   <Tooltip title="Click to view all match history" arrow>
                     <Paper
                       onClick={() => setActiveView('all')}
@@ -167,13 +163,13 @@ export default function UnoDashboard() {
                         '&:hover': { transform: 'translateY(-3px)', bgcolor: 'rgba(33, 150, 243, 0.1)' },
                       }}
                     >
-                      <Typography variant="caption" color="text.secondary">Total Matches ↗</Typography>
+                      <Typography variant="caption" color="text.secondary">Total ↗</Typography>
                       <Typography variant="h6" sx={{ mt: 0.5, fontWeight: 'bold' }}>412</Typography>
                     </Paper>
                   </Tooltip>
                 </Grid>
 
-                <Grid item xs={6}>
+                <Grid size={{ xs: 3 }}>
                   <Tooltip title="Click to filter winning matches" arrow>
                     <Paper
                       onClick={() => setActiveView('wins')}
@@ -193,7 +189,7 @@ export default function UnoDashboard() {
                   </Tooltip>
                 </Grid>
 
-                <Grid item xs={6}>
+                <Grid size={{ xs: 3 }}>
                   <Tooltip title="Click to filter losing matches" arrow>
                     <Paper
                       onClick={() => setActiveView('losses')}
@@ -213,7 +209,7 @@ export default function UnoDashboard() {
                   </Tooltip>
                 </Grid>
 
-                <Grid item xs={6}>
+                <Grid size={{ xs: 3 }}>
                   <Tooltip title="Click to view pie chart summary" arrow>
                     <Paper
                       onClick={() => setActiveView('summary')}
@@ -260,12 +256,12 @@ export default function UnoDashboard() {
                       </Box>
                     </Box>
 
-                    <Box display="flex" justifyContent="center" gap={3} mt={1}>
-                      <Box display="flex" alignItems="center" gap={1}>
+                    <Box sx={{ display: 'flex', justifyContent: 'center', gap: 3, mt: 1 }}>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                         <Box sx={{ width: 12, height: 12, borderRadius: '50%', bgcolor: '#4caf50' }} />
                         <Typography variant="body2">Wins (287)</Typography>
                       </Box>
-                      <Box display="flex" alignItems="center" gap={1}>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                         <Box sx={{ width: 12, height: 12, borderRadius: '50%', bgcolor: '#f44336' }} />
                         <Typography variant="body2">Losses (125)</Typography>
                       </Box>
@@ -330,9 +326,9 @@ export default function UnoDashboard() {
             </Stack>
           </Grid>
 
-          <Grid item xs={12} md={3}>
+          <Grid size={{ xs: 12, md: 4 }}>
             <Paper sx={{ p: 3, height: '100%' }}>
-              <Box display="flex" justifyContent="space-between" alignItems="center" sx={{ mb: 2 }}>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
                 <Typography variant="h6">Friends</Typography>
                 {/* <Chip label="Top 42" variant="outlined" size="small" /> */}
               </Box>
@@ -377,9 +373,9 @@ export default function UnoDashboard() {
             </Paper>
           </Grid>
 
-          <Grid item xs={12} md={3}>
+          <Grid size={{ xs: 12, md: 4 }}>
             <Paper sx={{ p: 3, height: '100%' }}>
-              <Box display="flex" justifyContent="space-between" alignItems="center" sx={{ mb: 2 }}>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
                 <Typography variant="h6">Global</Typography>
                 <Chip label="Top 42" variant="outlined" size="small" />
               </Box>
@@ -429,262 +425,3 @@ export default function UnoDashboard() {
     </ThemeProvider>
   );
 }
-
-// import React from 'react';
-// import {
-//     ThemeProvider,
-//     createTheme,
-//     CssBaseline,
-//     Box,
-//     Container,
-//     Grid,
-//     Paper,
-//     Typography,
-//     Avatar,
-//     LinearProgress,
-//     Table,
-//     TableBody,
-//     TableCell,
-//     TableContainer,
-//     TableHead,
-//     TableRow,
-//     Chip,
-//     Divider,
-//     Stack,
-// } from '@mui/material';
-
-// // 1. 自定义 MUI 暗黑科技主题，融合 UNO 主题色彩 (红、黄、绿、蓝)
-// const unoTheme = createTheme({
-//     palette: {
-//         mode: 'dark',
-//         primary: { main: '#f44336' },   // UNO 红色
-//         secondary: { main: '#ffeb3b' }, // UNO 黄色
-//         success: { main: '#4caf50' },   // UNO 绿色
-//         info: { main: '#2196f3' },      // UNO 蓝色
-//         background: {
-//             default: '#0f172a',
-//             paper: '#1e293b',
-//         },
-//         text: {
-//             primary: '#f8fafc',
-//             secondary: '#94a3b8',
-//         },
-//     },
-//     typography: {
-//         fontFamily: '"Roboto", "Helvetica", "Arial", sans-serif',
-//         h4: { fontWeight: 800 },
-//         h5: { fontWeight: 700 },
-//         h6: { fontWeight: 600 },
-//     },
-//     components: {
-//         MuiPaper: {
-//             styleOverrides: {
-//                 root: {
-//                     borderRadius: 16,
-//                     border: '1px solid rgba(255, 255, 255, 0.08)',
-//                     backgroundImage: 'none',
-//                 },
-//             },
-//         },
-//     },
-// });
-
-// // 2. 模拟排行榜数据
-// const leaderboardData = [
-//     { rank: 1, name: 'FireUno', level: 48, wins: 1250, winRate: '78%' },
-//     { rank: 2, name: 'StarPlayer', level: 45, wins: 1180, winRate: '76%' },
-//     { rank: 3, name: 'UnoLegend', level: 42, wins: 1095, winRate: '75%' },
-//     { rank: 4, name: 'GameMaster', level: 39, wins: 980, winRate: '73%' },
-//     { rank: 5, name: 'QuickPlay', level: 37, wins: 910, winRate: '71%' },
-//     { rank: 6, name: 'UnoChamp', level: 35, wins: 880, winRate: '70%' },
-//     { rank: 7, name: 'CardShark', level: 33, wins: 850, winRate: '69%' },
-//     { rank: 8, name: 'PlaySmart', level: 31, wins: 820, winRate: '68%' },
-//     { rank: 215, name: 'PlayerUno_99 (你)', level: 15, wins: 287, winRate: '69.66%', isCurrent: true },
-// ];
-
-// export default function UnoDashboard() {
-//     return (
-//         <ThemeProvider theme={unoTheme}>
-//             <CssBaseline />
-//             <Container maxWidth="xl" sx={{ py: 4 }}>
-//                 <Box sx={{ mb: 4, display: 'flex', alignItems: 'center', gap: 2 }}>
-//                     <Typography
-//                         variant="h4"
-//                         component="h1"
-//                         sx={{
-//                             background: 'linear-gradient(45deg, #f44336, #ffeb3b)',
-//                             WebkitBackgroundClip: 'text',
-//                             WebkitTextFillColor: 'transparent',
-//                         }}
-//                     >
-//                         UNO GLOBAL DASHBOARD
-//                     </Typography>
-//                     <Chip label="LIVE ONLINE" color="success" size="small" sx={{ fontWeight: 'bold' }} />
-//                 </Box>
-
-//                 <Grid container spacing={1}>
-//                     <Grid item xs={12} md={4}>
-//                         <Stack spacing={3}>
-
-//                             <Paper sx={{ p: 3, background: 'linear-gradient(135deg, #1e293b 0%, #0f172a 100%)' }}>
-//                                 <Grid container spacing={2} alignItems="center">
-//                                     <Grid item>
-//                                         <Avatar
-//                                             sx={{
-//                                                 width: 72,
-//                                                 height: 72,
-//                                                 bgcolor: 'primary.main',
-//                                                 fontSize: '2rem',
-//                                                 fontWeight: 'bold',
-//                                                 border: '3px solid #ffeb3b',
-//                                             }}
-//                                         >
-//                                             U
-//                                         </Avatar>
-//                                     </Grid>
-//                                     <Grid item xs>
-//                                         <Box display="flex" alignItems="center" gap={1}>
-//                                             <Typography variant="h5">PlayerUno_99</Typography>
-//                                             <Chip
-//                                                 label="Level 15"
-//                                                 color="secondary"
-//                                                 size="small"
-//                                                 sx={{ fontWeight: 'bold', color: '#000' }}
-//                                             />
-//                                         </Box>
-//                                         <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
-//                                             UNO Master | XP: 15,200 / 20,000
-//                                         </Typography>
-//                                         <Box sx={{ width: '100%', mt: 1.5 }}>
-//                                             <LinearProgress variant="determinate" value={76} color="info" sx={{ height: 8, borderRadius: 4 }} />
-//                                         </Box>
-//                                     </Grid>
-//                                 </Grid>
-//                             </Paper>
-
-//                             <Grid container spacing={2}>
-//                                 <Grid item xs={6} sm={3}>
-//                                     <Paper sx={{ p: 2, textAlign: 'center', borderTop: '4px solid #2196f3' }}>
-//                                         <Typography variant="body2" color="text.secondary">Total Matches</Typography>
-//                                         <Typography variant="h5" sx={{ mt: 1, fontWeight: 'bold' }}>412</Typography>
-//                                     </Paper>
-//                                 </Grid>
-//                                 <Grid item xs={6} sm={3}>
-//                                     <Paper sx={{ p: 2, textAlign: 'center', borderTop: '4px solid #4caf50' }}>
-//                                         <Typography variant="body2" color="text.secondary">Wins</Typography>
-//                                         <Typography variant="h5" sx={{ mt: 1, fontWeight: 'bold', color: 'success.main' }}>287</Typography>
-//                                     </Paper>
-//                                 </Grid>
-//                                 <Grid item xs={6} sm={3}>
-//                                     <Paper sx={{ p: 2, textAlign: 'center', borderTop: '4px solid #f44336' }}>
-//                                         <Typography variant="body2" color="text.secondary">Losses</Typography>
-//                                         <Typography variant="h5" sx={{ mt: 1, fontWeight: 'bold', color: 'primary.main' }}>125</Typography>
-//                                     </Paper>
-//                                 </Grid>
-//                                 <Grid item xs={6} sm={3}>
-//                                     <Paper sx={{ p: 2, textAlign: 'center', borderTop: '4px solid #ffeb3b' }}>
-//                                         <Typography variant="body2" color="text.secondary">Win Rate</Typography>
-//                                         <Typography variant="h5" sx={{ mt: 1, fontWeight: 'bold', color: 'secondary.main' }}>69.66%</Typography>
-//                                     </Paper>
-//                                 </Grid>
-//                             </Grid>
-//                         </Stack>
-//                     </Grid>
-//                     <Grid item xs={12} md={4}>
-//                         <Paper sx={{ p: 3, height: '100%' }}>
-//                             <Box display="flex" justifyContent="space-between" alignItems="center" sx={{ mb: 2 }}>
-//                                 <Typography variant="h6">Friends Leaderboard</Typography>
-//                                 <Chip label="Top 42" variant="outlined" size="small" />
-//                             </Box>
-
-//                             <TableContainer>
-//                                 <Table>
-//                                     <TableHead>
-//                                         <TableRow>
-//                                             <TableCell sx={{ fontWeight: 'bold' }}>Rank</TableCell>
-//                                             <TableCell sx={{ fontWeight: 'bold' }}>Player</TableCell>
-//                                             <TableCell sx={{ fontWeight: 'bold' }}>Level</TableCell>
-//                                             <TableCell sx={{ fontWeight: 'bold' }} align="right">Wins</TableCell>
-//                                             <TableCell sx={{ fontWeight: 'bold' }} align="right">Win Rate</TableCell>
-//                                         </TableRow>
-//                                     </TableHead>
-//                                     <TableBody>
-//                                         {leaderboardData.map((row) => (
-//                                             <TableRow
-//                                                 key={row.rank}
-//                                                 sx={{
-//                                                     backgroundColor: row.isCurrent ? 'rgba(255, 235, 59, 0.15)' : 'transparent',
-//                                                     '&:last-child td, &:last-child th': { border: 0 }
-//                                                 }}
-//                                             >
-//                                                 <TableCell component="th" scope="row">
-//                                                     {row.rank === 1 && <Chip label="🥇 #1" color="secondary" size="small" sx={{ fontWeight: 'bold', color: '#000' }} />}
-//                                                     {row.rank === 2 && <Chip label="🥈 #2" size="small" sx={{ fontWeight: 'bold', bgcolor: '#e0e0e0', color: '#000' }} />}
-//                                                     {row.rank === 3 && <Chip label="🥉 #3" size="small" sx={{ fontWeight: 'bold', bgcolor: '#cd7f32', color: '#fff' }} />}
-//                                                     {row.rank > 3 && `#${row.rank}`}
-//                                                 </TableCell>
-//                                                 <TableCell sx={{ fontWeight: row.isCurrent ? 'bold' : 'normal' }}>
-//                                                     {row.name}
-//                                                 </TableCell>
-//                                                 <TableCell>Lvl {row.level}</TableCell>
-//                                                 <TableCell align="right" sx={{ fontWeight: 'bold' }}>{row.wins}</TableCell>
-//                                                 <TableCell align="right" sx={{ color: 'success.main', fontWeight: 'bold' }}>{row.winRate}</TableCell>
-//                                             </TableRow>
-//                                         ))}
-//                                     </TableBody>
-//                                 </Table>
-//                             </TableContainer>
-//                         </Paper>
-//                     </Grid>
-//                     <Grid item xs={12} md={4}>
-//                         <Paper sx={{ p: 3, height: '100%' }}>
-//                             <Box display="flex" justifyContent="space-between" alignItems="center" sx={{ mb: 2 }}>
-//                                 <Typography variant="h6">Global Leaderboard</Typography>
-//                                 <Chip label="Top 42" variant="outlined" size="small" />
-//                             </Box>
-
-//                             <TableContainer>
-//                                 <Table>
-//                                     <TableHead>
-//                                         <TableRow>
-//                                             <TableCell sx={{ fontWeight: 'bold' }}>Rank</TableCell>
-//                                             <TableCell sx={{ fontWeight: 'bold' }}>Player</TableCell>
-//                                             <TableCell sx={{ fontWeight: 'bold' }}>Level</TableCell>
-//                                             <TableCell sx={{ fontWeight: 'bold' }} align="right">Wins</TableCell>
-//                                             <TableCell sx={{ fontWeight: 'bold' }} align="right">Win Rate</TableCell>
-//                                         </TableRow>
-//                                     </TableHead>
-//                                     <TableBody>
-//                                         {leaderboardData.map((row) => (
-//                                             <TableRow
-//                                                 key={row.rank}
-//                                                 sx={{
-//                                                     backgroundColor: row.isCurrent ? 'rgba(255, 235, 59, 0.15)' : 'transparent',
-//                                                     '&:last-child td, &:last-child th': { border: 0 }
-//                                                 }}
-//                                             >
-//                                                 <TableCell component="th" scope="row">
-//                                                     {row.rank === 1 && <Chip label="🥇 #1" color="secondary" size="small" sx={{ fontWeight: 'bold', color: '#000' }} />}
-//                                                     {row.rank === 2 && <Chip label="🥈 #2" size="small" sx={{ fontWeight: 'bold', bgcolor: '#e0e0e0', color: '#000' }} />}
-//                                                     {row.rank === 3 && <Chip label="🥉 #3" size="small" sx={{ fontWeight: 'bold', bgcolor: '#cd7f32', color: '#fff' }} />}
-//                                                     {row.rank > 3 && `#${row.rank}`}
-//                                                 </TableCell>
-//                                                 <TableCell sx={{ fontWeight: row.isCurrent ? 'bold' : 'normal' }}>
-//                                                     {row.name}
-//                                                 </TableCell>
-//                                                 <TableCell>Lvl {row.level}</TableCell>
-//                                                 <TableCell align="right" sx={{ fontWeight: 'bold' }}>{row.wins}</TableCell>
-//                                                 <TableCell align="right" sx={{ color: 'success.main', fontWeight: 'bold' }}>{row.winRate}</TableCell>
-//                                             </TableRow>
-//                                         ))}
-//                                     </TableBody>
-//                                 </Table>
-//                             </TableContainer>
-//                         </Paper>
-//                     </Grid>
-//                 </Grid>
-
-//             </Container>
-//         </ThemeProvider>
-//     );
-// }
