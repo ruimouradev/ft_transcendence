@@ -1,0 +1,3 @@
+{
+  "TODO": "the service dashboard: backend up, requests per second, 5xx per second, p95 latency, and a database row (pg up, connections, transactions per second)"
+}

@@ -1,0 +1,2 @@
+# 3 alert rules: BackendDown (up == 0), ErrorRateHigh (5xx rate) and
+# SlowRequests (p95 latency), each with a "for:" so it does not flap.

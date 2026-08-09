@@ -16,9 +16,9 @@ import pydantic
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 
 from app.game.contract import (
-    Card, Catch, Color, Draw, Error, ErrorCode, GameState, Join,
-    LastAction, Phase, Play, PlayerAction, PrivateView, PublicPlayer,
-    Start, parse_action,
+    Card, Catch, Challenge, Color, Draw, Error, ErrorCode, GameState,
+    Join, LastAction, Phase, Play, PlayerAction, PrivateView,
+    PublicPlayer, Start, parse_action,
 )
 from app.game.rules import build_deck
 
@@ -149,6 +149,9 @@ def apply(room: Room, player: Player, action: PlayerAction) -> Error | None:
     elif isinstance(action, Draw):
         player.hand.append(room.deck.pop())
         room.last = LastAction(player=player.id, kind="draw")
+    elif isinstance(action, Challenge):
+        # no rules here
+        room.last = LastAction(player=player.id, kind="challenge")
     else:
         room.last = LastAction(player=player.id, kind="pass")
 
@@ -178,7 +181,9 @@ async def game(ws: WebSocket, room_id: str) -> None:
             try:
                 action = parse_action(text)
             except pydantic.ValidationError:
-                await reject(ws, ErrorCode.INVALID_MESSAGE, "not a valid message")
+                await reject(
+                    ws, ErrorCode.INVALID_MESSAGE, "not a valid message"
+                )
                 continue
 
             if player is None:

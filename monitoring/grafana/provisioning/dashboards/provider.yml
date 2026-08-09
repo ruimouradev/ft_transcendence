@@ -1,0 +1,10 @@
+# Grafana loads every dashboard json from the folder below at start.
+
+apiVersion: 1
+
+providers:
+  - name: files
+    type: file
+    options:
+      # where compose mounts monitoring/grafana/dashboards
+      path: /var/lib/grafana/dashboards
