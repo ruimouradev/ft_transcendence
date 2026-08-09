@@ -1,7 +1,8 @@
 """
 The deck and the play rules. build_deck makes a full shuffled deck,
-effect_of gives a card's effect (draw, skip, reverse), and is_playable
-says whether a card matches the active color or the top value.
+effect_of gives a card's effect (draw, skip, reverse), is_playable
+says whether a card matches the active color or the top value, and
+points says what a card left in a hand is worth to the winner.
 """
 
 from dataclasses import dataclass
@@ -51,6 +52,7 @@ _CARD_EFFECTS: dict[Value, CardEffect] = {
     "skip": CardEffect(skip=True),
     "reverse": CardEffect(reverse=True),
     "+2": CardEffect(draw=2, skip=True),
+    # applied by the engine only once the victim answers the challenge
     "+4": CardEffect(draw=4, skip=True),
 }
 
@@ -65,3 +67,12 @@ def is_playable(card: Card, active_color: Color | None, top: Card) -> bool:
         or card.color == active_color
         or card.value == top.value
     )
+
+
+def points(card: Card) -> int:
+    # official scoring: numbers at face value, actions 20, wilds 50
+    if card.value.isdigit():
+        return int(card.value)
+    if card.color == "wild":
+        return 50
+    return 20

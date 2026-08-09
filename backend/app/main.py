@@ -6,18 +6,22 @@ from app.models.database import init_db, engine
 from sqlmodel import Session
 from app.platform.main import api_router
 from app.platform.config import settings
+from prometheus_fastapi_instrumentator import Instrumentator
 
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, EmailStr
 
 def custom_generate_unique_id(route: APIRoute) -> str:
-    return f"{route.tags[0]}-{route.name}"
+    tag = route.tags[0] if route.tags else "default"
+    return f"{tag}-{route.name}"
 
 app = FastAPI(
     title=settings.PROJECT_NAME,
     openapi_url=f"{settings.API_V1_STR}/openapi.json",
     generate_unique_id_function=custom_generate_unique_id
 )
+
+Instrumentator().instrument(app).expose(app)
 
 app.add_middleware(
     CORSMiddleware,
