@@ -37,6 +37,7 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile
+    image: backend
     container_name: backend
     volumes:
       - ./backend:/app
@@ -78,6 +79,7 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile
+    image: frontend
     container_name: frontend
     volumes:
       - ./frontend:/app
@@ -99,6 +101,7 @@ services:
     build:
       context: ./nginx
       dockerfile: Dockerfile
+    image: nginx
     container_name: nginx
     ports:
       - "8080:80"
@@ -107,6 +110,43 @@ services:
       backend:
         condition: service_healthy
       frontend:
+        condition: service_healthy
+    networks:
+      - ft_network
+
+  prometheus:
+    image: prom/prometheus:v2.53.0
+    container_name: prometheus
+    volumes:
+      - ./monitoring/prometheus:/etc/prometheus
+      - prometheus_data:/prometheus
+    networks:
+      - ft_network
+
+  grafana:
+    image: grafana/grafana:11.1.0
+    container_name: grafana
+    ports:
+      - "127.0.0.1:3001:3000"
+    volumes:
+      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning
+      - ./monitoring/grafana/dashboards:/var/lib/grafana/dashboards
+      - grafana_data:/var/lib/grafana
+    environment:
+      - GF_SECURITY_ADMIN_USER=${GRAFANA_ADMIN_USER}
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD}
+    depends_on:
+      - prometheus
+    networks:
+      - ft_network
+
+  postgres-exporter:
+    image: prometheuscommunity/postgres-exporter:v0.15.0
+    container_name: postgres-exporter
+    environment:
+      - DATA_SOURCE_NAME=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}?sslmode=disable
+    depends_on:
+      db:
         condition: service_healthy
     networks:
       - ft_network
@@ -122,3 +162,5 @@ volumes:
       type: none
       o: bind
       device: ${DBDATAPATH}
+  prometheus_data:
+  grafana_data:

@@ -28,6 +28,8 @@ class Card(BaseModel):
 class Join(BaseModel):
     type: Literal["join"] = "join"
     name: str
+    # Present when reclaiming a seat after a disconnect, from Welcome
+    token: str | None = None
 
 
 class Start(BaseModel):
@@ -41,6 +43,8 @@ class Play(BaseModel):
     color: Color | None = None
     # Saying uno travels with the play
     uno: bool = False
+    # Whose hand you take, required for a 7 under the seven-zero rule
+    target: str | None = None
 
 
 class Draw(BaseModel):
@@ -59,9 +63,17 @@ class Catch(BaseModel):
     target: str
 
 
+class Challenge(BaseModel):
+    # For the +4 victim who thinks it was played while holding the
+    # active color.
+    # Right: the player who bluffed draws the 4.
+    # Wrong: you draw 6.
+    type: Literal["challenge"] = "challenge"
+
+
 # the type field tells pydantic which model to build from the raw text
 PlayerAction = Annotated[
-    Join | Start | Play | Draw | Pass | Catch,
+    Join | Start | Play | Draw | Pass | Catch | Challenge,
     Field(discriminator="type"),
 ]
 
@@ -72,12 +84,25 @@ def parse_action(data: str | bytes) -> PlayerAction:
     return _action_adapter.validate_json(data)
 
 
+class GameSettings(BaseModel):
+    # Chosen once when a room is created. The defaults are the official
+    # game, every house rule starts off.
+    hand_size: int = Field(default=7, ge=3, le=10)
+    # A +2 may be answered with another +2, the pile grows
+    stacking: bool = False
+    # A 7 swaps hands with a player of your choice, a 0 rotates all
+    # hands in the direction of play
+    seven_zero: bool = False
+
+
 class ErrorCode(str, Enum):
     NOT_YOUR_TURN = "NOT_YOUR_TURN"
     INVALID_CARD = "INVALID_CARD"
     COLOR_REQUIRED = "COLOR_REQUIRED"
+    TARGET_REQUIRED = "TARGET_REQUIRED"
     CARD_NOT_IN_HAND = "CARD_NOT_IN_HAND"
     INVALID_CATCH = "INVALID_CATCH"
+    INVALID_CHALLENGE = "INVALID_CHALLENGE"
     INVALID_MESSAGE = "INVALID_MESSAGE"
     ROOM_FULL = "ROOM_FULL"
     GAME_NOT_STARTED = "GAME_NOT_STARTED"
@@ -91,10 +116,23 @@ class Error(BaseModel):
     msg: str
 
 
+class Welcome(BaseModel):
+    # Sent once when a seat is taken. Join again with the token to get
+    # the same seat back after a disconnect.
+    type: Literal["welcome"] = "welcome"
+    id: str
+    token: str
+
+
 class PrivateView(BaseModel):
     # The only part of a game state the other players must never get
     id: str
     hand: list[Card]
+    # ids of the cards you may play right now, straight from the engine,
+    # so the frontend never has to know the rules
+    playable: list[str] = []
+    # the card you just drew, while you may still play it or pass
+    drawn: str | None = None
 
 
 class PublicPlayer(BaseModel):
@@ -105,12 +143,16 @@ class PublicPlayer(BaseModel):
     cards: int
     connected: bool = True
     uno: bool = False
+    # What the cards still in this hand are worth, 0 until the game ends
+    points: int = 0
 
 
 class LastAction(BaseModel):
     # What just happened, so the frontend knows what to animate
     player: str
-    kind: Literal["join", "start", "play", "draw", "pass", "catch"]
+    kind: Literal[
+        "join", "start", "play", "draw", "pass", "catch", "challenge",
+    ]
     card: Card | None = None
 
 
@@ -128,5 +170,11 @@ class GameState(BaseModel):
     direction: Literal[1, -1] = 1
     turn: str | None = None  # player id, None outside play
     draw_pile: int = 0  # count only
+    # cards the player on turn must draw, grows while +2s stack
+    stack: int = 0
+    # set while a played +4 waits for the next player to draw or challenge
+    plus4_by: str | None = None
     last_action: LastAction | None = None
     winner: str | None = None
+    # The winner scores every card left in the other hands
+    winner_score: int | None = None
