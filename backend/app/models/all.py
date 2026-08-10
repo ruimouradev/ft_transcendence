@@ -173,20 +173,27 @@ class Game(SQLModel, table=True):
 
     finished_at: datetime | None = None
 
-    winner_id: UUID | None = Field(default=None, foreign_key="user.id")
-    winner_score: int | None = None
-
 class GamePlayer(SQLModel, table=True):
 
     game_id: UUID = Field(foreign_key="game.id", primary_key=True)
     user_id: UUID = Field(foreign_key="user.id", primary_key=True)
     is_winner: bool = False
+    score: int = 0
     
     seat: int
-    rank: int | None = None
     remain_points: int = 0
     cards_left: int = 0
     is_connected: bool = True
+
+class GamePlayerDetail(SQLModel):
+    user_id: UUID
+    full_name: str
+    is_winner: bool
+    score: int
+    seat: int
+    remain_points: int
+    cards_left: int
+    is_connected: bool
 
 class UserStatistic(SQLModel, table=True):
 
@@ -202,6 +209,39 @@ class UserStatistic(SQLModel, table=True):
 
     updated_at: datetime = Field(default_factory=get_datetime_utc,sa_type=DateTime(timezone=True))
 
+class UserStatisticLevel(SQLModel):
+    current_level: int = 0
+    total_xp: int = 0
+    xp_in_current_level: int = 0
+    xp_required_for_next_level: int = 0
+    progress_percentage: float = 0
+    total_xp_for_next_level: int = 0
+
+class UserStatisticInfo(SQLModel):
+    user: UserPublic
+    total_games: int = 0
+    wins: int = 0
+    losses: int = 0
+    total_score: int = 0
+    level_info: UserStatisticLevel = UserStatisticLevel()
+
+class UserStatisticLeaderboardEntry(SQLModel):
+    rank: int
+    user_id: UUID
+    full_name: str
+    avatar: str | None = None
+    level: int
+    xp: int
+    total_rounds: int
+    total_wins: int
+    total_losses: int
+    win_rate: float
+
+class UserGameDetail(SQLModel):
+    game_id: UUID
+    is_winner: bool
+    score: int
+    finished_at: datetime | None = None
 
 class Friend(SQLModel):
     id: UUID
