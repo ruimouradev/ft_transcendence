@@ -255,3 +255,42 @@ class Game:
             if h.id == player_id:
                 return h
         raise GameError(ErrorCode.INVALID_MESSAGE, "no such player")
+
+    def _finish_or_step(self, plus4_by):
+        # a +4 win only counts after the victim answers
+        if not self._hand(plus4_by).cards:
+            self.phase = "finished"
+            self.winner = plus4_by
+            return
+        self._step(1)
+
+    def _deal(self, hand, n):
+        # hand grew, the uno call resets
+        hand.said_uno = False
+        for _ in range(n):
+            if not self.deck:
+                self._reshuffle()
+            if self.deck:
+                hand.cards.append(self.deck.pop())
+
+    def _reshuffle(self):
+        # the discard goes back into the deck, minus its top card
+        if len(self.discard) <= 1:
+            return
+        top = self.discard.pop()
+        self.rng.shuffle(self.discard)
+        self.deck = self.discard
+        self.discard = [top]
+
+    def _step(self, times):
+        self.turn = (self.turn + self.direction * times) % len(self.hands)
+
+    def _apply_effect(self, effect):
+        if effect.reverse and len(self.hands) > 2:
+            self.direction = -self.direction
+        victim = (self.turn + self.direction) % len(self.hands)
+        if effect.draw:
+            self._deal(self.hands[victim], effect.draw)
+        # with two players a reverse just skips, like the rules say
+        two_player_reverse = effect.reverse and len(self.hands) == 2
+        self._step(2 if effect.skip or two_player_reverse else 1)
