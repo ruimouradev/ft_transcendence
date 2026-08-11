@@ -12,7 +12,7 @@ from .rules import CardEffect, build_deck, effect_of, is_playable, points
 
 @dataclass(frozen=True)
 class Plus4:
-    # a +4 the victim did not answer yet, if it's usable it will be decided at play time
+    # a +4 the victim did not answer yet, legal is decided at play time
     by: str
     legal: bool
 
@@ -30,7 +30,7 @@ class Hand:
     name: str
     cards: list[Card] = field(default_factory=list)
     said_uno = False
-    connected = True  # TODO the ws layer needs a hook to flip this on rejoin
+    connected = True  # flipped by set_connected on disconnect and rejoin
 
 
 def _find(cards: list[Card], card_id: str) -> Card | None:
@@ -56,7 +56,7 @@ class Game:
         self.drawn = None
         # set while a +4 waits for the victim's draw or challenge
         self.plus4 = None
-        self.stack = 0
+        self.stack = 0  # cards the player on turn owes while +2s stack
 
     def start(self) -> None:
         if self.phase != "lobby":
@@ -82,7 +82,6 @@ class Game:
         self.seq += 1
 
     def play(self, player_id, card_id, color, uno, target=None):
-        # the seven-zero house rule will use target
         self._require_turn(player_id)
         if self.plus4:
             raise GameError(
@@ -94,6 +93,10 @@ class Game:
             raise GameError(
                 ErrorCode.CARD_NOT_IN_HAND, "card not in your hand"
             )
+        if self.stack and card.value != "+2":
+            raise GameError(
+                ErrorCode.INVALID_CARD, "answer the +2 pile or draw it"
+            )
         if self.drawn and card.id != self.drawn.id:
             raise GameError(
                 ErrorCode.INVALID_CARD, "after drawing, only the drawn card"
@@ -104,6 +107,19 @@ class Game:
             raise GameError(
                 ErrorCode.INVALID_CARD, "card matches neither color nor value"
             )
+        swap_with = None
+        if (self.settings.seven_zero and card.value == "7"
+                and len(hand.cards) > 1):
+            # a last card 7 just wins, nothing left to trade
+            if target is None:
+                raise GameError(
+                    ErrorCode.TARGET_REQUIRED, "a seven needs a target"
+                )
+            if target == player_id:
+                raise GameError(
+                    ErrorCode.INVALID_MESSAGE, "cannot swap with yourself"
+                )
+            swap_with = self._hand(target)
         # holding the color makes this a bluff, check it before the
         # color changes
         legal = not any(
@@ -125,6 +141,17 @@ class Game:
             self.phase = "finished"
             self.winner = player_id
             return
+        if self.settings.stacking and card.value == "+2":
+            # the pile is not drawn now, it passes on
+            self.stack += 2
+            self._step(1)
+            return
+        if swap_with is not None:
+            hand.cards, swap_with.cards = swap_with.cards, hand.cards
+            # both hands changed size, uno calls reset
+            hand.said_uno = swap_with.said_uno = False
+        elif self.settings.seven_zero and card.value == "0":
+            self._rotate()
         self._apply_effect(effect_of(card))
 
     def draw(self, player_id):
@@ -138,6 +165,14 @@ class Game:
             self.last = LastAction(player=player_id, kind="draw")
             self.seq += 1
             self._finish_or_step(plus4.by)
+            return
+        if self.stack:
+            # drawing takes the whole pile
+            owed, self.stack = self.stack, 0
+            self._deal(hand, owed)
+            self.last = LastAction(player=player_id, kind="draw")
+            self.seq += 1
+            self._step(1)
             return
         if self.drawn:
             raise GameError(ErrorCode.INVALID_MESSAGE, "one draw per turn")
@@ -224,6 +259,7 @@ class Game:
             direction=self.direction,
             turn=self.hands[self.turn].id if playing else None,
             draw_pile=len(self.deck),
+            stack=self.stack,
             plus4_by=self.plus4.by if self.plus4 else None,
             last_action=self.last,
             winner=self.winner,
@@ -232,17 +268,36 @@ class Game:
         )
 
     def legal_moves(self, player_id):
-        # is the base source so both the AI and the frontend can read this
+        # both the AI and the frontend read this, one source of truth
         if self.phase != "playing" or self.hands[self.turn].id != player_id:
             return []
         if self.plus4:
             return []
+        if self.stack:
+            # only a +2 answers the pile
+            return [
+                c for c in self._hand(player_id).cards if c.value == "+2"
+            ]
         top = self.discard[-1]
         # after drawing, the drawn card is the only one playable
         cards = [self.drawn] if self.drawn else self._hand(player_id).cards
         return [
             c for c in cards if is_playable(c, self.active_color, top)
         ]
+
+    def set_connected(self, player_id, connected):
+        # the ws layer calls this on a disconnect and on a rejoin, the
+        # seat itself never leaves the game
+        self._hand(player_id).connected = connected
+        self.seq += 1
+
+    def _rotate(self):
+        # every hand moves one seat in the play direction
+        n = len(self.hands)
+        cards = [h.cards for h in self.hands]
+        for i, h in enumerate(self.hands):
+            h.cards = cards[(i - self.direction) % n]
+            h.said_uno = False
 
     def _require_turn(self, player_id):
         if self.phase != "playing":
