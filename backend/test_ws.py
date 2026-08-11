@@ -1,13 +1,21 @@
 import pytest
+from fastapi import FastAPI
 from fastapi.testclient import TestClient
-from app.realtime.ws import app
+from app.realtime.ws import router
 from app.game.contract import Join
+
+app = FastAPI()
+app.include_router(router)
 
 def test_websocket():
     client = TestClient(app)
     # Join Player 1
     with client.websocket_connect("/ws/game/room1") as websocket1:
         websocket1.send_json({"type": "join", "name": "Alice"})
+        
+        welcome1 = websocket1.receive_json()
+        assert welcome1["type"] == "welcome"
+        
         data1 = websocket1.receive_json()
         print("P1 Initial State:", data1)
         assert data1["type"] == "state"
@@ -17,6 +25,10 @@ def test_websocket():
         # Join Player 2
         with client.websocket_connect("/ws/game/room1") as websocket2:
             websocket2.send_json({"type": "join", "name": "Bob"})
+            
+            welcome2 = websocket2.receive_json()
+            assert welcome2["type"] == "welcome"
+            
             data2 = websocket2.receive_json()
             print("P2 Initial State:", data2)
             assert data2["type"] == "state"
