@@ -1,9 +1,10 @@
 from dataclasses import dataclass, field
+from typing import Literal
 
 import random
 
 from .contract import (
-    Card, Color, ErrorCode, GameSettings, GameState, LastAction,
+    Card, Color, ErrorCode, GameSettings, GameState, LastAction, Phase,
     PrivateView, PublicPlayer,
 )
 
@@ -29,8 +30,8 @@ class Hand:
     id: str
     name: str
     cards: list[Card] = field(default_factory=list)
-    said_uno = False
-    connected = True  # flipped by set_connected on disconnect and rejoin
+    said_uno: bool = False
+    connected: bool = True  # flipped by set_connected on disconnect/rejoin
 
 
 def _find(cards: list[Card], card_id: str) -> Card | None:
@@ -39,23 +40,24 @@ def _find(cards: list[Card], card_id: str) -> Card | None:
 
 class Game:
     def __init__(self, players: list[tuple[str, str]],
-                 seed=None, settings=None):
+                 seed: int | None = None,
+                 settings: GameSettings | None = None) -> None:
         self.hands = [Hand(id=i, name=n) for i, n in players]
         self.settings = settings or GameSettings()
         self.rng = random.Random(seed)
-        self.deck = []
-        self.discard = []
-        self.active_color = None
-        self.direction = 1
+        self.deck: list[Card] = []
+        self.discard: list[Card] = []
+        self.active_color: Color | None = None
+        self.direction: Literal[1, -1] = 1
         self.turn = 0
-        self.phase = "lobby"
+        self.phase: Phase = "lobby"
         self.seq = 0
-        self.last = None
-        self.winner = None
+        self.last: LastAction | None = None
+        self.winner: str | None = None
         # the card just drawn, also means the player drew this turn
-        self.drawn = None
+        self.drawn: Card | None = None
         # set while a +4 waits for the victim's draw or challenge
-        self.plus4 = None
+        self.plus4: Plus4 | None = None
         self.stack = 0  # cards the player on turn owes while +2s stack
 
     def start(self) -> None:
@@ -81,7 +83,9 @@ class Game:
         self.last = LastAction(player=self.hands[0].id, kind="start")
         self.seq += 1
 
-    def play(self, player_id, card_id, color, uno, target=None):
+    def play(self, player_id: str, card_id: str,
+             color: Color | None, uno: bool,
+             target: str | None = None) -> None:
         self._require_turn(player_id)
         if self.plus4:
             raise GameError(
@@ -107,7 +111,7 @@ class Game:
             raise GameError(
                 ErrorCode.INVALID_CARD, "card matches neither color nor value"
             )
-        swap_with = None
+        swap_with: Hand | None = None
         if (self.settings.seven_zero and card.value == "7"
                 and len(hand.cards) > 1):
             # a last card 7 just wins, nothing left to trade
@@ -154,7 +158,7 @@ class Game:
             self._rotate()
         self._apply_effect(effect_of(card))
 
-    def draw(self, player_id):
+    def draw(self, player_id: str) -> None:
         self._require_turn(player_id)
         hand = self.hands[self.turn]
         if self.plus4:
@@ -186,7 +190,7 @@ class Game:
             self.drawn = None
             self._step(1)
 
-    def do_pass(self, player_id):
+    def do_pass(self, player_id: str) -> None:
         self._require_turn(player_id)
         if not self.drawn:
             raise GameError(
@@ -197,7 +201,7 @@ class Game:
         self.seq += 1
         self._step(1)
 
-    def challenge(self, player_id):
+    def challenge(self, player_id: str) -> None:
         # answer a +4 by accusing its player of holding the color
         self._require_turn(player_id)
         if not self.plus4:
@@ -215,7 +219,7 @@ class Game:
             # bluff exposed, the penalty changes hands
             self._deal(self._hand(plus4.by), penalty)
 
-    def catch(self, player_id, target_id):
+    def catch(self, player_id: str, target_id: str) -> None:
         if self.phase != "playing":
             raise GameError(ErrorCode.GAME_NOT_STARTED, "no game running")
         if player_id == target_id:
@@ -230,7 +234,7 @@ class Game:
         self.last = LastAction(player=player_id, kind="catch")
         self.seq += 1
 
-    def snapshot_for(self, player_id):
+    def snapshot_for(self, player_id: str) -> GameState:
         me = self._hand(player_id)
         # points only count when the game is over
         finished = self.phase == "finished"
@@ -267,7 +271,7 @@ class Game:
             winner_score=sum(s.points for s in seats) if finished else None,
         )
 
-    def legal_moves(self, player_id):
+    def legal_moves(self, player_id: str) -> list[Card]:
         # both the AI and the frontend read this, one source of truth
         if self.phase != "playing" or self.hands[self.turn].id != player_id:
             return []
@@ -285,13 +289,13 @@ class Game:
             c for c in cards if is_playable(c, self.active_color, top)
         ]
 
-    def set_connected(self, player_id, connected):
+    def set_connected(self, player_id: str, connected: bool) -> None:
         # the ws layer calls this on a disconnect and on a rejoin, the
         # seat itself never leaves the game
         self._hand(player_id).connected = connected
         self.seq += 1
 
-    def _rotate(self):
+    def _rotate(self) -> None:
         # every hand moves one seat in the play direction
         n = len(self.hands)
         cards = [h.cards for h in self.hands]
@@ -299,19 +303,19 @@ class Game:
             h.cards = cards[(i - self.direction) % n]
             h.said_uno = False
 
-    def _require_turn(self, player_id):
+    def _require_turn(self, player_id: str) -> None:
         if self.phase != "playing":
             raise GameError(ErrorCode.GAME_NOT_STARTED, "no game running")
         if self.hands[self.turn].id != player_id:
             raise GameError(ErrorCode.NOT_YOUR_TURN, "wait for your turn")
 
-    def _hand(self, player_id):
+    def _hand(self, player_id: str) -> Hand:
         for h in self.hands:
             if h.id == player_id:
                 return h
         raise GameError(ErrorCode.INVALID_MESSAGE, "no such player")
 
-    def _finish_or_step(self, plus4_by):
+    def _finish_or_step(self, plus4_by: str) -> None:
         # a +4 win only counts after the victim answers
         if not self._hand(plus4_by).cards:
             self.phase = "finished"
@@ -319,7 +323,7 @@ class Game:
             return
         self._step(1)
 
-    def _deal(self, hand, n):
+    def _deal(self, hand: Hand, n: int) -> None:
         # hand grew, the uno call resets
         hand.said_uno = False
         for _ in range(n):
@@ -328,7 +332,7 @@ class Game:
             if self.deck:
                 hand.cards.append(self.deck.pop())
 
-    def _reshuffle(self):
+    def _reshuffle(self) -> None:
         # the discard goes back into the deck, minus its top card
         if len(self.discard) <= 1:
             return
@@ -337,12 +341,12 @@ class Game:
         self.deck = self.discard
         self.discard = [top]
 
-    def _step(self, times):
+    def _step(self, times: int) -> None:
         self.turn = (self.turn + self.direction * times) % len(self.hands)
 
-    def _apply_effect(self, effect):
+    def _apply_effect(self, effect: CardEffect) -> None:
         if effect.reverse and len(self.hands) > 2:
-            self.direction = -self.direction
+            self.direction = -1 if self.direction == 1 else 1
         victim = (self.turn + self.direction) % len(self.hands)
         if effect.draw:
             self._deal(self.hands[victim], effect.draw)
