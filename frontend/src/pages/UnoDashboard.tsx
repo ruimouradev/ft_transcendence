@@ -133,7 +133,6 @@ export default function UnoDashboard() {
         } catch (error) {
             console.error('Error fetching player stats:', error);
         }
-        // console.log(`Active view changed to: ${activeView}`);
     }, []);
 
     return (
@@ -201,7 +200,7 @@ export default function UnoDashboard() {
                                 <Grid size={{ xs: 3 }}>
                                     <Tooltip title="Click to view all match history" arrow>
                                         <Paper
-                                            onClick={() => setActiveView('all')}
+                                            onClick={() => {setActiveView('all');setGamePlayers([]);}}
                                             sx={{
                                                 p: 2,
                                                 textAlign: 'center',
@@ -221,7 +220,7 @@ export default function UnoDashboard() {
                                 <Grid size={{ xs: 3 }}>
                                     <Tooltip title="Click to filter winning matches" arrow>
                                         <Paper
-                                            onClick={() => setActiveView('wins')}
+                                            onClick={() => {setActiveView('wins');setGamePlayers([]);}}
                                             sx={{
                                                 p: 2,
                                                 textAlign: 'center',
@@ -241,7 +240,7 @@ export default function UnoDashboard() {
                                 <Grid size={{ xs: 3 }}>
                                     <Tooltip title="Click to filter losing matches" arrow>
                                         <Paper
-                                            onClick={() => setActiveView('losses')}
+                                            onClick={() => {setActiveView('losses');setGamePlayers([]);}}
                                             sx={{
                                                 p: 2,
                                                 textAlign: 'center',
@@ -261,7 +260,7 @@ export default function UnoDashboard() {
                                 <Grid size={{ xs: 3 }}>
                                     <Tooltip title="Click to view pie chart summary" arrow>
                                         <Paper
-                                            onClick={() => setActiveView('summary')}
+                                            onClick={() => {setActiveView('summary');setGamePlayers([]);}}
                                             sx={{
                                                 p: 2,
                                                 textAlign: 'center',
@@ -371,10 +370,17 @@ export default function UnoDashboard() {
                                     </Box>
                                 )}
                             </Paper>
-                            <Paper sx={{ p: 3, minHeight: 320 }}>
+                            {gamePlayers.length > 0 && (
+                                <Paper sx={{ p: 3, minHeight: 320 }}>
+                                    <Typography variant="h6" sx={{ mb: 2 }}>Match History</Typography>
+                                    <GamePlayers players={gamePlayers} currentPlayerId={playerData.user.id} />
+                                </Paper>
+                            )}
+                   
+                            {/* <Paper sx={{ p: 3, minHeight: 320 }}>
                                 <Typography variant="h6" sx={{ mb: 2 }}>Match History</Typography>
                                 <GamePlayers players={gamePlayers} currentPlayerId={playerData.user.id} />
-                            </Paper>
+                            </Paper> */}
                         </Stack>
                     </Grid>
 
