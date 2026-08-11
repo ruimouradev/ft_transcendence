@@ -159,8 +159,9 @@ export default function UnoDashboard() {
                                                 bgcolor: 'primary.main',
                                                 fontSize: '1.75rem',
                                                 fontWeight: 'bold',
-                                                border: '3px solid #ffeb3b',
+                                                border: '0px solid #ffeb3b',
                                             }}
+                                            src={playerData.user.avatar || undefined}
                                         >
                                             U
                                         </Avatar>
