@@ -22,6 +22,8 @@ import {
     Tooltip,
 } from '@mui/material';
 
+import { api } from '../client';
+
 const unoTheme = createTheme({
     palette: {
         mode: 'dark',
@@ -57,48 +59,70 @@ const unoTheme = createTheme({
     },
 });
 
-const leaderboardData = [
-    { rank: 1, name: 'FireUno', level: 48, wins: 1250, winRate: '78%' },
-    { rank: 2, name: 'StarPlayer', level: 45, wins: 1180, winRate: '76%' },
-    { rank: 3, name: 'UnoLegend', level: 42, wins: 1095, winRate: '75%' },
-    { rank: 4, name: 'GameMaster', level: 39, wins: 980, winRate: '73%' },
-    { rank: 5, name: 'QuickPlay', level: 37, wins: 910, winRate: '71%' },
-    { rank: 6, name: 'UnoChamp', level: 35, wins: 880, winRate: '70%' },
-    { rank: 7, name: 'CardShark', level: 33, wins: 850, winRate: '69%' },
-    { rank: 8, name: 'PlaySmart', level: 31, wins: 820, winRate: '68%' },
-    { rank: 215, name: 'PlayerUno_99 (You)', level: 15, wins: 287, winRate: '69.66%', isCurrent: true },
-];
-
-const matchHistoryData = [
-    { id: '#UNO-9082', result: 'WIN', duration: '4m 12s', players: 4, score: '+150 XP', date: '2026-08-07 11:20' },
-    { id: '#UNO-9079', result: 'WIN', duration: '6m 45s', players: 2, score: '+220 XP', date: '2026-08-07 10:15' },
-    { id: '#UNO-9055', result: 'LOSS', duration: '3m 10s', players: 4, score: '-50 XP', date: '2026-08-06 21:04' },
-    { id: '#UNO-9021', result: 'WIN', duration: '8m 02s', players: 3, score: '+180 XP', date: '2026-08-06 18:30' },
-    { id: '#UNO-8990', result: 'LOSS', duration: '5m 50s', players: 4, score: '-40 XP', date: '2026-08-05 15:12' },
-    { id: '#UNO-8982', result: 'WIN', duration: '2m 40s', players: 2, score: '+130 XP', date: '2026-08-05 14:00' },
-];
-
-const playerData = {
-    username: 'Alice Joao',
-    level: 42,
-    title: 'UNO Super Master',
-    xp: 1520,
-    xpToNextLevel: 2000,
-    totalMatches: 42,
-    wins: 21,
-    losses: 21,
-    winRate: '50.00%',
-};
-
 export default function UnoDashboard() {
     // activeView state: 'summary' (pie chart), 'all' (all matches), 'wins' (only wins), 'losses' (only losses)
     const [activeView, setActiveView] = useState('summary');
+    const [playerData, setPlayerData] = useState({
+        user:{
+            email: '',
+            full_name: '',
+            avatar: '',
+            is_active: false,
+            is_superuser: false,
+            is_verified: false,
+            use2fa: false,
+            id: "",
+            created_at: '',
+        },
+        total_games: 0,
+        wins: 0,
+        losses: 0,
+        total_score: 0,
+        level_info: {
+            current_level: 0,
+            total_xp: 0,
+            xp_in_current_level: 0,
+            xp_required_for_next_level: 0,
+            progress_percentage: 0,
+            total_xp_for_next_level: 0,
+            title: ''
+        }
+    });
+    const [matchHistoryData, setMatchHistoryData] = useState([]);
+    const [leaderboardDataGlobal, setLeaderboardDataGlobal] = useState([]);
+    const [leaderboardDataFriends, setLeaderboardDataFriends] = useState([]);
 
     const filteredMatches = matchHistoryData.filter((match) => {
-        if (activeView === 'wins') return match.result === 'WIN';
-        if (activeView === 'losses') return match.result === 'LOSS';
+        if (activeView === 'wins') return match.is_winner;
+        if (activeView === 'losses') return !match.is_winner;
         return true;
     });
+
+    useEffect(() => {
+        try {
+            const fetchData = async () => {
+                const response = await api.get('/static/maininfo');
+                setPlayerData(response.data);
+                console.log('Fetched player stats:', response.data);
+
+                const response1 = await api.get('/static/staticdetails');
+                setMatchHistoryData(response1.data);
+                console.log('Fetched player stats all games:', response1.data);
+
+                const response2= await api.get('/static/leaderboard/friends');
+                setLeaderboardDataFriends(response2.data);
+                console.log('Fetched player stats friends:', response2.data);
+
+                const response3= await api.get('/static/leaderboard/global');
+                setLeaderboardDataGlobal(response3.data);
+                console.log('Fetched player stats global:', response3.data);
+            };
+            fetchData();
+        } catch (error) {
+            console.error('Error fetching player stats:', error);
+        }
+        console.log(`Active view changed to: ${activeView}`);
+    }, []);
 
     return (
         <ThemeProvider theme={unoTheme}>
@@ -143,16 +167,16 @@ export default function UnoDashboard() {
                                     </Grid>
                                     <Grid size={{ xs: 12, sm: 8 }}>
                                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                            <Typography variant="h6">{playerData.username}</Typography>
+                                            <Typography variant="h6">{playerData.user.full_name}</Typography>
                                             <Chip
-                                                label={`Lvl ${playerData.level}`}
+                                                label={`Lvl ${playerData.level_info.current_level}`}
                                                 color="secondary"
                                                 size="small"
                                                 sx={{ fontWeight: 'bold', color: '#000', height: 20 }}
                                             />
                                         </Box>
                                         <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
-                                            Title: {playerData.title} | XP: {playerData.xp.toLocaleString()}/{playerData.xpToNextLevel.toLocaleString()}
+                                            Title: {playerData.level_info.title} | XP: {playerData.total_score.toLocaleString()}/{playerData.level_info.total_xp_for_next_level.toLocaleString()}
                                         </Typography>
                                         <Box sx={{ width: '100%', mt: 1.5 }}>
                                             <LinearProgress variant="determinate" value={76} color="info" sx={{ height: 8, borderRadius: 4 }} />
@@ -176,7 +200,7 @@ export default function UnoDashboard() {
                                             }}
                                         >
                                             <Typography variant="caption" color="text.secondary">Total ↗</Typography>
-                                            <Typography variant="h6" sx={{ mt: 0.5, fontWeight: 'bold' }}>{playerData.totalMatches}</Typography>
+                                            <Typography variant="h6" sx={{ mt: 0.5, fontWeight: 'bold' }}>{playerData.total_games}</Typography>
                                         </Paper>
                                     </Tooltip>
                                 </Grid>
@@ -236,7 +260,7 @@ export default function UnoDashboard() {
                                             }}
                                         >
                                             <Typography variant="caption" color="text.secondary">Win Rate</Typography>
-                                            <Typography variant="h6" sx={{ mt: 0.5, fontWeight: 'bold', color: 'secondary.main' }}>{playerData.winRate}</Typography>
+                                            <Typography variant="h6" sx={{ mt: 0.5, fontWeight: 'bold', color: 'secondary.main' }}>{(playerData.wins / (playerData.total_games || 1) * 100).toFixed(2)}%</Typography>
                                         </Paper>
                                     </Tooltip>
                                 </Grid>
@@ -258,12 +282,12 @@ export default function UnoDashboard() {
                                                     fill="transparent"
                                                     stroke="#4caf50"
                                                     strokeWidth="5"
-                                                    strokeDasharray="50 50"
+                                                    strokeDasharray={`${(playerData.wins / (playerData.total_games || 1) * 100).toFixed(2)} ${(100 - (playerData.wins / (playerData.total_games || 1) * 100)).toFixed(2)}`}
                                                     strokeDashoffset="25"
                                                 />
                                             </svg>
                                             <Box sx={{ position: 'absolute', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                                                <Typography variant="h5" sx={{ fontWeight: 'bold', color: '#4caf50' }}>{playerData.winRate}</Typography>
+                                                <Typography variant="h5" sx={{ fontWeight: 'bold', color: '#4caf50' }}>{(playerData.wins / (playerData.total_games || 1) * 100).toFixed(2)}%</Typography>
                                                 <Typography variant="caption" color="text.secondary">Win Rate</Typography>
                                             </Box>
                                         </Box>
@@ -308,23 +332,23 @@ export default function UnoDashboard() {
                                                 </TableHead>
                                                 <TableBody>
                                                     {filteredMatches.map((match) => (
-                                                        <TableRow key={match.id} hover>
+                                                        <TableRow key={match.game_id} hover>
                                                             <TableCell component="th" scope="row" sx={{ fontFamily: 'monospace' }}>
-                                                                {match.id}
+                                                                {match.game_id.slice(0, 0) + '...' + match.game_id.slice(-5)}
                                                             </TableCell>
                                                             <TableCell>
                                                                 <Chip
-                                                                    label={match.result}
-                                                                    color={match.result === 'WIN' ? 'success' : 'error'}
+                                                                    label={match.is_winner ? "win" : "loss"}
+                                                                    color={match.is_winner ? 'success' : 'error'}
                                                                     size="small"
                                                                     sx={{ height: 20, fontSize: '0.7rem', fontWeight: 'bold' }}
                                                                 />
                                                             </TableCell>
-                                                            <TableCell sx={{ fontWeight: 'bold', color: match.result === 'WIN' ? 'success.main' : 'error.main' }}>
+                                                            <TableCell sx={{ fontWeight: 'bold', color: match.is_winner ? 'success.main' : 'error.main' }}>
                                                                 {match.score}
                                                             </TableCell>
                                                             <TableCell align="right" sx={{ color: 'text.secondary', fontSize: '0.75rem' }}>
-                                                                {match.date.split(' ')[1]}
+                                                                {match.finished_at.split('T')[0] + ' ' + match.finished_at.split('T')[1].split('.')[0]}
                                                             </TableCell>
                                                         </TableRow>
                                                     ))}
@@ -357,7 +381,7 @@ export default function UnoDashboard() {
                                         </TableRow>
                                     </TableHead>
                                     <TableBody>
-                                        {leaderboardData.map((row) => (
+                                        {leaderboardDataFriends.map((row) => (
                                             <TableRow
                                                 key={row.rank}
                                                 sx={{
@@ -372,11 +396,11 @@ export default function UnoDashboard() {
                                                     {row.rank > 3 && `#${row.rank}`}
                                                 </TableCell>
                                                 <TableCell sx={{ fontWeight: row.isCurrent ? 'bold' : 'normal' }}>
-                                                    {row.name}
+                                                    {row.full_name}
                                                 </TableCell>
                                                 <TableCell>Lvl {row.level}</TableCell>
-                                                <TableCell align="right" sx={{ fontWeight: 'bold' }}>{row.wins}</TableCell>
-                                                <TableCell align="right" sx={{ color: 'success.main', fontWeight: 'bold' }}>{row.winRate}</TableCell>
+                                                <TableCell align="right" sx={{ fontWeight: 'bold' }}>{row.total_wins}</TableCell>
+                                                <TableCell align="right" sx={{ color: 'success.main', fontWeight: 'bold' }}>{row.win_rate}%</TableCell>
                                             </TableRow>
                                         ))}
                                     </TableBody>
@@ -404,7 +428,7 @@ export default function UnoDashboard() {
                                         </TableRow>
                                     </TableHead>
                                     <TableBody>
-                                        {leaderboardData.map((row) => (
+                                        {leaderboardDataGlobal.map((row) => (
                                             <TableRow
                                                 key={row.rank}
                                                 sx={{
@@ -419,11 +443,11 @@ export default function UnoDashboard() {
                                                     {row.rank > 3 && `#${row.rank}`}
                                                 </TableCell>
                                                 <TableCell sx={{ fontWeight: row.isCurrent ? 'bold' : 'normal' }}>
-                                                    {row.name}
+                                                    {row.full_name}
                                                 </TableCell>
                                                 <TableCell>Lvl {row.level}</TableCell>
-                                                <TableCell align="right" sx={{ fontWeight: 'bold' }}>{row.wins}</TableCell>
-                                                <TableCell align="right" sx={{ color: 'success.main', fontWeight: 'bold' }}>{row.winRate}</TableCell>
+                                                <TableCell align="right" sx={{ fontWeight: 'bold' }}>{row.total_wins}</TableCell>
+                                                <TableCell align="right" sx={{ color: 'success.main', fontWeight: 'bold' }}>{row.win_rate}%</TableCell>
                                             </TableRow>
                                         ))}
                                     </TableBody>

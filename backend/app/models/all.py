@@ -216,6 +216,7 @@ class UserStatisticLevel(SQLModel):
     xp_required_for_next_level: int = 0
     progress_percentage: float = 0
     total_xp_for_next_level: int = 0
+    title: str = "Novice"
 
 class UserStatisticInfo(SQLModel):
     user: UserPublic
