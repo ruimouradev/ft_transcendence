@@ -4,9 +4,9 @@ import pydantic
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 
 from app.game.contract import (
-    Card, Catch, Challenge, Color, Draw, Error, ErrorCode, GameState,
-    Join, LastAction, Phase, Play, PlayerAction, PrivateView,
-    PublicPlayer, Start, parse_action,
+    Card, Catch, Color, Draw, Error, ErrorCode, GameState, Join,
+    LastAction, Phase, Play, PlayerAction, PrivateView, PublicPlayer,
+    Start, parse_action, Pass,
 )
 from app.game.rules import build_deck, effect_of, is_playable
 
