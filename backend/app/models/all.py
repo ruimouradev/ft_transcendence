@@ -186,8 +186,9 @@ class GamePlayer(SQLModel, table=True):
     is_connected: bool = True
 
 class GamePlayerDetail(SQLModel):
-    user_id: UUID
-    full_name: str
+    id: UUID
+    name: str
+    avatar: str | None = None
     is_winner: bool
     score: int
     seat: int

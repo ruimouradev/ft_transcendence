@@ -117,8 +117,9 @@ def get_game_player_records(session: SessionDep, current_user: CurrentUser, game
     game_player_details = []
     for user, game_player in game_player_records:
         game_player_details.append(GamePlayerDetail(
-            user_id=user.id,
-            full_name=user.full_name,
+            id=user.id,
+            name=user.full_name,
+            avatar=user.avatar,
             is_winner=game_player.is_winner,
             score=game_player.score,
             seat=game_player.seat,

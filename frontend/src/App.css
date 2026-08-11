@@ -304,3 +304,25 @@
     background-position: 200% center;
   }
 }
+
+@keyframes avatar-shine {
+  0% {
+    border-color: #67e8f9;
+    box-shadow: 0 0 4px #67e8f9;
+  }
+
+  50% {
+    border-color: #c084fc;
+    box-shadow: 0 0 12px #c084fc;
+  }
+
+  100% {
+    border-color: #fde68a;
+    box-shadow: 0 0 4px #fde68a;
+  }
+}
+
+.avatar-shine {
+  border: 2px solid;
+  animation: avatar-shine 2s ease-in-out infinite;
+}

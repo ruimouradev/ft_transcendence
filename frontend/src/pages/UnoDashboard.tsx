@@ -23,6 +23,7 @@ import {
 } from '@mui/material';
 
 import { api } from '../client';
+import GamePlayers from '../components/GamePlayers';
 
 const unoTheme = createTheme({
     palette: {
@@ -63,7 +64,7 @@ export default function UnoDashboard() {
     // activeView state: 'summary' (pie chart), 'all' (all matches), 'wins' (only wins), 'losses' (only losses)
     const [activeView, setActiveView] = useState('summary');
     const [playerData, setPlayerData] = useState({
-        user:{
+        user: {
             email: '',
             full_name: '',
             avatar: '',
@@ -91,6 +92,7 @@ export default function UnoDashboard() {
     const [matchHistoryData, setMatchHistoryData] = useState([]);
     const [leaderboardDataGlobal, setLeaderboardDataGlobal] = useState([]);
     const [leaderboardDataFriends, setLeaderboardDataFriends] = useState([]);
+    const [gamePlayers, setGamePlayers] = useState([]);
 
     const filteredMatches = matchHistoryData.filter((match) => {
         if (activeView === 'wins') return match.is_winner;
@@ -98,30 +100,40 @@ export default function UnoDashboard() {
         return true;
     });
 
+    const handleGameRowClick = async (gameId) => {
+        try {
+            const response = await api.get(`/static/game/${gameId}/players`);
+            // console.log('Fetched game players:', response.data);
+            setGamePlayers(response.data);
+        } catch (error) {
+            console.error('Error fetching game players:', error);
+        }
+    }
+
     useEffect(() => {
         try {
             const fetchData = async () => {
                 const response = await api.get('/static/maininfo');
                 setPlayerData(response.data);
-                console.log('Fetched player stats:', response.data);
+                // console.log('Fetched player stats:', response.data);
 
                 const response1 = await api.get('/static/staticdetails');
                 setMatchHistoryData(response1.data);
-                console.log('Fetched player stats all games:', response1.data);
+                // console.log('Fetched player stats all games:', response1.data);
 
-                const response2= await api.get('/static/leaderboard/friends');
+                const response2 = await api.get('/static/leaderboard/friends');
                 setLeaderboardDataFriends(response2.data);
-                console.log('Fetched player stats friends:', response2.data);
+                // console.log('Fetched player stats friends:', response2.data);
 
-                const response3= await api.get('/static/leaderboard/global');
+                const response3 = await api.get('/static/leaderboard/global');
                 setLeaderboardDataGlobal(response3.data);
-                console.log('Fetched player stats global:', response3.data);
+                // console.log('Fetched player stats global:', response3.data);
             };
             fetchData();
         } catch (error) {
             console.error('Error fetching player stats:', error);
         }
-        console.log(`Active view changed to: ${activeView}`);
+        // console.log(`Active view changed to: ${activeView}`);
     }, []);
 
     return (
@@ -333,7 +345,7 @@ export default function UnoDashboard() {
                                                 </TableHead>
                                                 <TableBody>
                                                     {filteredMatches.map((match) => (
-                                                        <TableRow key={match.game_id} hover>
+                                                        <TableRow key={match.game_id} hover onClick={() => handleGameRowClick(match.game_id)} sx={{ cursor: 'pointer' }}>
                                                             <TableCell component="th" scope="row" sx={{ fontFamily: 'monospace' }}>
                                                                 {match.game_id.slice(0, 0) + '...' + match.game_id.slice(-5)}
                                                             </TableCell>
@@ -359,7 +371,10 @@ export default function UnoDashboard() {
                                     </Box>
                                 )}
                             </Paper>
-
+                            <Paper sx={{ p: 3, minHeight: 320 }}>
+                                <Typography variant="h6" sx={{ mb: 2 }}>Match History</Typography>
+                                <GamePlayers players={gamePlayers} currentPlayerId={playerData.user.id} />
+                            </Paper>
                         </Stack>
                     </Grid>
 
@@ -397,7 +412,7 @@ export default function UnoDashboard() {
                                                     {row.rank > 3 && `#${row.rank}`}
                                                 </TableCell>
                                                 <TableCell sx={{ fontWeight: row.isCurrent ? 'bold' : 'normal' }}>
-                                                    {row.full_name}
+                                                    {row.user_id == playerData.user.id ? <Avatar src={playerData.user.avatar} className="rounded-full avatar-shine" sx={{ width: 24, height: 24 }} /> : row.full_name}
                                                 </TableCell>
                                                 <TableCell>Lvl {row.level}</TableCell>
                                                 <TableCell align="right" sx={{ fontWeight: 'bold' }}>{row.total_wins}</TableCell>
@@ -444,7 +459,7 @@ export default function UnoDashboard() {
                                                     {row.rank > 3 && `#${row.rank}`}
                                                 </TableCell>
                                                 <TableCell sx={{ fontWeight: row.isCurrent ? 'bold' : 'normal' }}>
-                                                    {row.full_name}
+                                                    {row.user_id == playerData.user.id ? <Avatar src={playerData.user.avatar} className="rounded-full avatar-shine" sx={{ width: 24, height: 24 }} /> : row.full_name}
                                                 </TableCell>
                                                 <TableCell>Lvl {row.level}</TableCell>
                                                 <TableCell align="right" sx={{ fontWeight: 'bold' }}>{row.total_wins}</TableCell>
