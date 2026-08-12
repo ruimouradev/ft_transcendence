@@ -1,4 +1,5 @@
 import React from "react";
+import {Crown} from "lucide-react";
 
 interface Player {
   id: number | string;
@@ -53,12 +54,24 @@ function PlayerCard({
         ${isCurrentPlayer ? "scale-110" : ""}
       `}
     >
+      <div
+        className={`
+          mt-1 rounded-full px-3 py-1 text-xs font-bold
+          ${
+            isWinner
+              ? "bg-yellow-400/20 text-yellow-300"
+              : "bg-slate-800/80 text-slate-300"
+          }
+        `}
+      >
+        {player.is_winner ? (<div><Crown size={14} /></div>) : ""}
+      </div>
       {/* Current player indicator */}
-      {isCurrentPlayer && (
+      {/* {isCurrentPlayer && (
         <div className="absolute -top-5 text-xs font-bold text-cyan-300">
           YOU
         </div>
-      )}
+      )} */}
 
       {/* Avatar */}
       <div
@@ -86,8 +99,6 @@ function PlayerCard({
       <div className="mt-2 max-w-[120px] truncate text-sm font-semibold text-white">
         {player.name}
       </div>
-
-      {/* Result */}
       <div
         className={`
           mt-1 rounded-full px-3 py-1 text-xs font-bold
@@ -98,8 +109,7 @@ function PlayerCard({
           }
         `}
       >
-        {player.is_winner ? "WINNER" : "LOSER"}
-        {player.is_winner ? `(+${player.score})` : ""}
+        {player.is_winner ? `+${player.score}` : ""}
       </div>
     </div>
   );

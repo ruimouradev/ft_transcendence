@@ -19,6 +19,7 @@ import {
     Chip,
     Stack,
     IconButton,
+    Popover,
     Tooltip,
 } from '@mui/material';
 
@@ -94,6 +95,16 @@ export default function UnoDashboard() {
     const [leaderboardDataFriends, setLeaderboardDataFriends] = useState([]);
     const [gamePlayers, setGamePlayers] = useState([]);
 
+    const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
+
+    const handleRowClick = (event: React.MouseEvent<HTMLElement>) => {
+        setAnchorEl(event.currentTarget);
+    };
+    const handleClose = () => {
+        setAnchorEl(null);
+    };
+    const open = Boolean(anchorEl);
+
     const filteredMatches = matchHistoryData.filter((match) => {
         if (activeView === 'wins') return match.is_winner;
         if (activeView === 'losses') return !match.is_winner;
@@ -101,6 +112,7 @@ export default function UnoDashboard() {
     });
 
     const handleGameRowClick = async (gameId) => {
+
         try {
             const response = await api.get(`/static/game/${gameId}/players`);
             // console.log('Fetched game players:', response.data);
@@ -200,7 +212,7 @@ export default function UnoDashboard() {
                                 <Grid size={{ xs: 3 }}>
                                     <Tooltip title="Click to view all match history" arrow>
                                         <Paper
-                                            onClick={() => {setActiveView('all');setGamePlayers([]);}}
+                                            onClick={() => { setActiveView('all'); setGamePlayers([]); }}
                                             sx={{
                                                 p: 2,
                                                 textAlign: 'center',
@@ -220,7 +232,7 @@ export default function UnoDashboard() {
                                 <Grid size={{ xs: 3 }}>
                                     <Tooltip title="Click to filter winning matches" arrow>
                                         <Paper
-                                            onClick={() => {setActiveView('wins');setGamePlayers([]);}}
+                                            onClick={() => { setActiveView('wins'); setGamePlayers([]); }}
                                             sx={{
                                                 p: 2,
                                                 textAlign: 'center',
@@ -240,7 +252,7 @@ export default function UnoDashboard() {
                                 <Grid size={{ xs: 3 }}>
                                     <Tooltip title="Click to filter losing matches" arrow>
                                         <Paper
-                                            onClick={() => {setActiveView('losses');setGamePlayers([]);}}
+                                            onClick={() => { setActiveView('losses'); setGamePlayers([]); }}
                                             sx={{
                                                 p: 2,
                                                 textAlign: 'center',
@@ -260,7 +272,7 @@ export default function UnoDashboard() {
                                 <Grid size={{ xs: 3 }}>
                                     <Tooltip title="Click to view pie chart summary" arrow>
                                         <Paper
-                                            onClick={() => {setActiveView('summary');setGamePlayers([]);}}
+                                            onClick={() => { setActiveView('summary'); setGamePlayers([]); }}
                                             sx={{
                                                 p: 2,
                                                 textAlign: 'center',
@@ -344,7 +356,7 @@ export default function UnoDashboard() {
                                                 </TableHead>
                                                 <TableBody>
                                                     {filteredMatches.map((match) => (
-                                                        <TableRow key={match.game_id} hover onClick={() => handleGameRowClick(match.game_id)} sx={{ cursor: 'pointer' }}>
+                                                        <TableRow key={match.game_id} hover onClick={(event) => { handleGameRowClick(match.game_id); setAnchorEl(event.currentTarget); }} sx={{ cursor: 'pointer' }}>
                                                             <TableCell component="th" scope="row" sx={{ fontFamily: 'monospace' }}>
                                                                 {match.game_id.slice(0, 0) + '...' + match.game_id.slice(-5)}
                                                             </TableCell>
@@ -370,13 +382,26 @@ export default function UnoDashboard() {
                                     </Box>
                                 )}
                             </Paper>
-                            {gamePlayers.length > 0 && (
+                            {/* {gamePlayers.length > 0 && (
                                 <Paper sx={{ p: 3, minHeight: 320 }}>
                                     <Typography variant="h6" sx={{ mb: 2 }}>Match History</Typography>
                                     <GamePlayers players={gamePlayers} currentPlayerId={playerData.user.id} />
                                 </Paper>
+                            )} */}
+
+                            <Popover open={open} anchorEl={anchorEl} onClose={handleClose}
+                                anchorOrigin={{
+                                    vertical: "top",
+                                    horizontal: "right",
+                                }} >
+                                {gamePlayers.length > 0 && (
+                                <Paper sx={{ minWidth: 400, p:3, minHeight: 220 }}>
+                                    <Typography variant="h6" sx={{ mb: 2 }}>Match History</Typography>
+                                    <GamePlayers players={gamePlayers} currentPlayerId={playerData.user.id} />
+                                </Paper>
                             )}
-                   
+                            </Popover>
+
                             {/* <Paper sx={{ p: 3, minHeight: 320 }}>
                                 <Typography variant="h6" sx={{ mb: 2 }}>Match History</Typography>
                                 <GamePlayers players={gamePlayers} currentPlayerId={playerData.user.id} />
