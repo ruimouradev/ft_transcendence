@@ -18,9 +18,11 @@ async def get_main_info(session: SessionDep, current_user: CurrentUser) -> UserS
 async def get_static_details(session: SessionDep, current_user: CurrentUser):
     return userStatisticService.get_user_all_game_detail_records(session=session, current_user=current_user)
 
+
 @router.get("/game/{game_id}/players",response_model=list[GamePlayerDetail])
 async def get_game_players(session: SessionDep, current_user: CurrentUser, game_id: str):
     return userStatisticService.get_game_player_records(session=session, current_user=current_user, game_id=game_id)
+
 
 @router.get("/leaderboard/friends", response_model=list[UserStatisticLeaderboardEntry])
 async def get_friend_leaderboard(session: SessionDep, current_user: CurrentUser):

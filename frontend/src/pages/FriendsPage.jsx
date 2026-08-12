@@ -98,12 +98,16 @@ export default function FriendsPage() {
         f.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         f.handle.toLowerCase().includes(searchQuery.toLowerCase())
     );
+    const filteredSuggestions= suggestions.filter((s) =>
+        s.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        s.handle.toLowerCase().includes(searchQuery.toLowerCase())
+    );
 
     useEffect(() => {
-        if (!user) {
-            navigate("/login", { replace: true });
-            return;
-        }
+        // if (!user) {
+        //     navigate("/login", { replace: true });
+        //     return;
+        // }
 
         const fetchFriendsData = async () => {
             try {
@@ -123,7 +127,7 @@ export default function FriendsPage() {
         fetchFriendsData();
 
         setSearchQuery('');
-    }, []);
+    }, [user]);
 
     return (
         <div className="min-h-screen bg-slate-950 text-slate-100 p-4 sm:p-8">
@@ -283,7 +287,7 @@ export default function FriendsPage() {
                 {/* ------------------------------------------------------------------ */}
                 {activeTab === 'suggested' && (
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                        {suggestions.map((item) => (
+                        {filteredSuggestions.map((item) => (
                             <div key={item.id} className="bg-slate-900 p-5 rounded-2xl border border-slate-800 flex items-center justify-between">
                                 <div className="flex items-center gap-3">
                                     <img src={item.avatar+'?v='+Date.now()} alt={item.name} className="w-12 h-12 rounded-full object-cover" />
