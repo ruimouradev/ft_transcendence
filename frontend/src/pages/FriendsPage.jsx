@@ -102,10 +102,11 @@ export default function FriendsPage() {
     useEffect(() => {
         if (!user) {
             navigate("/login", { replace: true });
+            return;
         }
 
-        try {
-            const fetchFriendsData = async () => {
+        const fetchFriendsData = async () => {
+            try {
                 const friends_response = await api.get('/friends/all');
                 setFriends(friends_response.data.friends);
 
@@ -114,15 +115,15 @@ export default function FriendsPage() {
 
                 const suggestions_response = await api.get('/friends/suggested');
                 setSuggestions(suggestions_response.data.suggestions);
-            };
+            } catch (error) {
+                showNotification('Failed to fetch friends data. Please try again later.', 'error');
+            }
+        };
 
-            fetchFriendsData();
-        } catch (error) {
-            console.error("Error fetching friends data:", error);
-        }
+        fetchFriendsData();
 
         setSearchQuery('');
-    }, [user]);
+    }, []);
 
     return (
         <div className="min-h-screen bg-slate-950 text-slate-100 p-4 sm:p-8">

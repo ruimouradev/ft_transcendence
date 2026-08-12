@@ -1,7 +1,6 @@
 import logging
 import math
-from fastapi import APIRouter
-from sqlmodel import select
+from fastapi import APIRouter,HTTPException
 
 from app.platform.service import userStatisticService
 from app.platform.deps import CurrentUser, SessionDep

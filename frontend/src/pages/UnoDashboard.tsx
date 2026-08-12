@@ -26,6 +26,8 @@ import {
 import { api } from '../client';
 import GamePlayers from '../components/GamePlayers';
 
+import { useNotification } from '../components/useNotification';
+
 const unoTheme = createTheme({
     palette: {
         mode: 'dark',
@@ -62,6 +64,8 @@ const unoTheme = createTheme({
 });
 
 export default function UnoDashboard() {
+    const { notificationNode, showNotification } = useNotification();
+
     // activeView state: 'summary' (pie chart), 'all' (all matches), 'wins' (only wins), 'losses' (only losses)
     const [activeView, setActiveView] = useState('summary');
     const [playerData, setPlayerData] = useState({
@@ -123,8 +127,8 @@ export default function UnoDashboard() {
     }
 
     useEffect(() => {
-        try {
-            const fetchData = async () => {
+        const fetchData = async () => {
+            try {
                 const response = await api.get('/static/maininfo');
                 setPlayerData(response.data);
                 // console.log('Fetched player stats:', response.data);
@@ -140,16 +144,22 @@ export default function UnoDashboard() {
                 const response3 = await api.get('/static/leaderboard/global');
                 setLeaderboardDataGlobal(response3.data);
                 // console.log('Fetched player stats global:', response3.data);
-            };
-            fetchData();
-        } catch (error) {
-            console.error('Error fetching player stats:', error);
-        }
+            } catch (error) {
+                setNotification({
+                    open: true,
+                    message: 'Failed to fetch player data. Please try again later.',
+                    severity: 'error',
+                });
+            }
+        };
+
+        fetchData();
     }, []);
 
     return (
         <ThemeProvider theme={unoTheme}>
             <CssBaseline />
+
             <Container maxWidth="xl" sx={{ py: 4 }}>
 
                 {/* Header */}
@@ -395,11 +405,11 @@ export default function UnoDashboard() {
                                     horizontal: "right",
                                 }} >
                                 {gamePlayers.length > 0 && (
-                                <Paper sx={{ minWidth: 400, p:3, minHeight: 220 }}>
-                                    <Typography variant="h6" sx={{ mb: 2 }}>Match History</Typography>
-                                    <GamePlayers players={gamePlayers} currentPlayerId={playerData.user.id} />
-                                </Paper>
-                            )}
+                                    <Paper sx={{ minWidth: 400, p: 3, minHeight: 220 }}>
+                                        <Typography variant="h6" sx={{ mb: 2 }}>Match History</Typography>
+                                        <GamePlayers players={gamePlayers} currentPlayerId={playerData.user.id} />
+                                    </Paper>
+                                )}
                             </Popover>
 
                             {/* <Paper sx={{ p: 3, minHeight: 320 }}>
@@ -432,8 +442,25 @@ export default function UnoDashboard() {
                                             <TableRow
                                                 key={row.rank}
                                                 sx={{
-                                                    backgroundColor: row.isCurrent ? 'rgba(255, 235, 59, 0.15)' : 'transparent',
-                                                    '&:last-child td, &:last-child th': { border: 0 },
+                                                    position: 'relative',
+                                                    backgroundColor:
+                                                        row.user_id === playerData.user.id
+                                                            ? 'rgba(255, 193, 7, 0.10)'
+                                                            : 'transparent',
+
+                                                    boxShadow:
+                                                        row.user_id === playerData.user.id
+                                                            ? 'inset 4px 0 0 #ffc107, 0 0 12px rgba(255, 193, 7, 0.12)'
+                                                            : 'none',
+
+                                                    transition: 'all 0.2s ease',
+
+                                                    '&:hover': {
+                                                        backgroundColor:
+                                                            row.user_id === playerData.user.id
+                                                                ? 'rgba(255, 193, 7, 0.16)'
+                                                                : 'action.hover',
+                                                    },
                                                 }}
                                             >
                                                 <TableCell component="th" scope="row">
@@ -442,8 +469,18 @@ export default function UnoDashboard() {
                                                     {row.rank === 3 && <Chip label="🥉 #3" size="small" sx={{ fontWeight: 'bold', bgcolor: '#cd7f32', color: '#fff' }} />}
                                                     {row.rank > 3 && `#${row.rank}`}
                                                 </TableCell>
-                                                <TableCell sx={{ fontWeight: row.isCurrent ? 'bold' : 'normal' }}>
-                                                    {row.user_id == playerData.user.id ? <Avatar src={playerData.user.avatar} className="rounded-full avatar-shine" sx={{ width: 24, height: 24 }} /> : row.full_name}
+                                                <TableCell sx={{ fontWeight: row.isCurrent ? 'bold' : 'normal' }} >
+                                                    {row.user_id == playerData.user.id ? <Box component="span" sx={{ ml: row.user_id == playerData.user.id ? 1 : 0 }} className="flex items-center no-wrap gap-1"><Avatar src={playerData.user.avatar} className="rounded-full avatar-shine" sx={{ width: 24, height: 24 }} /><Chip label="You" color="secondary" size="small" sx={{
+                                                        px: 0.8,
+                                                        py: 0.2,
+                                                        borderRadius: 1,
+                                                        fontSize: '0.65rem',
+                                                        fontWeight: 700,
+                                                        letterSpacing: 0.5,
+                                                        backgroundColor: 'warning.main',
+                                                        color: 'warning.contrastText',
+                                                    }} /></Box> : row.full_name}
+
                                                 </TableCell>
                                                 <TableCell>Lvl {row.level}</TableCell>
                                                 <TableCell align="right" sx={{ fontWeight: 'bold' }}>{row.total_wins}</TableCell>
@@ -479,8 +516,25 @@ export default function UnoDashboard() {
                                             <TableRow
                                                 key={row.rank}
                                                 sx={{
-                                                    backgroundColor: row.isCurrent ? 'rgba(255, 235, 59, 0.15)' : 'transparent',
-                                                    '&:last-child td, &:last-child th': { border: 0 },
+                                                    position: 'relative',
+                                                    backgroundColor:
+                                                        row.user_id === playerData.user.id
+                                                            ? 'rgba(255, 193, 7, 0.10)'
+                                                            : 'transparent',
+
+                                                    boxShadow:
+                                                        row.user_id === playerData.user.id
+                                                            ? 'inset 4px 0 0 #ffc107, 0 0 12px rgba(255, 193, 7, 0.12)'
+                                                            : 'none',
+
+                                                    transition: 'all 0.2s ease',
+
+                                                    '&:hover': {
+                                                        backgroundColor:
+                                                            row.user_id === playerData.user.id
+                                                                ? 'rgba(255, 193, 7, 0.16)'
+                                                                : 'action.hover',
+                                                    },
                                                 }}
                                             >
                                                 <TableCell component="th" scope="row">
@@ -489,8 +543,18 @@ export default function UnoDashboard() {
                                                     {row.rank === 3 && <Chip label="🥉 #3" size="small" sx={{ fontWeight: 'bold', bgcolor: '#cd7f32', color: '#fff' }} />}
                                                     {row.rank > 3 && `#${row.rank}`}
                                                 </TableCell>
-                                                <TableCell sx={{ fontWeight: row.isCurrent ? 'bold' : 'normal' }}>
-                                                    {row.user_id == playerData.user.id ? <Avatar src={playerData.user.avatar} className="rounded-full avatar-shine" sx={{ width: 24, height: 24 }} /> : row.full_name}
+                                                <TableCell sx={{ fontWeight: row.isCurrent ? 'bold' : 'normal' }} >
+                                                    {row.user_id == playerData.user.id ? <Box component="span" sx={{ ml: row.user_id == playerData.user.id ? 1 : 0 }} className="flex items-center no-wrap gap-1"><Avatar src={playerData.user.avatar} className="rounded-full avatar-shine" sx={{ width: 24, height: 24 }} /><Chip label="You" color="secondary" size="small" sx={{
+                                                        px: 0.8,
+                                                        py: 0.2,
+                                                        borderRadius: 1,
+                                                        fontSize: '0.65rem',
+                                                        fontWeight: 700,
+                                                        letterSpacing: 0.5,
+                                                        backgroundColor: 'warning.main',
+                                                        color: 'warning.contrastText',
+                                                    }} /></Box> : row.full_name}
+
                                                 </TableCell>
                                                 <TableCell>Lvl {row.level}</TableCell>
                                                 <TableCell align="right" sx={{ fontWeight: 'bold' }}>{row.total_wins}</TableCell>
