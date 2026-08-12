@@ -1,7 +1,11 @@
+import asyncio
+from time import time
 import uuid
 from typing import Any
+import logging
 
-from fastapi import APIRouter, Depends, HTTPException, status, BackgroundTasks, UploadFile
+from app.presence_manager import presence_manager
+from fastapi import APIRouter, Depends, HTTPException, status, BackgroundTasks, UploadFile, WebSocket, WebSocketDisconnect
 from sqlmodel import col, delete, func, select
 from pathlib import Path
 
@@ -32,7 +36,6 @@ from app.platform.service.mailservice import (
 )
 
 router = APIRouter(prefix="/users", tags=["users"])
-
 
 @router.get(
     "/",
@@ -300,3 +303,36 @@ def get_online_users(session: SessionDep, current_user: CurrentUser) -> Any:
 
     users_public = [UserPublic.model_validate(user) for user in users]
     return UsersPublic(data=users_public, count=len(users_public))
+
+user_presence_router = APIRouter()
+
+logger = logging.getLogger("uvicorn.error")
+
+@user_presence_router.websocket("/ws/presence/{user_id}")
+async def websocket_endpoint(websocket: WebSocket, user_id: str):
+    await presence_manager.connect(user_id, websocket)
+    try:
+        while True:
+            data = await websocket.receive_json()
+            if data.get("type") == "PING":
+                presence_manager.update_heartbeat(user_id)
+                logger.info(f"=======================> Received PING from user {user_id}.")
+                await websocket.send_json({"type": "PONG", "user_id": user_id})
+            else:
+                await presence_manager.handle_message(user_id, data)
+
+    except WebSocketDisconnect:
+        # Standard client disconnect (closed tab, navigate away, etc.)
+        logger.info(f"=======================> User {user_id} disconnected.")
+
+    except Exception as e:
+        # Unexpected server or message processing error
+        logger.error(f"=======================> Error in WebSocket connection for user {user_id}: {e}")
+
+    finally:
+        # Guaranteed cleanup regardless of how the loop exited
+        await presence_manager.disconnect(user_id)
+        logger.info(
+            f"=======================> User {user_id} disconnected. "
+            f"Current status: {presence_manager.get_status(user_id)}"
+        )

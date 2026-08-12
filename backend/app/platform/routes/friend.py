@@ -20,7 +20,7 @@ async def get_suggested_friends(session: SessionDep, current_user: CurrentUser):
                                     ),
                                     User.id.not_in(
                                         select(Friendship.requester_id).where(Friendship.addressee_id == current_user.id)
-                                    )).limit(10)
+                                    )).limit(42)
     users = session.exec(statement).all()
     user_requested = session.exec(
         select(User).join(Friendship, and_(User.id == Friendship.addressee_id, Friendship.status == FriendshipStatus.PENDING,Friendship.requester_id == current_user.id))
