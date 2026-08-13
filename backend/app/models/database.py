@@ -7,7 +7,7 @@ from app.models.all import User, UserCreate
 from app.platform.config import settings
 
 if settings.DMODE == "dev":
-    engine = create_engine(settings.DATABASE_URL, echo=False)
+    engine = create_engine(settings.DATABASE_URL, echo=True)
 else:
     engine = create_engine(settings.DATABASE_URL)
 

@@ -87,8 +87,6 @@ class UsersPublic(SQLModel):
 class Message(SQLModel):
     message: str
 
-
-
 # JSON payload containing access token
 class Token(SQLModel):
     access_token: str
@@ -110,6 +108,7 @@ class NewPassword(SQLModel):
 class ProviderType(str, Enum):
     t42 = "t42"
     local = "local"
+    api_key = "api_key"
 
 class OAuthAccountBase(SQLModel):
     provider: ProviderType
@@ -266,3 +265,7 @@ class Suggestions(SQLModel):
 class Requests(SQLModel):
     requests: list[Friend]
     count: int = 0
+
+class APIKeyContext:
+    user_id: UUID
+    api_key: str

@@ -78,7 +78,7 @@ def get_user_statistic_info(session: SessionDep, current_user: CurrentUser) -> U
     level_data = calculate_level_data(int(total_xp))
 
     return UserStatisticInfo(
-        user=UserPublic.parse_obj(current_user),
+        user=UserPublic.model_validate(current_user),
         total_games=user_xp_info.total_games,
         wins=user_xp_info.wins,
         losses=user_xp_info.losses,

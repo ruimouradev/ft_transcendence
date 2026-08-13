@@ -1,10 +1,9 @@
 import logging
-import math
-from fastapi import APIRouter,HTTPException
+from fastapi import APIRouter
 
 from app.platform.service import userStatisticService
 from app.platform.deps import CurrentUser, SessionDep
-from app.models.all import GamePlayerDetail, UserGameDetail, UserPublic, UserStatistic, UserStatisticInfo, UserStatisticLeaderboardEntry, UserStatisticLevel
+from app.models.all import GamePlayerDetail, UserGameDetail, UserStatisticInfo, UserStatisticLeaderboardEntry
 
 router = APIRouter(prefix="/static", tags=["static"])
 logger = logging.getLogger("uvicorn.error")

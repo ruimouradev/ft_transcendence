@@ -1,9 +1,12 @@
 from collections.abc import Generator
+import select
 from typing import Annotated, Optional
 
 import jwt
-from fastapi import Depends, HTTPException, status, Request
-from fastapi.security import OAuth2PasswordBearer, OAuth2
+import logging
+from app.platform.service import userservice
+from fastapi import Depends, HTTPException, status, Request, Header
+from fastapi.security import OAuth2PasswordBearer, OAuth2, APIKeyHeader
 from fastapi.security.oauth2 import OAuthFlowsModel
 from jwt.exceptions import InvalidTokenError
 from pydantic import ValidationError
@@ -12,11 +15,13 @@ from sqlmodel import Session
 from app.platform import security
 from app.platform.config import settings
 from app.models.database import engine
-from app.models.all import TokenPayload, User
+from app.models.all import OAuthAccount, ProviderType, TokenPayload, User, APIKeyContext
 
 # reusable_oauth2 = OAuth2PasswordBearer(
 #     tokenUrl=f"{settings.API_V1_STR}/login/access-token"
 # )
+
+logger = logging.getLogger("uvicorn.error")
 
 class OAuth2PasswordBearerWithCookie(OAuth2):
     def __init__(
@@ -55,7 +60,6 @@ def get_db() -> Generator[Session, None, None]:
     with Session(engine) as session:
         yield session
 
-
 SessionDep = Annotated[Session, Depends(get_db)]
 TokenDep = Annotated[str, Depends(reusable_oauth2)]
 
@@ -88,3 +92,38 @@ def get_current_active_superuser(current_user: CurrentUser) -> User:
             status_code=403, detail="The user doesn't have enough privileges"
         )
     return current_user
+
+api_key_header = APIKeyHeader(
+    name="X-API-Key",
+    auto_error=False,
+)
+
+
+async def verify_api_key(
+    session: SessionDep,
+    api_key: str | None = Depends(api_key_header),
+    user_id: str = Header(..., alias="X-User-ID"),
+) -> str:
+
+    if not api_key:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="API key is missing",
+        )
+
+    # Find the API key in your database
+    oauth_account = userservice.get_oauth_account_by_provider_and_user_id(session=session, provider=ProviderType.api_key, user_id=user_id)
+    print(f"------------------verify_api_key: user_id={user_id}, api_key={api_key}, oauth_account={oauth_account}")
+    if oauth_account is None:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid API key",
+        )
+    veryfy_result = security.verify_password(api_key, oauth_account.access_token)
+    if not veryfy_result[0]:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid API key",
+        )
+
+    return oauth_account.user_id
