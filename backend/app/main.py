@@ -3,7 +3,7 @@ import logging
 import time
 
 from app.presence_manager import presence_manager
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect
+from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 from fastapi.routing import APIRoute
 from fastapi.middleware.cors import CORSMiddleware
@@ -12,6 +12,8 @@ from sqlmodel import Session
 from app.platform.main import api_router
 from app.platform.config import settings
 from prometheus_fastapi_instrumentator import Instrumentator
+from app.realtime.ws import router as game_router
+from app.platform.routes.user import user_presence_router
 
 def custom_generate_unique_id(route: APIRoute) -> str:
     tag = route.tags[0] if route.tags else "default"
@@ -44,19 +46,22 @@ def on_startup():
 
 
 app.include_router(api_router, prefix=f"{settings.API_V1_STR}")
+app.include_router(game_router)
+app.include_router(user_presence_router)
 
+# Health check endpoint
 @app.get("/", tags=["Root"], include_in_schema=False)
 def home():
     return {"status": "Backend is running."}
 
+# filter out health check logs from uvicorn.access
 class SuppressHealthCheckFilter(logging.Filter):
     def filter(self, record: logging.LogRecord) -> bool:
         return "GET / HTTP/1.1" not in record.getMessage()
 
-# Attach the filter to Uvicorn's access logger
 logging.getLogger("uvicorn.access").addFilter(SuppressHealthCheckFilter())
-logger = logging.getLogger("uvicorn.error")
 
+# Background task to check for frontend player's heartbeat timeouts and mark them as offline if necessary
 async def check_heartbeat_timeouts():
     while True:
         await asyncio.sleep(10)
@@ -64,32 +69,3 @@ async def check_heartbeat_timeouts():
         for user_id, last_ping in list(presence_manager.last_seen.items()):
             if presence_manager.get_status(user_id) == "ONLINE" and (now - last_ping) > 25:
                 await presence_manager.disconnect(user_id, grace_period=10)
-
-@app.websocket("/ws/game/{user_id}")
-async def websocket_endpoint(websocket: WebSocket, user_id: str):
-    await presence_manager.connect(user_id, websocket)
-    try:
-        while True:
-            data = await websocket.receive_json()
-            if data.get("type") == "PING":
-                presence_manager.update_heartbeat(user_id)
-                logger.info(f"=======================> Received PING from user {user_id}.")
-                await websocket.send_json({"type": "PONG", "user_id": user_id})
-            else:
-                await presence_manager.handle_message(user_id, data)
-
-    except WebSocketDisconnect:
-        # Standard client disconnect (closed tab, navigate away, etc.)
-        logger.info(f"=======================> User {user_id} disconnected.")
-
-    except Exception as e:
-        # Unexpected server or message processing error
-        logger.error(f"=======================> Error in WebSocket connection for user {user_id}: {e}")
-
-    finally:
-        # Guaranteed cleanup regardless of how the loop exited
-        await presence_manager.disconnect(user_id)
-        logger.info(
-            f"=======================> User {user_id} disconnected. "
-            f"Current status: {presence_manager.get_status(user_id)}"
-        )

@@ -98,14 +98,19 @@ export default function FriendsPage() {
         f.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         f.handle.toLowerCase().includes(searchQuery.toLowerCase())
     );
+    const filteredSuggestions= suggestions.filter((s) =>
+        s.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        s.handle.toLowerCase().includes(searchQuery.toLowerCase())
+    );
 
     useEffect(() => {
-        if (!user) {
-            navigate("/login", { replace: true });
-        }
+        // if (!user) {
+        //     navigate("/login", { replace: true });
+        //     return;
+        // }
 
-        try {
-            const fetchFriendsData = async () => {
+        const fetchFriendsData = async () => {
+            try {
                 const friends_response = await api.get('/friends/all');
                 setFriends(friends_response.data.friends);
 
@@ -114,12 +119,12 @@ export default function FriendsPage() {
 
                 const suggestions_response = await api.get('/friends/suggested');
                 setSuggestions(suggestions_response.data.suggestions);
-            };
+            } catch (error) {
+                showNotification('Failed to fetch friends data. Please try again later.', 'error');
+            }
+        };
 
-            fetchFriendsData();
-        } catch (error) {
-            console.error("Error fetching friends data:", error);
-        }
+        fetchFriendsData();
 
         setSearchQuery('');
     }, [user]);
@@ -282,7 +287,7 @@ export default function FriendsPage() {
                 {/* ------------------------------------------------------------------ */}
                 {activeTab === 'suggested' && (
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                        {suggestions.map((item) => (
+                        {filteredSuggestions.map((item) => (
                             <div key={item.id} className="bg-slate-900 p-5 rounded-2xl border border-slate-800 flex items-center justify-between">
                                 <div className="flex items-center gap-3">
                                     <img src={item.avatar+'?v='+Date.now()} alt={item.name} className="w-12 h-12 rounded-full object-cover" />

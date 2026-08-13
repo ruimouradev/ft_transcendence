@@ -42,7 +42,7 @@ export const WebSocketProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
     cleanup();
 
-    const wsUrl = `wss://${window.location.hostname}:8443/ws/game/${user.id}`;
+    const wsUrl = `wss://${window.location.hostname}:8443/ws/presence/${user.id}`;
     const ws = new WebSocket(wsUrl);
     socketRef.current = ws;
 
