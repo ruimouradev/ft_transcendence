@@ -11,15 +11,28 @@
       "type": "stat",
       "title": "Backend up",
       "gridPos": { "h": 5, "w": 4, "x": 0, "y": 0 },
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [
+            {
+              "type": "value",
+              "options": {
+                "0": { "text": "DOWN", "color": "red" },
+                "1": { "text": "UP", "color": "green" }
+              }
+            }
+          ]
+        }
+      },
       "targets": [
-        { "refId": "A", "expr": "up" }
+        { "refId": "A", "expr": "up{job=\"backend\"}" }
       ]
     },
     {
       "id": 2,
       "type": "timeseries",
       "title": "Requests per second",
-      "gridPos": { "h": 5, "w": 10, "x": 4, "y": 0 },
+      "gridPos": { "h": 5, "w": 7, "x": 4, "y": 0 },
       "targets": [
         {
           "refId": "A",
@@ -32,7 +45,7 @@
       "id": 3,
       "type": "timeseries",
       "title": "Server errors per second",
-      "gridPos": { "h": 5, "w": 10, "x": 14, "y": 0 },
+      "gridPos": { "h": 5, "w": 6, "x": 11, "y": 0 },
       "targets": [
         {
           "refId": "A",
@@ -45,12 +58,61 @@
       "id": 4,
       "type": "timeseries",
       "title": "Request duration, 95th percentile",
-      "gridPos": { "h": 5, "w": 24, "x": 0, "y": 5 },
+      "gridPos": { "h": 5, "w": 7, "x": 17, "y": 0 },
+      "fieldConfig": { "defaults": { "unit": "s" } },
       "targets": [
         {
           "refId": "A",
           "expr": "histogram_quantile(0.95, sum by (le) (rate(http_request_duration_seconds_bucket[5m])))",
           "legendFormat": "p95"
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "type": "stat",
+      "title": "Postgres up",
+      "gridPos": { "h": 5, "w": 4, "x": 0, "y": 5 },
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [
+            {
+              "type": "value",
+              "options": {
+                "0": { "text": "DOWN", "color": "red" },
+                "1": { "text": "UP", "color": "green" }
+              }
+            }
+          ]
+        }
+      },
+      "targets": [
+        { "refId": "A", "expr": "pg_up" }
+      ]
+    },
+    {
+      "id": 6,
+      "type": "timeseries",
+      "title": "Database connections",
+      "gridPos": { "h": 5, "w": 10, "x": 4, "y": 5 },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum(pg_stat_activity_count)",
+          "legendFormat": "connections"
+        }
+      ]
+    },
+    {
+      "id": 7,
+      "type": "timeseries",
+      "title": "Transactions per second",
+      "gridPos": { "h": 5, "w": 10, "x": 14, "y": 5 },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum(rate(pg_stat_database_xact_commit[5m]))",
+          "legendFormat": "commits/s"
         }
       ]
     }
