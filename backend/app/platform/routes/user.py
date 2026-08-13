@@ -1,7 +1,7 @@
 import uuid
 from typing import Any
 import logging
-from datetime import datetime
+from datetime import datetime, timezone
 
 import jwt
 
@@ -18,6 +18,7 @@ from app.platform.deps import (
 from app.platform.config import settings
 from app.platform.security import get_password_hash, verify_password
 from app.models.all import (
+    APIKeyContext,
     Message,
     OAuthAccountCreate,
     ProviderType,
@@ -190,8 +191,8 @@ def verify_email(session: SessionDep, token: str):
     return {"message": "Email verification successful! Account has been activated."}
 
 
-@router.get("/apikey", response_model=Message)
-def get_api_key(session: SessionDep, current_user: CurrentUser) -> Message:
+@router.get("/apikey", response_model=APIKeyContext)
+def get_api_key(session: SessionDep, current_user: CurrentUser) -> APIKeyContext:
     """
     Retrieve API key for the current user.
     """
@@ -200,12 +201,13 @@ def get_api_key(session: SessionDep, current_user: CurrentUser) -> Message:
     oauth_account = userservice.get_oauth_account_by_provider_and_user_id(session=session, provider=ProviderType.api_key, user_id=current_user.id)
 
     if not oauth_account:
-        oauth_account = OAuthAccountCreate(user_id=current_user.id, provider=ProviderType.api_key.value, access_token=api_key_hash,provider_user_id="api_key",created_at=datetime.utcnow())
+        oauth_account = OAuthAccountCreate(user_id=current_user.id, provider=ProviderType.api_key.value, access_token=api_key_hash, provider_user_id="api_key", created_at=datetime.now(timezone.utc))
         userservice.create_oauth_account(session=session, oauth_account_create=oauth_account)
     else:
         userservice.update_oauth_api_key(session=session, db_oauth_account=oauth_account, api_key=api_key_hash)
 
-    return Message(message=f"Your API key is: {api_key}")
+    return APIKeyContext(client_id=current_user.id, api_key=api_key)
+
 
 @router.get("/{user_id}", response_model=UserPublic)
 def read_user_by_id(

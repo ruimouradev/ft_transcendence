@@ -58,6 +58,11 @@ class InMemoryPresenceManager:
         for user_id, status in self.statuses.items():
             logger.info(f"log user status=======================> User {user_id} status: {status}")
 
+    def get_online_players(self) -> Dict[str, str]:
+        online_players = {"id": user_id for user_id, status in self.statuses.items() if status == "ONLINE"}
+        logger.info(f"=======================> Online players: {online_players}")
+        return online_players
+
     async def handle_message(self, user_id: str, data: Dict[str, Any]):
         msg_type = data.get("type")
 

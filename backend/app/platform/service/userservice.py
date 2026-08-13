@@ -26,16 +26,15 @@ def update_user(*, session: Session, db_user: User, user_in: UserUpdate) -> Any:
     session.refresh(db_user)
     return db_user
 
+def get_user_by_id(*, session: Session, user_id: str) -> User | None:
+    statement = select(User).where(User.id == user_id)
+    session_user = session.exec(statement).first()
+    return session_user
 
 def get_user_by_email(*, session: Session, email: str) -> User | None:
     statement = select(User).where(User.email == email)
     session_user = session.exec(statement).first()
     return session_user
-
-# def get_oauth_account_by_user_id(*, session: Session, user_id: str) -> OAuthAccount | None:
-#     statement = select(OAuthAccount).where(OAuthAccount.user_id == user_id)
-#     oauth_account = session.exec(statement).first()
-#     return oauth_account
 
 def get_oauth_account_by_provider_and_user_id(*, session: Session, provider: ProviderType, user_id: str) -> OAuthAccount | None:
     statement = select(OAuthAccount).where(OAuthAccount.provider == provider, OAuthAccount.user_id == user_id)

@@ -266,6 +266,6 @@ class Requests(SQLModel):
     requests: list[Friend]
     count: int = 0
 
-class APIKeyContext:
-    user_id: UUID
+class APIKeyContext(SQLModel):
+    client_id: UUID
     api_key: str

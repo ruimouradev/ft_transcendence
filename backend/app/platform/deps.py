@@ -1,6 +1,7 @@
 from collections.abc import Generator
 import select
 from typing import Annotated, Optional
+from uuid import UUID
 
 import jwt
 import logging
@@ -15,7 +16,7 @@ from sqlmodel import Session
 from app.platform import security
 from app.platform.config import settings
 from app.models.database import engine
-from app.models.all import OAuthAccount, ProviderType, TokenPayload, User, APIKeyContext
+from app.models.all import ProviderType, TokenPayload, User
 
 # reusable_oauth2 = OAuth2PasswordBearer(
 #     tokenUrl=f"{settings.API_V1_STR}/login/access-token"
@@ -102,7 +103,7 @@ api_key_header = APIKeyHeader(
 async def verify_api_key(
     session: SessionDep,
     api_key: str | None = Depends(api_key_header),
-    user_id: str = Header(..., alias="X-User-ID"),
+    client_id: str = Header(..., alias="X-Client-ID"),
 ) -> str:
 
     if not api_key:
@@ -111,9 +112,16 @@ async def verify_api_key(
             detail="API key is missing",
         )
 
+    try:
+        UUID(client_id, version=4)
+    except ValueError:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid client ID format. Must be a valid UUID.",
+        )
     # Find the API key in your database
-    oauth_account = userservice.get_oauth_account_by_provider_and_user_id(session=session, provider=ProviderType.api_key, user_id=user_id)
-    print(f"------------------verify_api_key: user_id={user_id}, api_key={api_key}, oauth_account={oauth_account}")
+    oauth_account = userservice.get_oauth_account_by_provider_and_user_id(session=session, provider=ProviderType.api_key, user_id=client_id)
+    print(f"------------------verify_api_key: client_id={client_id}, api_key={api_key}, oauth_account={oauth_account}")
     if oauth_account is None:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
