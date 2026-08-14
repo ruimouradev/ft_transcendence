@@ -1,7 +1,8 @@
 """
 The message types the server and the client exchange. A player sends
-actions (join, start, play, draw, pass, catch), the server sends back the
-game state after each move, or an error when a move is refused.
+actions (create, join, start, play, draw, pass, catch, challenge), the
+server sends back the game state after each move, or an error when a
+move is refused.
 """
 
 from enum import Enum
@@ -23,6 +24,25 @@ class Card(BaseModel):
     id: str
     color: Color
     value: Value
+
+
+class GameSettings(BaseModel):
+    # Chosen once when a room is created. The defaults are the official
+    # game, every house rule starts off.
+    hand_size: int = Field(default=7, ge=3, le=10)
+    # A +2 may be answered with another +2, the pile grows
+    stacking: bool = False
+    # A 7 swaps hands with a player of your choice, a 0 rotates all
+    # hands in the direction of play
+    seven_zero: bool = False
+
+
+class Create(BaseModel):
+    # Opens a new room and takes the first seat. The settings are fixed
+    # here for the whole game, omitted means the official rules.
+    type: Literal["create"] = "create"
+    name: str
+    settings: GameSettings = GameSettings()
 
 
 class Join(BaseModel):
@@ -73,7 +93,7 @@ class Challenge(BaseModel):
 
 # the type field tells pydantic which model to build from the raw text
 PlayerAction = Annotated[
-    Join | Start | Play | Draw | Pass | Catch | Challenge,
+    Create | Join | Start | Play | Draw | Pass | Catch | Challenge,
     Field(discriminator="type"),
 ]
 
@@ -82,17 +102,6 @@ _action_adapter: TypeAdapter[PlayerAction] = TypeAdapter(PlayerAction)
 
 def parse_action(data: str | bytes) -> PlayerAction:
     return _action_adapter.validate_json(data)
-
-
-class GameSettings(BaseModel):
-    # Chosen once when a room is created. The defaults are the official
-    # game, every house rule starts off.
-    hand_size: int = Field(default=7, ge=3, le=10)
-    # A +2 may be answered with another +2, the pile grows
-    stacking: bool = False
-    # A 7 swaps hands with a player of your choice, a 0 rotates all
-    # hands in the direction of play
-    seven_zero: bool = False
 
 
 class ErrorCode(str, Enum):
