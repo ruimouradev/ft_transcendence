@@ -82,6 +82,9 @@ class UsersPublic(SQLModel):
     data: list[UserPublic]
     count: int
 
+class UserOnLineStatus(SQLModel):
+    user_id: UUID
+    online: str
 
 # Generic message
 class Message(SQLModel):

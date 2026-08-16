@@ -192,7 +192,7 @@ def get_global_leaderboard(session: SessionDep, current_user: CurrentUser):
         ))
         rank += 1
         
-    if current_user.id not in [entry.user_id for entry in leaderboard]:
+    if current_user and current_user.id not in [entry.user_id for entry in leaderboard]:
         # Fetch the current user's statistics
         user_statistic = session.exec(select(UserStatistic).where(UserStatistic.user_id == current_user.id)).first()
         if user_statistic:

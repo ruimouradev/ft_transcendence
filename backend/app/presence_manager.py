@@ -1,6 +1,7 @@
 import asyncio
 import time
 from typing import Any, Dict
+from app.models.all import UserOnLineStatus
 from fastapi import WebSocket
 import logging
 
@@ -58,8 +59,8 @@ class InMemoryPresenceManager:
         for user_id, status in self.statuses.items():
             logger.info(f"log user status=======================> User {user_id} status: {status}")
 
-    def get_online_players(self) -> Dict[str, str]:
-        online_players = {"id": user_id for user_id, status in self.statuses.items() if status == "ONLINE"}
+    def get_online_players(self) -> list[UserOnLineStatus]:
+        online_players = [UserOnLineStatus(user_id=user_id, online="ONLINE") for user_id, status in self.statuses.items() if status == "ONLINE"]
         logger.info(f"=======================> Online players: {online_players}")
         return online_players
 
