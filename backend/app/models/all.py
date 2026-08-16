@@ -254,6 +254,8 @@ class Friend(SQLModel):
     avatar: str | None = None
     status: FriendshipStatus | None = None
     mutual: int | None = None
+    level: int | None = None
+    title: str | None = None
     bio: str | None = None
     online: bool | None = None
 
@@ -272,3 +274,38 @@ class Requests(SQLModel):
 class APIKeyContext(SQLModel):
     client_id: UUID
     api_key: str
+
+
+class APIErrorCode(str, Enum):
+    #common operation errors
+    INVALID_OPERATION = "INVALID_OPERATION"
+    BAD_REQUEST = "BAD_REQUEST"
+
+    # business logic errors
+    FRIEND_REQUEST_NOT_FOUND = "FRIEND_REQUEST_NOT_FOUND"
+    
+    #authentication and authorization errors
+    USER_NOT_FOUND = "USER_NOT_FOUND"
+    INVALID_TOKEN = "INVALID_TOKEN"
+    INACTIVE_USER = "INACTIVE_USER"
+
+    # api key errors
+    API_KEY_MISSING = "API_KEY_MISSING"
+    INVALID_API_KEY = "INVALID_API_KEY"
+    APIKEY_NOT_EXIST = "APIKEY_NOT_EXIST"
+
+    # permission errors
+    REQUEST_NOT_FOUND = "REQUEST_NOT_FOUND"
+    FORBIDDEN = "FORBIDDEN"
+
+class APIError(Exception):
+    def __init__(self, *, status_code: int, code: APIErrorCode, msg: str, details: dict | None = None):
+        self.status_code = status_code
+        self.code = code
+        self.message = msg
+        self.details = details
+
+class ErrorResponse(SQLModel):
+    code: APIErrorCode
+    message: str
+    details: dict | None = None

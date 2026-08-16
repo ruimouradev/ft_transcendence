@@ -293,7 +293,7 @@ export default function FriendsPage() {
                                     <img src={item.avatar+'?v='+Date.now()} alt={item.name} className="w-12 h-12 rounded-full object-cover" />
                                     <div>
                                         <h4 className="font-bold text-sm">{item.name}</h4>
-                                        <p className="text-xs text-slate-400">{item.mutual} mutual friends</p>
+                                        <p className="text-xs text-slate-400">Title: {item.title} (Lvl: <span className="font-bold text-yellow-400">{item.level}</span>)</p>
                                     </div>
                                 </div>
 

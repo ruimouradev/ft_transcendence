@@ -231,7 +231,7 @@ async def callback_42(code: str, session: SessionDep):
             httponly=True,       # Prevents JS reading the token (XSS protection)
             secure=True,         # Set to True in production (HTTPS)
             samesite="lax",      # Crucial for OAuth redirects across domains
-            max_age=1800
+            max_age=1800         # 30 minutes in seconds
         )
         
         return response

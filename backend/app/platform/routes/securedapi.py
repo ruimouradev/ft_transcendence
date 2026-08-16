@@ -2,7 +2,7 @@ from uuid import UUID
 
 from app.platform.deps import SessionDep, verify_api_key
 from app.platform.service import userservice,userStatisticService
-from app.models.all import UserGameDetail, UserOnLineStatus, UserStatisticInfo, UserStatisticLeaderboardEntry
+from app.models.all import APIError, APIErrorCode, UserGameDetail, UserOnLineStatus, UserStatisticInfo, UserStatisticLeaderboardEntry
 from fastapi import APIRouter, Depends, HTTPException, status
 from app.presence_manager import presence_manager
 
@@ -41,11 +41,13 @@ async def get_user_info(session: SessionDep, user_id: str, api_key: str = Depend
     try:
         UUID(user_id, version=4)
     except ValueError:
-        raise HTTPException(status_code=400, detail="Invalid user ID format. Must be a valid UUID.")
+        raise APPError(status_code=400, code=APIErrorCode.BAD_REQUEST, msg="Invalid user ID format. Must be a valid UUID.")
+        # raise HTTPException(status_code=400, detail="Invalid user ID format. Must be a valid UUID.")
 
     user_info=userservice.get_user_by_id(session=session, user_id=user_id)
     if not user_info:
-        raise HTTPException(status_code=404, detail="User not found")
+        raise APPError(status_code=404, code=APIErrorCode.USER_NOT_FOUND, msg="User not found")
+        # raise HTTPException(status_code=404, detail="User not found")
     userStatisticInfo=userStatisticService.get_user_statistic_info(session=session, current_user=user_info)
     
     return userStatisticInfo
@@ -66,11 +68,11 @@ async def get_friend_list_with_rank(session: SessionDep, user_id: str, api_key: 
     try:
         UUID(user_id, version=4)
     except ValueError:
-        raise HTTPException(status_code=400, detail="Invalid user ID format. Must be a valid UUID.")
+        raise APIError(status_code=400, code=APIErrorCode.BAD_REQUEST, msg="Invalid user ID format. Must be a valid UUID.")
 
     user_info=userservice.get_user_by_id(session=session, user_id=user_id)
     if not user_info:
-        raise HTTPException(status_code=404, detail="User not found")
+        raise APIError(status_code=404, code=APIErrorCode.USER_NOT_FOUND, msg="User not found")
     
     friend_list_with_rank=userStatisticService.get_friend_leaderboard(session=session, current_user=user_info)
     
@@ -110,11 +112,11 @@ async def get_game_history(session: SessionDep, user_id: str, api_key: str = Dep
     try:
         UUID(user_id, version=4)
     except ValueError:
-        raise HTTPException(status_code=400, detail="Invalid user ID format. Must be a valid UUID.")
+        raise APIError(status_code=400, code=APIErrorCode.BAD_REQUEST, msg="Invalid user ID format. Must be a valid UUID.")
 
     user_info=userservice.get_user_by_id(session=session, user_id=user_id)
     if not user_info:
-        raise HTTPException(status_code=404, detail="User not found")
+        raise APIError(status_code=404, code=APIErrorCode.USER_NOT_FOUND, msg="User not found")
     
     game_history=userStatisticService.get_user_all_game_detail_records(session=session, current_user=user_info)
     
