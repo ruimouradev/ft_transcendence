@@ -37,6 +37,8 @@ class GameSettings(BaseModel):
     seven_zero: bool = False
     # How many seats the room has, humans and bots included
     max_players: int = Field(default=4, ge=2, le=4)
+    # Public rooms show up in the room list, private ones only by code
+    public: bool = False
 
 
 class Create(BaseModel):
