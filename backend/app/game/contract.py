@@ -1,8 +1,8 @@
 """
 The message types the server and the client exchange. A player sends
-actions (create, join, start, play, draw, pass, catch, challenge), the
-server sends back the game state after each move, or an error when a
-move is refused.
+actions (create, join, add_bot, remove_bot, start, play, draw, pass,
+catch, challenge), the server sends back the game state after each
+move, or an error when a move is refused.
 """
 
 from enum import Enum
@@ -35,6 +35,8 @@ class GameSettings(BaseModel):
     # A 7 swaps hands with a player of your choice, a 0 rotates all
     # hands in the direction of play
     seven_zero: bool = False
+    # How many seats the room has, humans and bots included
+    max_players: int = Field(default=4, ge=2, le=4)
 
 
 class Create(BaseModel):
@@ -50,6 +52,17 @@ class Join(BaseModel):
     name: str
     # Present when reclaiming a seat after a disconnect, from Welcome
     token: str | None = None
+
+
+class AddBot(BaseModel):
+    # Host only, in the lobby: seats an AI player on the next free chair
+    type: Literal["add_bot"] = "add_bot"
+
+
+class RemoveBot(BaseModel):
+    # Host only, in the lobby: frees the chair of that bot
+    type: Literal["remove_bot"] = "remove_bot"
+    target: str
 
 
 class Start(BaseModel):
@@ -93,7 +106,8 @@ class Challenge(BaseModel):
 
 # the type field tells pydantic which model to build from the raw text
 PlayerAction = Annotated[
-    Create | Join | Start | Play | Draw | Pass | Catch | Challenge,
+    Create | Join | AddBot | RemoveBot | Start | Play | Draw | Pass
+    | Catch | Challenge,
     Field(discriminator="type"),
 ]
 
