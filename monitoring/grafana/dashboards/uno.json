@@ -1,3 +1,80 @@
 {
-  "TODO": "the game dashboard: active rooms, players connected, games finished per hour, moves per second by kind, challenges caught vs wrong, refused moves by error code"
+  "uid": "uno-game",
+  "title": "Uno",
+  "timezone": "browser",
+  "schemaVersion": 39,
+  "refresh": "10s",
+  "time": { "from": "now-1h", "to": "now" },
+  "panels": [
+    {
+      "id": 1,
+      "type": "stat",
+      "title": "Active rooms",
+      "gridPos": { "h": 5, "w": 4, "x": 0, "y": 0 },
+      "targets": [
+        { "refId": "A", "expr": "uno_rooms_active" }
+      ]
+    },
+    {
+      "id": 2,
+      "type": "stat",
+      "title": "Players connected",
+      "gridPos": { "h": 5, "w": 4, "x": 4, "y": 0 },
+      "targets": [
+        { "refId": "A", "expr": "uno_players_connected" }
+      ]
+    },
+    {
+      "id": 3,
+      "type": "timeseries",
+      "title": "Games finished per hour",
+      "gridPos": { "h": 5, "w": 8, "x": 8, "y": 0 },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum(rate(uno_games_finished_total[1h])) * 3600",
+          "legendFormat": "games/h"
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "type": "timeseries",
+      "title": "Moves per second, by kind",
+      "gridPos": { "h": 5, "w": 8, "x": 16, "y": 0 },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum by (kind) (rate(uno_moves_total[5m]))",
+          "legendFormat": "{{kind}}"
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "type": "timeseries",
+      "title": "+4 challenges: bluffs caught vs wrong calls",
+      "gridPos": { "h": 6, "w": 12, "x": 0, "y": 5 },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum by (outcome) (rate(uno_challenges_total[1h]))",
+          "legendFormat": "{{outcome}}"
+        }
+      ]
+    },
+    {
+      "id": 6,
+      "type": "timeseries",
+      "title": "Refused moves, by error code",
+      "gridPos": { "h": 6, "w": 12, "x": 12, "y": 5 },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum by (code) (rate(uno_rejected_total[5m]))",
+          "legendFormat": "{{code}}"
+        }
+      ]
+    }
+  ]
 }

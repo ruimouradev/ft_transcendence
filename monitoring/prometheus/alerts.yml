@@ -1,2 +1,57 @@
-# 3 alert rules: BackendDown (up == 0), ErrorRateHigh (5xx rate) and
-# SlowRequests (p95 latency), each with a "for:" so it does not flap.
+# Alert rules in two groups, service and game. The thresholds are
+# first guesses, adjust them after some real games.
+
+groups:
+  - name: service
+    rules:
+      - alert: BackendDown
+        expr: up{job="backend"} == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "backend is not answering the scrape"
+
+      - alert: ErrorRateHigh
+        # 0.5 errors per second is already a lot for us
+        expr: >
+          sum(rate(http_requests_total{status=~"5.."}[5m])) > 0.5
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "server errors for 5 minutes straight"
+
+      - alert: SlowRequests
+        # half a second is very slow for a turn based game
+        expr: >
+          histogram_quantile(0.95,
+            sum by (le) (rate(http_request_duration_seconds_bucket[5m])))
+          > 0.5
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "slowest 5% of requests over 500ms for 10 minutes"
+
+  - name: game
+    rules:
+      - alert: StuckGames
+        # players online but nothing finishes, something is stuck
+        expr: >
+          uno_players_connected > 0
+          and rate(uno_games_finished_total[15m]) == 0
+        for: 15m
+        labels:
+          severity: warning
+        annotations:
+          summary: "players online but nothing finishes"
+
+      - alert: RejectionSpike
+        # too many refused moves, probably a broken client
+        expr: sum(rate(uno_rejected_total[5m])) > 1
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "over 1 refused move per second for 5 minutes"
