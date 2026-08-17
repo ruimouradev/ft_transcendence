@@ -1,6 +1,7 @@
 from dataclasses import dataclass, field
 from uuid import uuid4
 
+import jwt
 import pydantic
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 
@@ -10,6 +11,8 @@ from app.game.contract import (
     Welcome, parse_action,
 )
 from app.game.engine import Game, GameError
+from app.platform.config import settings
+from app.platform.security import ALGORITHM
 from app.realtime import metrics
 
 
@@ -21,6 +24,7 @@ class Player:
     ws: WebSocket | None  # None while the seat belongs to a bot
     connected: bool = True
     bot: bool = False
+    user: str | None = None  # account id from the login cookie
 
 
 @dataclass
@@ -40,6 +44,19 @@ def err(code: ErrorCode, msg: str) -> Error:
 
 async def reject(ws: WebSocket, code: ErrorCode, msg: str) -> None:
     await ws.send_text(err(code, msg).model_dump_json())
+
+
+def user_from_cookies(ws: WebSocket) -> str | None:
+    # The login cookie identifies the account, guests just get None
+    raw = ws.cookies.get("access_token", "")
+    if not raw.startswith("Bearer "):
+        return None
+    try:
+        payload = jwt.decode(raw[7:], settings.SECRET_KEY,
+                             algorithms=[ALGORITHM])
+    except jwt.InvalidTokenError:
+        return None
+    return str(payload.get("sub"))
 
 
 async def broadcast(room: Room) -> None:
@@ -129,9 +146,29 @@ def apply(room: Room, player: Player, action: PlayerAction) -> Error | None:
 router = APIRouter()
 
 
-async def seat_player(ws: WebSocket, room: Room, name: str) -> Player:
+@router.get("/api/rooms")
+def list_rooms() -> list[dict[str, object]]:
+    # The join screen list: public rooms still waiting in their lobby
+    out: list[dict[str, object]] = []
+    for code, room in rooms.items():
+        if not room.settings.public or room.game is None:
+            continue
+        if room.game.phase != "lobby":
+            continue
+        out.append({
+            "code": code,
+            "host": room.players[0].name if room.players else "",
+            "players": len(room.players),
+            "max_players": room.settings.max_players,
+            "settings": room.settings.model_dump(),
+        })
+    return out
+
+
+async def seat_player(ws: WebSocket, room: Room, name: str,
+                      user: str | None) -> Player:
     player = Player(id=f"p{len(room.players) + 1}", name=name,
-                    token=uuid4().hex, ws=ws)
+                    token=uuid4().hex, ws=ws, user=user)
     room.players.append(player)
     metrics.players_connected.inc()
     reseat(room)
@@ -145,6 +182,7 @@ async def seat_player(ws: WebSocket, room: Room, name: str) -> Player:
 @router.websocket("/ws/game/{room_id}")
 async def game(ws: WebSocket, room_id: str) -> None:
     await ws.accept()
+    user = user_from_cookies(ws)
     room: Room | None = None
     player: Player | None = None
     try:
@@ -167,7 +205,7 @@ async def game(ws: WebSocket, room_id: str) -> None:
                     room = Room(settings=action.settings)
                     rooms[room_id] = room
                     metrics.rooms_active.inc()
-                    player = await seat_player(ws, room, action.name)
+                    player = await seat_player(ws, room, action.name, user)
                     continue
 
                 if not isinstance(action, Join):
@@ -181,9 +219,16 @@ async def game(ws: WebSocket, room_id: str) -> None:
                                  "no such room")
                     continue
 
-                # Reconnection logic, the token from Welcome keeps the seat
+                # Reconnection: the logged in account is enough to get
+                # the seat back, the welcome token still works as before
                 existing = None
-                if action.token:
+                if user:
+                    existing = next(
+                        (p for p in room.players if p.user == user
+                         and not p.bot),
+                        None,
+                    )
+                if existing is None and action.token:
                     existing = next(
                         (p for p in room.players if p.token == action.token),
                         None,
@@ -199,11 +244,12 @@ async def game(ws: WebSocket, room_id: str) -> None:
                         metrics.players_connected.inc()
                         room.game.set_connected(player.id, True)
                         await broadcast(room)
-                elif (room.game.phase != "lobby"
+                elif ((room.game is not None
+                       and room.game.phase != "lobby")
                       or len(room.players) >= room.settings.max_players):
                     await reject(ws, ErrorCode.ROOM_FULL, "cannot join now")
                 else:
-                    player = await seat_player(ws, room, action.name)
+                    player = await seat_player(ws, room, action.name, user)
                 continue
 
             error = apply(room, player, action)
