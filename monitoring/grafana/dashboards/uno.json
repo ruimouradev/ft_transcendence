@@ -32,7 +32,7 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "sum(rate(uno_games_finished_total[1h]))",
+          "expr": "sum(rate(uno_games_finished_total[1h])) * 3600",
           "legendFormat": "games/h"
         }
       ]
@@ -58,7 +58,8 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "sum by (outcome) (rate(uno_challenges_total[1h]))"
+          "expr": "sum by (outcome) (rate(uno_challenges_total[1h]))",
+          "legendFormat": "{{outcome}}"
         }
       ]
     },
