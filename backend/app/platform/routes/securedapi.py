@@ -41,12 +41,12 @@ async def get_user_info(session: SessionDep, user_id: str):
     try:
         UUID(user_id, version=4)
     except ValueError:
-        raise APPError(status_code=400, code=APIErrorCode.BAD_REQUEST, msg="Invalid user ID format. Must be a valid UUID.")
+        raise APIError(status_code=400, code=APIErrorCode.BAD_REQUEST, msg="Invalid user ID format. Must be a valid UUID.")
         # raise HTTPException(status_code=400, detail="Invalid user ID format. Must be a valid UUID.")
 
     user_info=userservice.get_user_by_id(session=session, user_id=user_id)
     if not user_info:
-        raise APPError(status_code=404, code=APIErrorCode.USER_NOT_FOUND, msg="User not found")
+        raise APIError(status_code=404, code=APIErrorCode.USER_NOT_FOUND, msg="User not found")
         # raise HTTPException(status_code=404, detail="User not found")
     userStatisticInfo=userStatisticService.get_user_statistic_info(session=session, current_user=user_info)
     
