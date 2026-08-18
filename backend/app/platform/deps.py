@@ -96,17 +96,17 @@ async def verify_api_key(
 ) -> str:
 
     if not api_key:
-        raise APIError(status_code=400, code=APIErrorCode.API_KEY_MISSING, msg="API key is missing")
+        raise APIError(status_code=401, code=APIErrorCode.API_KEY_MISSING, msg="API key is missing")
 
     try:
         UUID(client_id, version=4)
     except ValueError:
-        raise APIError(status_code=400, code=APIErrorCode.INVALID_OPERATION, msg="Invalid client ID format. Must be a valid UUID.")
+        raise APIError(status_code=400, code=APIErrorCode.BAD_REQUEST, msg="Invalid client ID format. Must be a valid UUID.")
     oauth_account = userservice.get_oauth_account_by_provider_and_user_id(session=session, provider=ProviderType.api_key, user_id=client_id)
     if oauth_account is None:
         raise APIError(status_code=401, code=APIErrorCode.APIKEY_NOT_EXIST, msg="API key does not exist for the provided client ID")
-    veryfy_result = security.verify_password(api_key, oauth_account.access_token)
-    if not veryfy_result[0]:
+    verify_result = security.verify_password(api_key, oauth_account.access_token)
+    if not verify_result[0]:
         raise APIError(status_code=401, code=APIErrorCode.INVALID_API_KEY, msg="Invalid API key")
 
     return oauth_account.user_id
