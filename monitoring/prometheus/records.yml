@@ -1,0 +1,13 @@
+# The postgres exporter names its counters without the _total suffix,
+# so prometheus warns on every rate() over them. These rules republish
+# them under the conventional name and the dashboards use that.
+
+groups:
+  - name: renames
+    interval: 15s
+    rules:
+      - record: pg_stat_database_xact_commit_total
+        expr: pg_stat_database_xact_commit
+
+      - record: pg_stat_database_xact_rollback_total
+        expr: pg_stat_database_xact_rollback

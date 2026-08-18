@@ -111,7 +111,7 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "sum(rate(pg_stat_database_xact_commit[5m]))",
+          "expr": "sum(rate(pg_stat_database_xact_commit_total[5m]))",
           "legendFormat": "commits/s"
         }
       ]
