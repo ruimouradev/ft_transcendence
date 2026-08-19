@@ -19,6 +19,7 @@ from app.platform.config import settings
 from app.platform.security import get_password_hash, verify_password
 from app.models.all import (
     APIKeyContext,
+    APIKeyStatus,
     Message,
     OAuthAccountCreate,
     ProviderType,
@@ -191,10 +192,20 @@ def verify_email(session: SessionDep, token: str):
     return {"message": "Email verification successful! Account has been activated."}
 
 
-@router.get("/apikey", response_model=APIKeyContext)
-def get_api_key(session: SessionDep, current_user: CurrentUser) -> APIKeyContext:
+@router.get("/apikey", response_model=APIKeyStatus)
+def get_api_key(session: SessionDep, current_user: CurrentUser) -> APIKeyStatus:
     """
     Retrieve API key for the current user.
+    """
+    oauth_account = userservice.get_oauth_account_by_provider_and_user_id(session=session, provider=ProviderType.api_key, user_id=current_user.id)
+    hash_api_key = True if oauth_account else False
+
+    return APIKeyStatus(has_api_key=hash_api_key, client_id=str(current_user.id) if hash_api_key else None)
+
+@router.post("/apikey", response_model=APIKeyContext)
+def regenerate_api_key(session: SessionDep, current_user: CurrentUser) -> APIKeyContext:
+    """
+    Regenerate API key for the current user.
     """
     api_key = jwt.encode({"sub": str(current_user.id)}, settings.SECRET_KEY, algorithm="HS256")
     api_key_hash = get_password_hash(api_key)

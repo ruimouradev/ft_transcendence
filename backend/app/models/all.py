@@ -275,6 +275,9 @@ class APIKeyContext(SQLModel):
     client_id: UUID
     api_key: str
 
+class APIKeyStatus(SQLModel):
+    has_api_key: bool
+    client_id: str | None = None
 
 class APIErrorCode(str, Enum):
     #common operation errors
