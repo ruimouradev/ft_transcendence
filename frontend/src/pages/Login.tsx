@@ -54,6 +54,8 @@ export default function Login() {
     };
 
     useEffect(() => {
+        setInfo('');
+        setError('');
         const errorParam = searchParams.get('error');
         const infoParam = searchParams.get('info');
         if (infoParam) {
