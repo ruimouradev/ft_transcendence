@@ -49,7 +49,7 @@ export const WebSocketProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     ws.onopen = () => {
       setStatus('ONLINE');
       reconnectAttemptsRef.current = 0; // reset reconnect attempts on successful connection
-      console.log(`WebSocket connected for user: ${user.full_name || user.id}`);
+      console.log(`WebSocket connected for user: ${user.nick_name || user.id}`);
 
       // Start heartbeat interval
       heartbeatIntervalRef.current = setInterval(() => {

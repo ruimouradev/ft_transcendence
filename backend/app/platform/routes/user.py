@@ -7,6 +7,7 @@ import jwt
 
 from app.presence_manager import presence_manager
 from fastapi import APIRouter, Depends, HTTPException, status, BackgroundTasks, UploadFile, WebSocket, WebSocketDisconnect
+from fastapi.responses import RedirectResponse
 from sqlmodel import col, delete, func, select
 from pathlib import Path
 
@@ -81,7 +82,7 @@ def create_user(*, session: SessionDep, user_in: UserCreate) -> Any:
 
     user = userservice.create_user(session=session, user_create=user_in)
     if settings.EMAILS_ENABLED and user_in.email:
-        token = create_verification_token(user_in.email)
+        token = create_verification_token(user_in.email, expire_minutes=0)
         background_tasks.add_task(send_new_account_activation_email, user_in.email, user_in.username, token)
     return user
 
@@ -166,8 +167,8 @@ def register_user(session: SessionDep, user_in: UserRegister, background_tasks: 
     user_create.avatar = "/static/a00.jpeg"
     user = userservice.create_user(session=session, user_create=user_create)
     if settings.EMAILS_ENABLED and user_in.email:
-        token = create_verification_token(user_in.email)
-        background_tasks.add_task(send_new_account_activation_email, user_in.email, user_in.full_name, token)
+        token = create_verification_token(user_in.email, expire_minutes=0)
+        background_tasks.add_task(send_new_account_activation_email, user_in.email, user_in.nick_name, token)
     return user
 
 @router.get("/verify-email")
@@ -180,16 +181,25 @@ def verify_email(session: SessionDep, token: str):
     email = verify_token(token)
     user = userservice.get_user_by_email(session=session, email=email)
     if not user:
-        raise HTTPException(status_code=404, detail="User not found")
+        return RedirectResponse(
+                url="/login?error=Email verification failed. User not found.",
+                status_code=status.HTTP_307_TEMPORARY_REDIRECT
+            )
 
     if user.is_active:
-        return {"message": "Email already verified. No action needed."}
+        return RedirectResponse(
+                url="/login?info=Email already verified. Now you can log in.",
+                status_code=status.HTTP_307_TEMPORARY_REDIRECT
+            )
 
     user.is_active = True
     session.add(user)
     session.commit()
 
-    return {"message": "Email verification successful! Account has been activated."}
+    return RedirectResponse(
+				url="/login?info=Email verified successfully.Now You can log in.",
+				status_code=status.HTTP_307_TEMPORARY_REDIRECT
+			)
 
 
 @router.get("/apikey", response_model=APIKeyStatus)

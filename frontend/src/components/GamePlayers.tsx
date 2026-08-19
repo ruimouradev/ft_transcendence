@@ -3,7 +3,7 @@ import { Crown } from "lucide-react";
 
 interface Player {
     id: number | string;
-    name: string;
+    nick_name: string;
     avatar: string;
     is_winner: boolean;
     score: number;
@@ -88,7 +88,7 @@ function PlayerCard({
                 <div className="rounded-full bg-slate-950 p-1">
                     <img
                         src={player.avatar}
-                        alt={player.name}
+                        alt={player.nick_name}
                         className="h-12 w-12 rounded-full object-cover"
                     />
                 </div>
@@ -96,7 +96,7 @@ function PlayerCard({
 
             {/* Name */}
             <div className="mt-2 max-w-[120px] truncate text-sm font-semibold text-white">
-                {player.name}
+                {player.nick_name}
             </div>
             <div
                 className={`

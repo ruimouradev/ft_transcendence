@@ -10,7 +10,7 @@ build:
 vinit:
 	@mkdir -p ${DBDATAPATH}
 	
-dev:
+dev: vinit
 	docker compose -f ./docker-compose.yml up db backend frontend adminer nginx
 
 down:
