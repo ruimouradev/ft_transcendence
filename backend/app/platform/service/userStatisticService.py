@@ -151,7 +151,7 @@ def get_game_player_records(session: SessionDep, current_user: CurrentUser, game
     for user, game_player in game_player_records:
         game_player_details.append(GamePlayerDetail(
             id=user.id,
-            name=user.full_name,
+            nick_name=user.nick_name,
             avatar=user.avatar,
             is_winner=game_player.is_winner,
             score=game_player.score,
@@ -181,7 +181,7 @@ def get_global_leaderboard(session: SessionDep, current_user: CurrentUser):
         leaderboard.append(UserStatisticLeaderboardEntry(
             rank=rank,
             user_id=user.id,
-            full_name=user.full_name,
+            nick_name=user.nick_name,
             avatar=user.avatar,
             level=level_data.current_level,
             xp=user_statistic.total_score,
@@ -204,7 +204,7 @@ def get_global_leaderboard(session: SessionDep, current_user: CurrentUser):
             leaderboard.append(UserStatisticLeaderboardEntry(
                 rank=rank,
                 user_id=current_user.id,
-                full_name=current_user.full_name,
+                nick_name=current_user.nick_name,
                 avatar=current_user.avatar,
                 level=level_data.current_level,
                 xp=user_statistic.total_score,
@@ -243,7 +243,7 @@ def get_friend_leaderboard(session: SessionDep, current_user: CurrentUser):
         leaderboard.append(UserStatisticLeaderboardEntry(
             rank=rank,
             user_id=user.id,
-            full_name=user.full_name,
+            nick_name=user.nick_name,
             avatar=user.avatar,
             level=level_data.current_level,
             xp=user_statistic.total_score,

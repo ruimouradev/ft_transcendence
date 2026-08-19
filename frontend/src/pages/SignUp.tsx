@@ -34,8 +34,7 @@ import myIcon from '../assets/i42.ico';
 export default function SignUp() {
   const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState({
-    firstName: '',
-    lastName: '',
+    nickName: '',
     email: '',
     password: '',
     confirmPassword: '',
@@ -75,8 +74,12 @@ export default function SignUp() {
       setError('Email is required.');
       return;
     }
-    if (!formData.firstName || !formData.lastName) {
-      setError('First name and last name are required.');
+    if (!formData.nickName) {
+      setError('Nick name is required.');
+      return;
+    }
+    if(formData.nickName.length < 3 || formData.nickName.length > 20) {
+      setError('Nick name must be between 3 and 20 characters long.');
       return;
     }
     if (!formData.agreeTerms) {
@@ -84,17 +87,16 @@ export default function SignUp() {
       return;
     }
     setError('');
-    console.log('Form Submitted:', formData);
     // Add registration API call here
     try {
       const params = {
         'email': formData.email,
         'password': formData.password,
-        'full_name': formData.firstName + ' ' + formData.lastName
+        'nick_name': formData.nickName
       }
       const response = await axios.post('/api/v1/users/signup', params, { withCredentials: true });
-      if (response.data.id) {
-        navigate('/', { replace: true });
+      if (response?.data?.id) {
+        navigate('/login?info=Account created successfully,check your email for verification', { replace: true });
       }
     } catch (error) {
       if (axios.isAxiosError(error)) {
@@ -146,27 +148,15 @@ export default function SignUp() {
         {error && <Alert severity="error" sx={{ width: '100%', mb: 2 }}>{error}</Alert>}
         <Box component="form" onSubmit={handleSubmit} noValidate sx={{ mt: 1 }}>
           <Grid container spacing={2}>
-            <Grid size={{ xs: 12, sm: 6 }}>
+            <Grid size={{ xs: 12 }}>
               <TextField
-                name="firstName"
+                name="nickName"
                 required
                 fullWidth
-                id="firstName"
-                label="First Name"
+                id="nickName"
+                label="Nick Name"
                 autoFocus
-                value={formData.firstName}
-                onChange={handleChange}
-              />
-            </Grid>
-            <Grid size={{ xs: 12, sm: 6 }}>
-              <TextField
-
-                name="lastName"
-                required
-                fullWidth
-                id="lastName"
-                label="Last Name"
-                value={formData.lastName}
+                value={formData.nickName}
                 onChange={handleChange}
               />
             </Grid>

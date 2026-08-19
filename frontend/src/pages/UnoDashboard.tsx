@@ -70,7 +70,7 @@ export default function UnoDashboard() {
     const [playerData, setPlayerData] = useState<any>({
         user: {
             email: '',
-            full_name: '',
+            nick_name: '',
             avatar: '',
             is_active: false,
             is_superuser: false,
@@ -200,7 +200,7 @@ export default function UnoDashboard() {
                                     </Grid>
                                     <Grid size={{ xs: 12, sm: 8 }}>
                                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                            <Typography variant="h6">{playerData.user.full_name}</Typography>
+                                            <Typography variant="h6">{playerData.user.nick_name}</Typography>
                                             <Chip
                                                 label={`Lvl ${playerData.level_info.current_level}`}
                                                 color="secondary"
@@ -478,7 +478,7 @@ export default function UnoDashboard() {
                                                         letterSpacing: 0.5,
                                                         backgroundColor: 'warning.main',
                                                         color: 'warning.contrastText',
-                                                    }} /></Box> : row.full_name}
+                                                    }} /></Box> : row.nick_name}
 
                                                 </TableCell>
                                                 <TableCell>Lvl {row.level}</TableCell>
@@ -552,7 +552,7 @@ export default function UnoDashboard() {
                                                         letterSpacing: 0.5,
                                                         backgroundColor: 'warning.main',
                                                         color: 'warning.contrastText',
-                                                    }} /></Box> : row.full_name}
+                                                    }} /></Box> : row.nick_name}
 
                                                 </TableCell>
                                                 <TableCell>Lvl {row.level}</TableCell>

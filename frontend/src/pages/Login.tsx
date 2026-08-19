@@ -26,7 +26,7 @@ import {
 
 import myIcon from '../assets/i42.ico';
 import axios from 'axios';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../components/AuthContext';
 
 export default function Login() {
@@ -37,10 +37,12 @@ export default function Login() {
     });
     const [showPassword, setShowPassword] = useState(false);
     const [error, setError] = useState('');
+    const [info, setInfo] = useState('');
     const [loading, setLoading] = useState(false);
     const {user, login } = useAuth();
 
     const navigate = useNavigate();
+    const [searchParams] = useSearchParams();
 
     const handleChange = (e) => {
         const { name, value, checked, type } = e.target;
@@ -51,9 +53,18 @@ export default function Login() {
         if (error) setError('');
     };
 
-    const navigateSignUp = () => {
-        navigate('/signup');
-    };
+    useEffect(() => {
+        const errorParam = searchParams.get('error');
+        const infoParam = searchParams.get('info');
+        if (infoParam) {
+            setInfo(infoParam);
+        }
+        if (errorParam === 'oauth2_error') {
+            setError('Login failed: OAuth2 error.');
+        }else{
+            setError(errorParam || '');
+        }
+    }, [searchParams]);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -119,6 +130,11 @@ export default function Login() {
                             {error}
                         </Alert>
                     )}
+                    {info && (
+                        <Alert severity="success" sx={{ width: '100%', mb: 2 }}>
+                            {info}
+                        </Alert>
+                    )}
 
                     {/* Login Form */}
                     <Box component="form" onSubmit={handleSubmit} noValidate sx={{ width: '100%' }}>
@@ -159,31 +175,6 @@ export default function Login() {
                             }}
                         />
 
-                        {/* <Box
-            sx={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                mt: 1,
-                mb: 2,
-            }}
-            >
-            <FormControlLabel
-                control={
-                <Checkbox
-                    name="rememberMe"
-                    checked={formData.rememberMe}
-                    onChange={handleChange}
-                    color="primary"
-                />
-                }
-                label={<Typography variant="body2">Remember me</Typography>}
-            />
-            <Link href="#" variant="body2" underline="hover">
-                Forgot password?
-            </Link>
-            </Box> */}
-
                         <Button
                             type="submit"
                             fullWidth
@@ -219,15 +210,6 @@ export default function Login() {
                             >
                                 Login 42
                             </Button>
-                            {/* <Button
-                                fullWidth
-                                variant="outlined"
-                                startIcon={<GitHubIcon />}
-                                onClick={() => alert('GitHub Login')}
-                                sx={{ textTransform: 'none', borderRadius: 2 }}
-                            >
-                                GitHub
-                            </Button> */}
                         </Box>
 
                         {/* Footer Sign Up Link */}

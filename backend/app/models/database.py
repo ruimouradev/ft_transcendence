@@ -19,6 +19,7 @@ def init_db(session: Session)-> None:
         user_in = UserCreate(
             email=settings.FIRST_SUPERUSER,
             password=settings.FIRST_SUPERUSER_PASSWORD,
+            nick_name="Superuser",
             is_superuser=True,
             is_active=True
         )

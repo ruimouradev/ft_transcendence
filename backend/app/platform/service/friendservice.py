@@ -26,9 +26,9 @@ def get_suggested_friends(session: Session, current_user: CurrentUser)-> list[Fr
 
     friends = []
     if user_requested_result:
-        friends.extend([Friend(id=user.id, name=user.full_name, handle=user.full_name, avatar=user.avatar, status=FriendshipStatus.PENDING, level=calculate_level_data(user_statistic.total_score).current_level, title=calculate_level_data(user_statistic.total_score).title) for user, user_statistic in user_requested_result])
+        friends.extend([Friend(id=user.id, nick_name=user.nick_name, handle=user.nick_name, avatar=user.avatar, status=FriendshipStatus.PENDING, level=calculate_level_data(user_statistic.total_score).current_level, title=calculate_level_data(user_statistic.total_score).title) for user, user_statistic in user_requested_result])
     if users_result:
-        friends.extend([Friend(id=user.id, name=user.full_name, handle=user.full_name, avatar=user.avatar, status=None, level=calculate_level_data(user_statistic.total_score).current_level, title=calculate_level_data(user_statistic.total_score).title) for user, user_statistic in users_result])
+        friends.extend([Friend(id=user.id, nick_name=user.nick_name, handle=user.nick_name, avatar=user.avatar, status=None, level=calculate_level_data(user_statistic.total_score if user_statistic and user_statistic.total_score is not None else 0).current_level, title=calculate_level_data(user_statistic.total_score if user_statistic and user_statistic.total_score is not None else 0).title) for user, user_statistic in users_result])
 
     return friends
 
@@ -51,7 +51,7 @@ def get_all_friends(session: Session, current_user: CurrentUser, skip: int = 0, 
                 blocked = bool(friendship.blocked_by_req)
             elif friendship.addressee_id == current_user.id:
                 blocked = bool(friendship.blocked_by_add)
-            friends.append(Friend(id=user.id, name=user.full_name, handle=user.full_name, avatar=user.avatar, level=calculate_level_data(user_statistic.total_score).current_level, title=calculate_level_data(user_statistic.total_score).title, status=(FriendshipStatus.BLOCKED if blocked else FriendshipStatus.ACCEPTED), online=presence_manager.is_online(str(user.id))))
+            friends.append(Friend(id=user.id, nick_name=user.nick_name, handle=user.nick_name, avatar=user.avatar, level=calculate_level_data(user_statistic.total_score).current_level, title=calculate_level_data(user_statistic.total_score).title, status=(FriendshipStatus.BLOCKED if blocked else FriendshipStatus.ACCEPTED), online=presence_manager.is_online(str(user.id))))
 
     return friends
 
@@ -67,7 +67,7 @@ def get_pending_friends(session: Session, current_user: CurrentUser, skip: int =
     friends = []
     if result:
         for user, user_statistic in result:
-            friends.append(Friend(id=user.id, name=user.full_name, handle=user.full_name, avatar=user.avatar, level=calculate_level_data(user_statistic.total_score).current_level, title=calculate_level_data(user_statistic.total_score).title, status=FriendshipStatus.PENDING))
+            friends.append(Friend(id=user.id, nick_name=user.nick_name, handle=user.nick_name, avatar=user.avatar, level=calculate_level_data(user_statistic.total_score).current_level, title=calculate_level_data(user_statistic.total_score).title, status=FriendshipStatus.PENDING))
 
     return friends
 

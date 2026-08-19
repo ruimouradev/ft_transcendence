@@ -11,7 +11,7 @@ import axios from 'axios';
 import defaultAvatar from '../assets/avatar/a00.jpeg';
 
 interface UserProfile {
-    full_name: string;
+    nick_name: string;
     email: string;
     avatar: string;
     is_superuser: boolean;
@@ -100,7 +100,7 @@ export default function UserMenu() {
                     <div className="flex items-center gap-4">
                         <img src={user?.avatar || defaultAvatar} className="w-12 h-12 rounded-full" />
                         <div>
-                            <div>{user?.full_name}</div>
+                            <div>{user?.nick_name}</div>
                             <div className="text-sm text-gray-400">
                                 {user?.is_superuser ? 'Super User' : 'User'}
                             </div>

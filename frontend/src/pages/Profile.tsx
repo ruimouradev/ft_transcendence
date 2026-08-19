@@ -43,21 +43,17 @@ export default function ProfileCard() {
 
     const [uploading, setUploading] = useState(false);
     const [isEditingName, setIsEditingName] = useState(false);
-    const [firstName, setFirstName] = useState('');
-    const [lastName, setLastName] = useState('');
+    const [nickName, setNickName] = useState('');
     const fileInputRef = useRef<HTMLInputElement | null>(null);
 
     useEffect(() => {
-        if (!user?.full_name) {
-            setFirstName('');
-            setLastName('');
+        if (!user?.nick_name) {
+            setNickName('');
             return;
         }
 
-        const parts = user.full_name.trim().split(/\s+/);
-        setFirstName(parts[0] || '');
-        setLastName(parts.slice(1).join(' '));
-    }, [user?.full_name]);
+        setNickName(user.nick_name);
+    }, [user?.nick_name]);
 
     const handleAvatarClick = () => {
         if (fileInputRef.current) {
@@ -116,37 +112,34 @@ export default function ProfileCard() {
     const handleNameSave = async () => {
         if (!user) return;
 
-        const newFullName = [firstName.trim(), lastName.trim()].filter(Boolean).join(' ');
+        const newNickName = nickName.trim();
         try {
-            await api.patch('/users/me', { full_name: newFullName }, { withCredentials: true });
+            await api.patch('/users/me', { nick_name: newNickName }, { withCredentials: true });
         } catch (error) {
             setNotification({
                 open: true,
-                message: 'Failed to update name. Please try again.',
+                message: 'Failed to update nickName. Please try again.',
                 severity: 'error',
             });
             return;
         }
-        login({ ...user, full_name: newFullName || user.full_name });
+        login({ ...user, nick_name: newNickName || user.nick_name });
         setIsEditingName(false);
         setNotification({
             open: true,
-            message: 'Name updated successfully.',
+            message: 'NickName updated successfully.',
             severity: 'success',
         });
     };
 
     const handleNameCancel = () => {
-        if (!user?.full_name) {
-            setFirstName('');
-            setLastName('');
+        if (!user?.nick_name) {
+            setNickName('');
             setIsEditingName(false);
             return;
         }
 
-        const parts = user.full_name.trim().split(/\s+/);
-        setFirstName(parts[0] || '');
-        setLastName(parts.slice(1).join(' '));
+        setNickName(user.nick_name);
         setIsEditingName(false);
     };
 
@@ -190,7 +183,7 @@ export default function ProfileCard() {
                     <Tooltip title={uploading ? "Uploading..." : "Click to change avatar"} arrow>
                         <Avatar
                             src={user.avatar}
-                            alt={user.full_name}
+                            alt={user.nick_name}
                             onClick={handleAvatarClick}
                             sx={{
                                 width: 100,
@@ -208,7 +201,7 @@ export default function ProfileCard() {
                                 },
                             }}
                         >
-                            {user.full_name ? user.full_name.charAt(0).toUpperCase() : 'U'}
+                            {user.nick_name ? user.nick_name.charAt(0).toUpperCase() : 'U'}
                         </Avatar>
                     </Tooltip>
                         <input
@@ -226,17 +219,10 @@ export default function ProfileCard() {
                             <Stack spacing={1} sx={{ width: '100%', alignItems: 'center' }}>
                                 <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1} sx={{ width: '100%', justifyContent: 'center' }}>
                                     <TextField
-                                        label="First name"
+                                        label="Nick name"
                                         size="small"
-                                        value={firstName}
-                                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFirstName(e.target.value)}
-                                        sx={{ minWidth: 140 }}
-                                    />
-                                    <TextField
-                                        label="Last name"
-                                        size="small"
-                                        value={lastName}
-                                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => setLastName(e.target.value)}
+                                        value={nickName}
+                                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNickName(e.target.value)}
                                         sx={{ minWidth: 140 }}
                                     />
                                 </Stack>
@@ -257,7 +243,7 @@ export default function ProfileCard() {
                                 onDoubleClick={handleNameDoubleClick}
                                 sx={{ cursor: 'pointer', userSelect: 'none' }}
                             >
-                                {user.full_name}
+                                {user.nick_name}
                             </Typography>
                         )}
 

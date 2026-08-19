@@ -15,8 +15,9 @@ class UserBase(SQLModel):
     email: EmailStr = Field(unique=True, index=True, max_length=255)
     is_active: bool = False
     is_superuser: bool = False
-    full_name: str | None = Field(default=None, max_length=255)
+    nick_name: str | None = Field(default=None, max_length=50)
     avatar: str | None = Field(default=None, max_length=255)
+    card_back: str | None = Field(default=None, max_length=255)
     use2fa: bool = False
 
 
@@ -28,7 +29,7 @@ class UserCreate(UserBase):
 class UserRegister(SQLModel):
     email: EmailStr = Field(max_length=255)
     password: str = Field(min_length=8, max_length=128)
-    full_name: str | None = Field(default=None, max_length=255)
+    nick_name: str | None = Field(default=None, max_length=50)
 
 # Properties to receive via API on update, all are optional
 class UserUpdate(UserBase):
@@ -37,7 +38,7 @@ class UserUpdate(UserBase):
 
 
 class UserUpdateMe(SQLModel):
-    full_name: str | None = Field(default=None, max_length=255)
+    nick_name: str | None = Field(default=None, max_length=50)
     email: EmailStr | None = Field(default=None, max_length=255)
 
 
@@ -189,7 +190,7 @@ class GamePlayer(SQLModel, table=True):
 
 class GamePlayerDetail(SQLModel):
     id: UUID
-    name: str
+    nick_name: str
     avatar: str | None = None
     is_winner: bool
     score: int
@@ -232,7 +233,7 @@ class UserStatisticInfo(SQLModel):
 class UserStatisticLeaderboardEntry(SQLModel):
     rank: int
     user_id: UUID
-    full_name: str
+    nick_name: str
     avatar: str | None = None
     level: int
     xp: int
@@ -249,7 +250,7 @@ class UserGameDetail(SQLModel):
 
 class Friend(SQLModel):
     id: UUID
-    name: str
+    nick_name: str
     handle: str
     avatar: str | None = None
     status: FriendshipStatus | None = None
