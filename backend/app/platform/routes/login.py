@@ -173,6 +173,12 @@ async def callback_42(code: str, session: SessionDep):
     }
     async with httpx.AsyncClient() as client:
         response = await client.post(token_url, data=data)
+        if response.status_code != 200 or response.is_error:
+            response=RedirectResponse(
+                url="/login",
+                status_code=status.HTTP_307_TEMPORARY_REDIRECT
+            )
+            return response;
         response_data = response.json()
         access_token = response_data.get("access_token")
         if not access_token:
@@ -181,13 +187,12 @@ async def callback_42(code: str, session: SessionDep):
                 status_code=status.HTTP_307_TEMPORARY_REDIRECT
             )
             return response;
-            # raise HTTPException(status_code=400, detail="Failed to obtain access token from 42 API")
         
         # Use the access token to get user info
         user_info_url = "https://api.intra.42.fr/v2/me"
         headers = {"Authorization": f"Bearer {access_token}"}
         user_response = await client.get(user_info_url, headers=headers)
-        if user_response.status_code != 200:
+        if user_response.status_code != 200 or user_response.is_error:
             response=RedirectResponse(
 				url="/login",
 				status_code=status.HTTP_307_TEMPORARY_REDIRECT
