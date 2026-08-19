@@ -34,11 +34,8 @@ type NotificationState = {
 };
 
 const cardBacks = [
-  "/src/assets/avatar/a00.jpeg",
-  "/src/assets/avatar/a01.jpeg",
-  "/src/assets/avatar/a02.jpg",
-  "/src/assets/avatar/a03.jpeg",
-  "/src/assets/avatar/a04.jpg",
+  "/src/assets/cardbacks/cardback01.jpeg",
+  "/src/assets/cardbacks/cardback02.jpeg",
 ];
 
 export default function ProfileCard() {
@@ -190,8 +187,9 @@ export default function ProfileCard() {
                         <CardBackSelector
                             cardBacks={cardBacks}
                             value={user.card_back}
-                            onChange={(newCardBack) => {
-                                api.patch('/users/me', { card_back: newCardBack }, { withCredentials: true })
+                            onChange={async (newCardBack) => {
+                                console.log('Selected card back:', newCardBack);
+                                await api.patch('/users/me', { card_back: newCardBack }, { withCredentials: true })
                                     .then(() => {
                                         login({ ...user, card_back: newCardBack });
                                         setNotification({

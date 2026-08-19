@@ -39,6 +39,7 @@ class UserUpdate(UserBase):
 
 class UserUpdateMe(SQLModel):
     nick_name: str | None = Field(default=None, max_length=50)
+    card_back: str | None = Field(default=None, max_length=255)
     email: EmailStr | None = Field(default=None, max_length=255)
 
 
