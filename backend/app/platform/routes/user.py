@@ -1,8 +1,9 @@
-import asyncio
-from time import time
 import uuid
 from typing import Any
 import logging
+from datetime import datetime, timezone
+
+import jwt
 
 from app.presence_manager import presence_manager
 from fastapi import APIRouter, Depends, HTTPException, status, BackgroundTasks, UploadFile, WebSocket, WebSocketDisconnect
@@ -17,7 +18,11 @@ from app.platform.deps import (
 from app.platform.config import settings
 from app.platform.security import get_password_hash, verify_password
 from app.models.all import (
+    APIKeyContext,
+    APIKeyStatus,
     Message,
+    OAuthAccountCreate,
+    ProviderType,
     UpdatePassword,
     User,
     UserCreate,
@@ -34,6 +39,7 @@ from app.platform.service.mailservice import (
     create_verification_token,
     send_new_account_activation_email,
 )
+from app.platform.deps import get_current_user
 
 router = APIRouter(prefix="/users", tags=["users"])
 
@@ -185,6 +191,35 @@ def verify_email(session: SessionDep, token: str):
 
     return {"message": "Email verification successful! Account has been activated."}
 
+
+@router.get("/apikey", response_model=APIKeyStatus)
+def get_api_key(session: SessionDep, current_user: CurrentUser) -> APIKeyStatus:
+    """
+    Retrieve API key for the current user.
+    """
+    oauth_account = userservice.get_oauth_account_by_provider_and_user_id(session=session, provider=ProviderType.api_key, user_id=current_user.id)
+    hash_api_key = True if oauth_account else False
+
+    return APIKeyStatus(has_api_key=hash_api_key, client_id=str(current_user.id) if hash_api_key else None)
+
+@router.post("/apikey", response_model=APIKeyContext)
+def regenerate_api_key(session: SessionDep, current_user: CurrentUser) -> APIKeyContext:
+    """
+    Regenerate API key for the current user.
+    """
+    api_key = jwt.encode({"sub": str(current_user.id)}, settings.SECRET_KEY, algorithm="HS256")
+    api_key_hash = get_password_hash(api_key)
+    oauth_account = userservice.get_oauth_account_by_provider_and_user_id(session=session, provider=ProviderType.api_key, user_id=current_user.id)
+
+    if not oauth_account:
+        oauth_account = OAuthAccountCreate(user_id=current_user.id, provider=ProviderType.api_key.value, access_token=api_key_hash, provider_user_id="api_key", created_at=datetime.now(timezone.utc))
+        userservice.create_oauth_account(session=session, oauth_account_create=oauth_account)
+    else:
+        userservice.update_oauth_api_key(session=session, db_oauth_account=oauth_account, api_key=api_key_hash)
+
+    return APIKeyContext(client_id=current_user.id, api_key=api_key)
+
+
 @router.get("/{user_id}", response_model=UserPublic)
 def read_user_by_id(
     user_id: uuid.UUID, session: SessionDep, current_user: CurrentUser
@@ -235,7 +270,6 @@ def update_user(
 
     db_user = userservice.update_user(session=session, db_user=db_user, user_in=user_in)
     return db_user
-
 
 @router.delete("/{user_id}", dependencies=[Depends(get_current_active_superuser)])
 def delete_user(
@@ -290,7 +324,7 @@ async def upload_file(file: UploadFile, session: SessionDep, current_user: Curre
         f.write(content)
 
     userservice.update_user(session=session, db_user=current_user, user_in=UserUpdate(avatar=f"/static/{current_user.id.hex}/{avatar_filename}"))
-    return {"filename": avatar_filename, "file_size": len(content), "url": f"https://localhost:8443/static/{current_user.id.hex}/{avatar_filename}"}
+    return {"filename": avatar_filename, "file_size": len(content), "url": f"/static/{current_user.id.hex}/{avatar_filename}"}
 
 
 @router.get("/online", response_model=UsersPublic)
@@ -304,35 +338,61 @@ def get_online_users(session: SessionDep, current_user: CurrentUser) -> Any:
     users_public = [UserPublic.model_validate(user) for user in users]
     return UsersPublic(data=users_public, count=len(users_public))
 
+
 user_presence_router = APIRouter()
 
 logger = logging.getLogger("uvicorn.error")
+if not logger.handlers:
+    logger.propagate = False
+    handler = logging.StreamHandler()
+    handler.setFormatter(
+        logging.Formatter(
+            "%(asctime)s - %(levelname)s - %(message)s"
+        )
+    )
+    logger.addHandler(handler)
+else:
+    for handler in logger.handlers:
+        handler.setFormatter(
+            logging.Formatter(
+                "%(asctime)s - %(levelname)s - %(message)s"
+            )
+        )
 
 @user_presence_router.websocket("/ws/presence/{user_id}")
-async def websocket_endpoint(websocket: WebSocket, user_id: str):
+async def websocket_endpoint(websocket: WebSocket, user_id: str, session: SessionDep):
+    current_user = get_current_user(session=session, token=str(websocket.cookies.get("access_token")).replace("Bearer ", ""))
+    
+    if str(current_user.id) != user_id:
+        await websocket.close(code=status.WS_1008_POLICY_VIOLATION)
+        logger.warning(f"===> User {user_id} attempted to connect with invalid token.")
+        return
+
     await presence_manager.connect(user_id, websocket)
     try:
         while True:
             data = await websocket.receive_json()
             if data.get("type") == "PING":
                 presence_manager.update_heartbeat(user_id)
-                logger.info(f"=======================> Received PING from user {user_id}.")
+                logger.info(f"===> Received PING from user {user_id}.")
                 await websocket.send_json({"type": "PONG", "user_id": user_id})
             else:
                 await presence_manager.handle_message(user_id, data)
 
     except WebSocketDisconnect:
         # Standard client disconnect (closed tab, navigate away, etc.)
-        logger.info(f"=======================> User {user_id} disconnected.")
+        logger.info(f"===> User {user_id} disconnected.")
 
     except Exception as e:
         # Unexpected server or message processing error
-        logger.error(f"=======================> Error in WebSocket connection for user {user_id}: {e}")
+        logger.error(f"===> Error in WebSocket connection for user {user_id}: {e}")
 
     finally:
         # Guaranteed cleanup regardless of how the loop exited
         await presence_manager.disconnect(user_id)
         logger.info(
-            f"=======================> User {user_id} disconnected. "
+            f"===> User {user_id} disconnected. "
             f"Current status: {presence_manager.get_status(user_id)}"
         )
+
+

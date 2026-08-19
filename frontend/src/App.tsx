@@ -11,6 +11,7 @@ import FriendsPage from './pages/FriendsPage'
 import { ProtectedRoute } from './components/ProtectedRoute'
 import ChangePasswordCard from './components/ChangePasswordCard'
 import UnoDashboard from './pages/UnoDashboard'
+import APIKeyPage from './pages/ApiKeyPage'
 
 function App() {
     const [count, setCount] = useState(0)
@@ -28,6 +29,7 @@ function App() {
                     <Route path="play" element={<UnoGamePage />} />
                     <Route path="friends" element={<FriendsPage />} />
                     <Route path="password" element={<ChangePasswordCard />} />
+                    <Route path="apikey" element={<APIKeyPage />} />
                     <Route path="statistics" element={<UnoDashboard />} />
                 </Route>
 

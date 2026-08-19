@@ -6,7 +6,7 @@ alembic==1.18.4
 argon2-cffi==25.1.0
 bcrypt==4.3.0
 pwdlib==0.3.0
-psycopg==3.3.4
+psycopg[binary]==3.3.4
 python-multipart==0.0.32
 pyjwt==2.13.0
 pyotp==2.9.0

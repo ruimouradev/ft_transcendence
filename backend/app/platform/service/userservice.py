@@ -1,6 +1,6 @@
 from typing import Any
 from sqlmodel import Session, select
-from app.models.all import OAuthAccount, OAuthAccountCreate, OAuthAccountRead, User, UserCreate, UserUpdate
+from app.models.all import OAuthAccount, OAuthAccountCreate, OAuthAccountRead, ProviderType, User, UserCreate, UserUpdate, get_datetime_utc
 from app.platform.security import get_password_hash
 
 def create_user(*, session: Session, user_create: UserCreate) -> User:
@@ -26,16 +26,28 @@ def update_user(*, session: Session, db_user: User, user_in: UserUpdate) -> Any:
     session.refresh(db_user)
     return db_user
 
+def get_user_by_id(*, session: Session, user_id: str) -> User | None:
+    statement = select(User).where(User.id == user_id)
+    session_user = session.exec(statement).first()
+    return session_user
 
 def get_user_by_email(*, session: Session, email: str) -> User | None:
     statement = select(User).where(User.email == email)
     session_user = session.exec(statement).first()
     return session_user
 
-def get_oauth_account_by_user_id(*, session: Session, user_id: str) -> OAuthAccount | None:
-    statement = select(OAuthAccount).where(OAuthAccount.user_id == user_id)
+def get_oauth_account_by_provider_and_user_id(*, session: Session, provider: ProviderType, user_id: str) -> OAuthAccount | None:
+    statement = select(OAuthAccount).where(OAuthAccount.provider == provider, OAuthAccount.user_id == user_id)
     oauth_account = session.exec(statement).first()
     return oauth_account
+
+
+def update_oauth_api_key(*, session: Session, db_oauth_account: OAuthAccount, api_key: str) -> OAuthAccount:
+    db_oauth_account.sqlmodel_update({"access_token": api_key,"created_at": get_datetime_utc()})
+    session.add(db_oauth_account)
+    session.commit()
+    session.refresh(db_oauth_account)
+    return db_oauth_account
 
 def create_oauth_account(*, session: Session, oauth_account_create: OAuthAccountCreate) -> OAuthAccount:
     db_obj = OAuthAccount.model_validate(oauth_account_create)

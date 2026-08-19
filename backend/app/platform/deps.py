@@ -1,9 +1,12 @@
 from collections.abc import Generator
 from typing import Annotated, Optional
+from uuid import UUID
 
 import jwt
-from fastapi import Depends, HTTPException, status, Request
-from fastapi.security import OAuth2PasswordBearer, OAuth2
+import logging
+from app.platform.service import userservice
+from fastapi import Depends, HTTPException, status, Request, Header
+from fastapi.security import OAuth2, APIKeyHeader
 from fastapi.security.oauth2 import OAuthFlowsModel
 from jwt.exceptions import InvalidTokenError
 from pydantic import ValidationError
@@ -12,11 +15,10 @@ from sqlmodel import Session
 from app.platform import security
 from app.platform.config import settings
 from app.models.database import engine
-from app.models.all import TokenPayload, User
+from app.models.all import APIError, APIErrorCode, ProviderType, TokenPayload, User
 
-# reusable_oauth2 = OAuth2PasswordBearer(
-#     tokenUrl=f"{settings.API_V1_STR}/login/access-token"
-# )
+
+logger = logging.getLogger("uvicorn.error")
 
 class OAuth2PasswordBearerWithCookie(OAuth2):
     def __init__(
@@ -45,8 +47,6 @@ class OAuth2PasswordBearerWithCookie(OAuth2):
                 return None
         return token
 
-
-# Replace your standard reusable_oauth2 with this instance
 reusable_oauth2 = OAuth2PasswordBearerWithCookie(
     tokenUrl=f"{settings.API_V1_STR}/login/access-token"
 )
@@ -54,7 +54,6 @@ reusable_oauth2 = OAuth2PasswordBearerWithCookie(
 def get_db() -> Generator[Session, None, None]:
     with Session(engine) as session:
         yield session
-
 
 SessionDep = Annotated[Session, Depends(get_db)]
 TokenDep = Annotated[str, Depends(reusable_oauth2)]
@@ -67,15 +66,12 @@ def get_current_user(session: SessionDep, token: TokenDep) -> User:
         )
         token_data = TokenPayload(**payload)
     except (InvalidTokenError, ValidationError):
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Could not validate credentials",
-        )
+        raise APIError(status_code=403, code=APIErrorCode.INVALID_TOKEN, msg="Could not validate credentials.")
     user = session.get(User, token_data.sub)
     if not user:
-        raise HTTPException(status_code=404, detail="User not found")
+        raise APIError(status_code=404, code=APIErrorCode.USER_NOT_FOUND, msg="User not found")
     if not user.is_active:
-        raise HTTPException(status_code=400, detail="Inactive user")
+        raise APIError(status_code=400, code=APIErrorCode.INACTIVE_USER, msg="Inactive user")
     return user
 
 
@@ -84,7 +80,33 @@ CurrentUser = Annotated[User, Depends(get_current_user)]
 
 def get_current_active_superuser(current_user: CurrentUser) -> User:
     if not current_user.is_superuser:
-        raise HTTPException(
-            status_code=403, detail="The user doesn't have enough privileges"
-        )
+        raise APIError(status_code=403, code=APIErrorCode.FORBIDDEN, msg="The user doesn't have enough privileges")
     return current_user
+
+api_key_header = APIKeyHeader(
+    name="X-API-Key",
+    auto_error=False,
+)
+
+
+async def verify_api_key(
+    session: SessionDep,
+    api_key: str | None = Depends(api_key_header),
+    client_id: str = Header(..., alias="X-Client-ID"),
+) -> str:
+
+    if not api_key:
+        raise APIError(status_code=401, code=APIErrorCode.API_KEY_MISSING, msg="API key is missing")
+
+    try:
+        UUID(client_id, version=4)
+    except ValueError:
+        raise APIError(status_code=400, code=APIErrorCode.BAD_REQUEST, msg="Invalid client ID format. Must be a valid UUID.")
+    oauth_account = userservice.get_oauth_account_by_provider_and_user_id(session=session, provider=ProviderType.api_key, user_id=client_id)
+    if oauth_account is None:
+        raise APIError(status_code=401, code=APIErrorCode.APIKEY_NOT_EXIST, msg="API key does not exist for the provided client ID")
+    verify_result = security.verify_password(api_key, oauth_account.access_token)
+    if not verify_result[0]:
+        raise APIError(status_code=401, code=APIErrorCode.INVALID_API_KEY, msg="Invalid API key")
+
+    return oauth_account.user_id
