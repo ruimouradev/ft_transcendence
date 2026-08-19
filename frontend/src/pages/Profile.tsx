@@ -25,12 +25,21 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../components/AuthContext';
 import { api } from '../client';
 import NotificationSnackbar from '../components/NotificationSnackbar';
+import CardBackSelector from '../components/CardBackSelector';
 
 type NotificationState = {
     open: boolean;
     message: string;
     severity: 'success' | 'error' | 'info' | 'warning';
 };
+
+const cardBacks = [
+  "/src/assets/avatar/a00.jpeg",
+  "/src/assets/avatar/a01.jpeg",
+  "/src/assets/avatar/a02.jpg",
+  "/src/assets/avatar/a03.jpeg",
+  "/src/assets/avatar/a04.jpg",
+];
 
 export default function ProfileCard() {
     const [notification, setNotification] = useState<NotificationState>({
@@ -175,11 +184,41 @@ export default function ProfileCard() {
 
             <Card elevation={3} sx={{ borderRadius: 3, overflow: 'hidden' }}>
 
-                <Box sx={{ height: 120, bgcolor: 'primary.main' }} />
+                {/* <Box sx={{ height: 120, bgcolor: 'primary.main' }} /> */}
+                <Tooltip title="Click to change card back" arrow with="auto" height="auto">
+                    <Box sx={{ position: 'relative', top: 0, display: 'flex', justifyContent: 'left' }}>
+                        <CardBackSelector
+                            cardBacks={cardBacks}
+                            value={user.card_back}
+                            onChange={(newCardBack) => {
+                                api.patch('/users/me', { card_back: newCardBack }, { withCredentials: true })
+                                    .then(() => {
+                                        login({ ...user, card_back: newCardBack });
+                                        setNotification({
+                                            open: true,
+                                            message: 'Card back updated successfully.',
+                                            severity: 'success',
+                                        });
+                                    })
+                                    .catch(() => {
+                                        setNotification({
+                                            open: true,
+                                            message: 'Failed to update card back. Please try again.',
+                                            severity: 'error',
+                                        });
+                                    });
+                            }}
+                            cardWidth={600}
+                            cardHeight={120}
+                            optionWidth={65}
+                            columns={5}
+                        />
+                    </Box>
+                </Tooltip>
 
                 <CardContent sx={{ pt: 0, position: 'relative' }}>
 
-                    <Box display="flex" sx={{ justifyContent: 'center', mt: -7, mb: 2 }}>
+                    <Box display="flex" sx={{ justifyContent: 'center', mt: -7, mb: 2 ,width: '100'}}>
                     <Tooltip title={uploading ? "Uploading..." : "Click to change avatar"} arrow>
                         <Avatar
                             src={user.avatar}
