@@ -18,7 +18,6 @@ import {
     TableRow,
     Chip,
     Stack,
-    IconButton,
     Popover,
     Tooltip,
 } from '@mui/material';
@@ -68,7 +67,7 @@ export default function UnoDashboard() {
 
     // activeView state: 'summary' (pie chart), 'all' (all matches), 'wins' (only wins), 'losses' (only losses)
     const [activeView, setActiveView] = useState('summary');
-    const [playerData, setPlayerData] = useState({
+    const [playerData, setPlayerData] = useState<any>({
         user: {
             email: '',
             full_name: '',
@@ -94,16 +93,16 @@ export default function UnoDashboard() {
             title: ''
         }
     });
-    const [matchHistoryData, setMatchHistoryData] = useState([]);
-    const [leaderboardDataGlobal, setLeaderboardDataGlobal] = useState([]);
-    const [leaderboardDataFriends, setLeaderboardDataFriends] = useState([]);
-    const [gamePlayers, setGamePlayers] = useState([]);
+    const [matchHistoryData, setMatchHistoryData] = useState<any[]>([]);
+    const [leaderboardDataGlobal, setLeaderboardDataGlobal] = useState<any[]>([]);
+    const [leaderboardDataFriends, setLeaderboardDataFriends] = useState<any[]>([]);
+    const [gamePlayers, setGamePlayers] = useState<any[]>([]);
 
     const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
 
-    const handleRowClick = (event: React.MouseEvent<HTMLElement>) => {
-        setAnchorEl(event.currentTarget);
-    };
+    // const handleRowClick = (event: React.MouseEvent<HTMLElement>) => {
+    //     setAnchorEl(event.currentTarget);
+    // };
     const handleClose = () => {
         setAnchorEl(null);
     };
@@ -145,7 +144,7 @@ export default function UnoDashboard() {
                 setLeaderboardDataGlobal(response3.data);
                 // console.log('Fetched player stats global:', response3.data);
             } catch (error) {
-                setNotification({
+                showNotification({
                     open: true,
                     message: 'Failed to fetch player data. Please try again later.',
                     severity: 'error',
@@ -159,7 +158,7 @@ export default function UnoDashboard() {
     return (
         <ThemeProvider theme={unoTheme}>
             <CssBaseline />
-
+            {notificationNode}
             <Container maxWidth="xl" sx={{ py: 4 }}>
 
                 {/* Header */}
@@ -213,7 +212,7 @@ export default function UnoDashboard() {
                                             Title: {playerData.level_info.title} | XP: {playerData.total_score.toLocaleString()}/{playerData.level_info.total_xp_for_next_level.toLocaleString()}
                                         </Typography>
                                         <Box sx={{ width: '100%', mt: 1.5 }}>
-                                            <LinearProgress variant="determinate" value={76} color="info" sx={{ height: 8, borderRadius: 4 }} />
+                                            <LinearProgress variant="determinate" value={playerData.level_info.progress_percentage} color="info" sx={{ height: 8, borderRadius: 4 }} />
                                         </Box>
                                     </Grid>
                                 </Grid>

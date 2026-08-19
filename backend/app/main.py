@@ -3,7 +3,9 @@ import logging
 import time
 
 from app.presence_manager import presence_manager
-from fastapi import FastAPI
+from app.models.all import APIError, ErrorResponse
+from fastapi import FastAPI, Request
+from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.routing import APIRoute
 from fastapi.middleware.cors import CORSMiddleware
@@ -69,3 +71,18 @@ async def check_heartbeat_timeouts():
         for user_id, last_ping in list(presence_manager.last_seen.items()):
             if presence_manager.get_status(user_id) == "ONLINE" and (now - last_ping) > 25:
                 await presence_manager.disconnect(user_id, grace_period=10)
+
+
+@app.exception_handler(APIError)
+async def api_error_handler(
+    request: Request,
+    exc: APIError,
+)-> ErrorResponse:
+    return JSONResponse(
+        status_code=exc.status_code,
+        content={
+            "code": exc.code,
+            "message": exc.message,
+            "details": exc.details,
+        },
+    )

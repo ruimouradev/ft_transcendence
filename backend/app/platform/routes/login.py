@@ -173,6 +173,12 @@ async def callback_42(code: str, session: SessionDep):
     }
     async with httpx.AsyncClient() as client:
         response = await client.post(token_url, data=data)
+        if response.status_code != 200 or response.is_error:
+            response=RedirectResponse(
+                url="/login",
+                status_code=status.HTTP_307_TEMPORARY_REDIRECT
+            )
+            return response;
         response_data = response.json()
         access_token = response_data.get("access_token")
         if not access_token:
@@ -181,13 +187,12 @@ async def callback_42(code: str, session: SessionDep):
                 status_code=status.HTTP_307_TEMPORARY_REDIRECT
             )
             return response;
-            # raise HTTPException(status_code=400, detail="Failed to obtain access token from 42 API")
         
         # Use the access token to get user info
         user_info_url = "https://api.intra.42.fr/v2/me"
         headers = {"Authorization": f"Bearer {access_token}"}
         user_response = await client.get(user_info_url, headers=headers)
-        if user_response.status_code != 200:
+        if user_response.status_code != 200 or user_response.is_error:
             response=RedirectResponse(
 				url="/login",
 				status_code=status.HTTP_307_TEMPORARY_REDIRECT
@@ -210,7 +215,7 @@ async def callback_42(code: str, session: SessionDep):
 
         access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
         access_token=security.create_access_token(user.id, expires_delta=access_token_expires)
-        oauth_account = userservice.get_oauth_account_by_user_id(session=session, user_id=str(user.id))
+        oauth_account = userservice.get_oauth_account_by_provider_and_user_id(session=session, provider=ProviderType.t42, user_id=str(user.id))
 
         if not oauth_account:
             oauth_account = userservice.create_oauth_account(session=session, oauth_account_create=OAuthAccountCreate(
@@ -231,7 +236,7 @@ async def callback_42(code: str, session: SessionDep):
             httponly=True,       # Prevents JS reading the token (XSS protection)
             secure=True,         # Set to True in production (HTTPS)
             samesite="lax",      # Crucial for OAuth redirects across domains
-            max_age=1800
+            max_age=1800         # 30 minutes in seconds
         )
         
         return response

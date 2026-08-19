@@ -115,6 +115,7 @@ export default function UserMenu() {
                     }} >
                     <MenuItem onClick={() => handleMenuAction(() => navigate('/profile'))}>Profile</MenuItem>
                     <MenuItem component={RouterLink} to="/password" onClick={handleClose}>Password</MenuItem>
+                    <MenuItem component={RouterLink} to="/apikey" onClick={handleClose}>API Key</MenuItem>
                     <MenuItem link="/logout" onClick={handleClose}>Logout</MenuItem>
                 </Menu>
             </>)}
