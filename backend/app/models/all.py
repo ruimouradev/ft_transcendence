@@ -290,6 +290,7 @@ class APIErrorCode(str, Enum):
     FRIEND_REQUEST_NOT_FOUND = "FRIEND_REQUEST_NOT_FOUND"
     
     #authentication and authorization errors
+    UNAUTHORIZED = "UNAUTHORIZED"
     USER_NOT_FOUND = "USER_NOT_FOUND"
     INVALID_TOKEN = "INVALID_TOKEN"
     INACTIVE_USER = "INACTIVE_USER"

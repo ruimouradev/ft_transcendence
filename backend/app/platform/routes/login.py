@@ -13,7 +13,8 @@ from app.platform.service import userservice
 from app.platform.deps import CurrentUser, SessionDep, get_current_active_superuser
 from app.platform import security
 from app.platform.config import settings
-from app.models.all import Message, NewPassword, OAuthAccountCreate, ProviderType, Token, TokenAndUser, UserCreate, UserPublic, UserUpdate, User
+from app.models.all import ErrorResponse, Message, NewPassword, OAuthAccountCreate, ProviderType, Token, TokenAndUser, UserCreate, UserPublic, UserUpdate, User
+from app.models.all import APIError, APIErrorCode
 
 from fastapi.responses import RedirectResponse, Response
 from jwt.exceptions import InvalidTokenError
@@ -50,20 +51,17 @@ def generate_password_reset_token(email: str) -> str:
     )
     return encoded_jwt
 
-@router.post("/login/access-token")
-def login_access_token(
-    session: SessionDep, form_data: Annotated[OAuth2PasswordRequestForm, Depends()],response: Response
-) -> TokenAndUser:
+@router.post("/login/access-token", response_model=TokenAndUser, responses={401: {"model": ErrorResponse}})
+def login_access_token(session: SessionDep, form_data: Annotated[OAuth2PasswordRequestForm, Depends()],response: Response) -> TokenAndUser:
     """
     OAuth2 compatible token login, get an access token for future requests
     """
-    user = crud.authenticate(
-        session=session, email=form_data.username, password=form_data.password
-    )
+    user = crud.authenticate(session=session, email=form_data.username, password=form_data.password)
+    
     if not user:
-        raise HTTPException(status_code=401, detail="Incorrect email or password")
+        raise APIError(status_code=401, code=APIErrorCode.UNAUTHORIZED, msg="Incorrect email or password")
     elif not user.is_active:
-        raise HTTPException(status_code=401, detail="Inactive user")
+        raise APIError(status_code=401, code=APIErrorCode.INACTIVE_USER, msg="Inactive user")
     access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
 
     access_token=security.create_access_token(user.id, expires_delta=access_token_expires)
