@@ -1,11 +1,11 @@
 import jwt
 import httpx
+import logging
 
 from datetime import timedelta, datetime, timezone
 from typing import Annotated, Any
 
 from fastapi import APIRouter, Depends, HTTPException, status
-from fastapi.responses import HTMLResponse
 from fastapi.security import OAuth2PasswordRequestForm
 
 from app import crud
@@ -26,6 +26,7 @@ from jwt.exceptions import InvalidTokenError
 # )
 
 router = APIRouter(tags=["login"])
+logger = logging.getLogger("uvicorn.error")
 
 
 def verify_password_reset_token(token: str) -> str | None:
@@ -173,17 +174,19 @@ async def callback_42(code: str, session: SessionDep):
     }
     async with httpx.AsyncClient() as client:
         response = await client.post(token_url, data=data)
-        if response.status_code != 200 or response.is_error:
+        logger.info(f"------------42 OAuth2 callback response: {response.status_code}, {response.text}")
+        if response.status_code != 200:
             response=RedirectResponse(
-                url="/login",
-                status_code=status.HTTP_307_TEMPORARY_REDIRECT
+                url="/login?error=oauth2_error",
+                status_code=status.HTTP_307_TEMPORARY_REDIRECT,
+                
             )
             return response;
         response_data = response.json()
         access_token = response_data.get("access_token")
         if not access_token:
             response=RedirectResponse(
-                url="/login",
+                url="/login?error=oauth2_error",
                 status_code=status.HTTP_307_TEMPORARY_REDIRECT
             )
             return response;
@@ -192,9 +195,9 @@ async def callback_42(code: str, session: SessionDep):
         user_info_url = "https://api.intra.42.fr/v2/me"
         headers = {"Authorization": f"Bearer {access_token}"}
         user_response = await client.get(user_info_url, headers=headers)
-        if user_response.status_code != 200 or user_response.is_error:
+        if user_response.status_code != 200:
             response=RedirectResponse(
-				url="/login",
+				url="/login?error=oauth2_error",
 				status_code=status.HTTP_307_TEMPORARY_REDIRECT
 			)
             return response;
@@ -207,7 +210,7 @@ async def callback_42(code: str, session: SessionDep):
                 email=user_info.get("email"),
                 password=code,
                 is_active=True,
-                full_name=f"{user_info.get('first_name')} {user_info.get('last_name')}",
+                nick_name=f"{user_info.get('login')}",
                 avatar=f"/static/{user_info['id']}-small.jpg"
             )
             userservice.create_user(session=session, user_create=user_create)

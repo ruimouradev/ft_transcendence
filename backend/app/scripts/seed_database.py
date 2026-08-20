@@ -26,9 +26,8 @@ def create_users(session: Session) -> list[User]:
     for i in range(NUM_USERS):
         user = User(
             id=uuid4(),
-            # full_name=f"user_{i + 1}",
             email=f"user_{i + 1}@example.com",
-            full_name=fake.name(),
+            nick_name=fake.name(),
             avatar="/static/a00.jpeg",
             is_active=True,
             is_verified=True,

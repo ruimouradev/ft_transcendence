@@ -5,7 +5,7 @@ import { api } from '../client';
 interface User {
   id: number;
   email: string;
-  full_name: string;
+  nick_name: string;
   avatar: string;
   is_superuser: boolean;
   is_active: boolean;

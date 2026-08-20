@@ -95,11 +95,11 @@ export default function FriendsPage() {
 
     // Filter Friends by Search
     const filteredFriends = friends.filter((f) =>
-        f.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        f.nick_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         f.handle.toLowerCase().includes(searchQuery.toLowerCase())
     );
     const filteredSuggestions= suggestions.filter((s) =>
-        s.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        s.nick_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         s.handle.toLowerCase().includes(searchQuery.toLowerCase())
     );
 
@@ -207,7 +207,7 @@ export default function FriendsPage() {
                                         <div className="relative">
                                             <img
                                                 src={friend.avatar+'?v='+Date.now()}
-                                                alt={friend.name}
+                                                alt={friend.nick_name}
                                                 className={`${friend.status === 'blocked' ? 'w-14 h-14 rounded-full object-cover border-2 border-slate-800 grayscale' : 'w-14 h-14 rounded-full object-cover border-2 border-slate-800'}`}
                                             />
                                             {/* Status Indicator Dot */}
@@ -216,7 +216,7 @@ export default function FriendsPage() {
                                                 }`} />
                                         </div>
                                         <div className="mt-3">
-                                            <h3 className="font-bold text-base">{friend.name}</h3>
+                                            <h3 className="font-bold text-base">{friend.nick_name}</h3>
                                             <p className="text-xs text-slate-400">Title: {friend.title} (Lvl: <span className="font-bold text-yellow-400">{friend.level}</span>)</p>
                                             {/* <p className="text-xs text-slate-400">{friend.handle}</p> */}
                                             {/* <p className="text-xs text-slate-300 mt-2 line-clamp-2">{friend.bio}</p> */}
@@ -254,9 +254,9 @@ export default function FriendsPage() {
                                     className="bg-slate-900 p-4 rounded-2xl border border-slate-800 flex items-center justify-between"
                                 >
                                     <div className="flex items-center gap-3">
-                                        <img src={req.avatar+'?v='+Date.now()} alt={req.name} className="w-12 h-12 rounded-full object-cover" />
+                                        <img src={req.avatar+'?v='+Date.now()} alt={req.nick_name} className="w-12 h-12 rounded-full object-cover" />
                                         <div>
-                                            <h4 className="font-bold text-sm">{req.name}</h4>
+                                            <h4 className="font-bold text-sm">{req.nick_name}</h4>
                                             <p className="text-xs text-slate-400">Title: {req.title} (Lvl: <span className="font-bold text-yellow-400">{req.level}</span>)</p>
                                         </div>
                                     </div>
@@ -291,9 +291,9 @@ export default function FriendsPage() {
                         {filteredSuggestions.map((item) => (
                             <div key={item.id} className="bg-slate-900 p-5 rounded-2xl border border-slate-800 flex items-center justify-between">
                                 <div className="flex items-center gap-3">
-                                    <img src={item.avatar+'?v='+Date.now()} alt={item.name} className="w-12 h-12 rounded-full object-cover" />
+                                    <img src={item.avatar+'?v='+Date.now()} alt={item.nick_name} className="w-12 h-12 rounded-full object-cover" />
                                     <div>
-                                        <h4 className="font-bold text-sm">{item.name}</h4>
+                                        <h4 className="font-bold text-sm">{item.nick_name}</h4>
                                         <p className="text-xs text-slate-400">Title: {item.title} (Lvl: <span className="font-bold text-yellow-400">{item.level}</span>)</p>
                                     </div>
                                 </div>
