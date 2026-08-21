@@ -429,6 +429,23 @@ class Game:
         self._hand(player_id).connected = connected
         self.seq += 1
 
+    def timeout_skip(self, player_id: str) -> None:
+        """Close an idle player's turn after the room's clock runs out.
+
+        The realtime layer calls this when the player on turn let the
+        time limit pass. If the turn is still theirs it moves on; either
+        way the state records the timeout so everyone sees why the turn
+        jumped.
+
+        Args:
+            player_id: The player whose time ran out.
+        """
+        self.last = LastAction(player=player_id, kind="timeout")
+        self.seq += 1
+        if self.phase == "playing" and self.hands[self.turn].id == player_id:
+            self.drawn = None
+            self._step(1)
+
     def _rotate(self) -> None:
         """Move every hand one seat in the direction of play."""
         n = len(self.hands)
