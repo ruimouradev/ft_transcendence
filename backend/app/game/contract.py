@@ -176,10 +176,12 @@ class PublicPlayer(BaseModel):
 
 
 class LastAction(BaseModel):
-    # What just happened, so the frontend knows what to animate
+    # What just happened, so the frontend knows what to animate.
+    # "timeout" is the server closing an idle turn, never a player act
     player: str
     kind: Literal[
         "join", "start", "play", "draw", "pass", "catch", "challenge",
+        "timeout",
     ]
     card: Card | None = None
 
