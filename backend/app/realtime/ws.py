@@ -1,3 +1,5 @@
+import asyncio
+import time
 from dataclasses import dataclass, field
 from uuid import uuid4
 
@@ -37,6 +39,9 @@ class Room:
 
 
 rooms: dict[str, Room] = {}
+
+TURN_TIMEOUT = 60  # seconds an idle turn is allowed to sit
+TIMER_TICK = 5  # how often each room looks at its clock
 
 
 def err(code: ErrorCode, msg: str) -> Error:
@@ -79,7 +84,11 @@ async def broadcast(room: Room) -> None:
         return
     for p in room.players:
         if p.connected and p.ws:
-            await p.ws.send_text(snapshot_json(room, p.id))
+            try:
+                await p.ws.send_text(snapshot_json(room, p.id))
+            except Exception:
+                # died mid send; its own handler deals with the goodbye
+                continue
 
 
 def host_of(room: Room) -> Player | None:
@@ -87,6 +96,39 @@ def host_of(room: Room) -> Player | None:
     return next(
         (p for p in room.players if not p.bot and p.connected), None
     )
+
+
+async def room_timer(room_id: str, room: Room) -> None:
+    # One clock per room, so a sleeping or gone player never freezes
+    # the table: an untouched turn is closed for them after the limit.
+    # Bot seats ride the same clock while the AI does not exist yet
+    mark: tuple[int, float] | None = None
+    while rooms.get(room_id) is room:
+        await asyncio.sleep(TIMER_TICK)
+        game = room.game
+        if game is None or game.phase != "playing":
+            mark = None
+            continue
+        if mark is None or mark[0] != game.seq:
+            mark = (game.seq, time.monotonic())
+            continue
+        if time.monotonic() - mark[1] < TURN_TIMEOUT:
+            continue
+        pid = game.hands[game.turn].id
+        # Owing cards (a +4 or a +2 pile) or holding nothing playable
+        # means the forced move is the draw they were avoiding
+        if game.plus4 or game.stack or not game.legal_moves(pid):
+            try:
+                game.draw(pid)
+            except GameError:
+                pass
+            else:
+                metrics.moves.labels(kind="draw").inc()
+                await broadcast(room)
+        game.timeout_skip(pid)
+        metrics.moves.labels(kind="timeout").inc()
+        await broadcast(room)
+        mark = None
 
 
 def reseat(room: Room) -> None:
@@ -243,6 +285,7 @@ async def game(ws: WebSocket, room_id: str) -> None:
                     room = Room(settings=action.settings)
                     rooms[room_id] = room
                     metrics.rooms_active.inc()
+                    asyncio.create_task(room_timer(room_id, room))
                     player = await seat_player(ws, room, action.name, user)
                     continue
 
