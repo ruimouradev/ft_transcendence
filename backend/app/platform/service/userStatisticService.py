@@ -3,7 +3,7 @@ import logging
 
 from sqlmodel import select, func, or_
 from app.platform.deps import CurrentUser, SessionDep
-from app.models.all import GamePlayerDetail, User, UserGameDetail, UserPublic, UserStatistic, UserStatisticInfo, UserStatisticLeaderboardEntry, UserStatisticLevel, Game, GamePlayer, Friendship, FriendshipStatus
+from app.models.all import APIError, APIErrorCode, GamePlayerDetail, User, UserGameDetail, UserPublic, UserStatistic, UserStatisticInfo, UserStatisticLeaderboardEntry, UserStatisticLevel, Game, GamePlayer, Friendship, FriendshipStatus
 
 logger=logging.getLogger("uvicorn.error")
 
@@ -254,3 +254,35 @@ def get_friend_leaderboard(session: SessionDep, current_user: CurrentUser):
         ))
         rank += 1
     return leaderboard
+
+def save_game_result(session:SessionDep, game:Game, game_players: list[GamePlayer]):
+    '''
+    saves the game result for all players in the game.
+    Game need with the state of finished and the created_at and finished_at timestamp set.
+    GamePlayers need to have all other fields set except the game_id field.
+    '''
+
+    game_in_db=session.exec(select(Game).where(Game.id == game.id)).first()
+    if game_in_db:
+        raise APIError(status_code=500,code=APIErrorCode.GAME_ALREADY_EXISTS, msg="Game already exists.")
+
+    session.add(game)
+
+    for player in game_players:
+        player.game_id = game.id
+        session.add(player)
+        user_statistic = session.exec(select(UserStatistic).where(UserStatistic.user_id == player.user_id)).first()
+        if user_statistic is None:
+            user_statistic = UserStatistic(user_id=player.user_id)
+        
+        user_statistic.total_games += 1
+        user_statistic.total_score += player.score
+
+        if player.is_winner:
+            user_statistic.wins += 1
+        else:
+            user_statistic.losses += 1
+        
+        session.add(user_statistic)
+    
+    session.commit()
