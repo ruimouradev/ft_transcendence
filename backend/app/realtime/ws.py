@@ -124,7 +124,7 @@ async def room_timer(room_id: str, room: Room) -> None:
                 pass
             else:
                 metrics.moves.labels(kind="draw").inc()
-                await broadcast(room)
+                
         game.timeout_skip(pid)
         metrics.moves.labels(kind="timeout").inc()
         await broadcast(room)
