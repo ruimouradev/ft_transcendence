@@ -81,7 +81,7 @@ def recover_password(email: str, session: SessionDep, background_tasks: Backgrou
     user = userservice.get_user_by_email(session=session, email=email)
     if user:
         if settings.EMAILS_ENABLED and user.is_active:
-            new_password = security.generate_password()
+            new_password = security.generate_password(8)
             userservice.update_user(session=session, db_user=user, user_in=UserUpdate(password=new_password))
             background_tasks.add_task(send_password_reset_email, email=email, username=user.nick_name, new_password=new_password)
         # password_reset_token = generate_password_reset_token(email=email)
