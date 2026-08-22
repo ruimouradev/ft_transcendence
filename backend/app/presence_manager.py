@@ -81,3 +81,12 @@ class InMemoryPresenceManager:
             await websocket.send_json(message)
 
 presence_manager = InMemoryPresenceManager()
+
+# Background task to check for frontend player's heartbeat timeouts and mark them as offline if necessary
+async def check_heartbeat_timeouts():
+    while True:
+        await asyncio.sleep(10)
+        now = time.time()
+        for user_id, last_ping in list(presence_manager.last_seen.items()):
+            if presence_manager.get_status(user_id) == "ONLINE" and (now - last_ping) > 25:
+                await presence_manager.disconnect(user_id, grace_period=10)

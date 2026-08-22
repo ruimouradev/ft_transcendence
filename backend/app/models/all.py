@@ -281,6 +281,7 @@ class APIErrorCode(str, Enum):
     INVALID_INPUT = "INVALID_INPUT"
     
     #authentication and authorization errors
+    UNAUTHORIZED = "UNAUTHORIZED"
     USER_NOT_FOUND = "USER_NOT_FOUND"
     INVALID_TOKEN = "INVALID_TOKEN"
     INACTIVE_USER = "INACTIVE_USER"

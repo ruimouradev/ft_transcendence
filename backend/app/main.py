@@ -1,8 +1,7 @@
 import asyncio
 import logging
-import time
 
-from app.presence_manager import presence_manager
+from app.presence_manager import check_heartbeat_timeouts
 from app.models.all import APIError, ErrorResponse
 from app.platform.service.userservice import get_robot_user_list
 from fastapi import FastAPI, Request
@@ -72,6 +71,7 @@ class SuppressHealthCheckFilter(logging.Filter):
 
 logging.getLogger("uvicorn.access").addFilter(SuppressHealthCheckFilter())
 
+
 async def check_heartbeat_timeouts():
     try:
         while True:
@@ -84,12 +84,8 @@ async def check_heartbeat_timeouts():
         raise
 
 @app.exception_handler(APIError)
-async def api_error_handler(request: Request,exc: APIError)-> ErrorResponse:
+async def api_error_handler(request: Request, exc: APIError)-> ErrorResponse:
     return JSONResponse(
         status_code=exc.status_code,
-        content={
-            "code": exc.code,
-            "message": exc.message,
-            "details": exc.details,
-        },
+        content={"code": exc.code, "message": exc.message, "details": exc.details}
     )
