@@ -1,3 +1,5 @@
+import asyncio
+import time
 from dataclasses import dataclass, field
 from uuid import uuid4
 
@@ -33,9 +35,13 @@ class Room:
     game: Game | None = None
     settings: GameSettings = field(default_factory=GameSettings)
     bots_made: int = 0  # grows forever so bot ids never repeat
+    humans_made: int = 0  # same idea, seats freed in the lobby come back
 
 
 rooms: dict[str, Room] = {}
+
+TURN_TIMEOUT = 60  # seconds an idle turn is allowed to sit
+TIMER_TICK = 5  # how often each room looks at its clock
 
 
 def err(code: ErrorCode, msg: str) -> Error:
@@ -59,21 +65,80 @@ def user_from_cookies(ws: WebSocket) -> str | None:
     return str(payload.get("sub"))
 
 
+def snapshot_json(room: Room, player_id: str) -> str:
+    # The engine only knows the rules; the facts that belong to the
+    # room (its settings, who hosts, which seats are bots) ride on top
+    snap = room.game.snapshot_for(player_id)
+    snap.settings = room.settings
+    host = host_of(room)
+    snap.host_id = host.id if host else None
+    bots = {p.id for p in room.players if p.bot}
+    for seat in snap.players:
+        seat.bot = seat.id in bots
+    return snap.model_dump_json()
+
+
 async def broadcast(room: Room) -> None:
     # The engine bumps seq itself, here we just send everyone their view
     if room.game is None:
         return
     for p in room.players:
         if p.connected and p.ws:
-            await p.ws.send_text(
-                room.game.snapshot_for(p.id).model_dump_json()
-            )
+            try:
+                await p.ws.send_text(snapshot_json(room, p.id))
+            except Exception:
+                # died mid send; its own handler deals with the goodbye
+                continue
+
+
+def host_of(room: Room) -> Player | None:
+    # The crown never lands on a bot, and a ghost cannot hold it either
+    return next(
+        (p for p in room.players if not p.bot and p.connected), None
+    )
+
+
+async def room_timer(room_id: str, room: Room) -> None:
+    # One clock per room, so a sleeping or gone player never freezes
+    # the table: an untouched turn is closed for them after the limit.
+    # Bot seats ride the same clock while the AI does not exist yet
+    mark: tuple[int, float] | None = None
+    while rooms.get(room_id) is room:
+        await asyncio.sleep(TIMER_TICK)
+        game = room.game
+        if game is None or game.phase != "playing":
+            mark = None
+            continue
+        if mark is None or mark[0] != game.seq:
+            mark = (game.seq, time.monotonic())
+            continue
+        if time.monotonic() - mark[1] < TURN_TIMEOUT:
+            continue
+        pid = game.hands[game.turn].id
+        # Owing cards (a +4 or a +2 pile) or holding nothing playable
+        # means the forced move is the draw they were avoiding
+        if game.plus4 or game.stack or not game.legal_moves(pid):
+            try:
+                game.draw(pid)
+            except GameError:
+                pass
+            else:
+                metrics.moves.labels(kind="draw").inc()
+                await broadcast(room)
+        game.timeout_skip(pid)
+        metrics.moves.labels(kind="timeout").inc()
+        await broadcast(room)
+        mark = None
 
 
 def reseat(room: Room) -> None:
-    # While in the lobby the game is rebuilt to match the seats
+    # While in the lobby the game is rebuilt to match the seats.
+    # The seq belongs to the room: it survives every rebuild, so
+    # clients can trust it from the first lobby state to a rematch
+    prev = room.game.seq if room.game else 0
     room.game = Game([(p.id, p.name) for p in room.players],
                      settings=room.settings)
+    room.game.seq = prev + 1
 
 
 def apply(room: Room, player: Player, action: PlayerAction) -> Error | None:
@@ -83,7 +148,7 @@ def apply(room: Room, player: Player, action: PlayerAction) -> Error | None:
         return err(ErrorCode.INVALID_MESSAGE, "already joined")
 
     if isinstance(action, AddBot):
-        if player is not room.players[0]:
+        if player is not host_of(room):
             return err(ErrorCode.INVALID_MESSAGE, "only the host adds bots")
         if room.game.phase != "lobby":
             return err(ErrorCode.GAME_ALREADY_STARTED, "game already started")
@@ -97,7 +162,7 @@ def apply(room: Room, player: Player, action: PlayerAction) -> Error | None:
         return None
 
     if isinstance(action, RemoveBot):
-        if player is not room.players[0]:
+        if player is not host_of(room):
             return err(ErrorCode.INVALID_MESSAGE, "only the host removes bots")
         if room.game.phase != "lobby":
             return err(ErrorCode.GAME_ALREADY_STARTED, "game already started")
@@ -113,8 +178,19 @@ def apply(room: Room, player: Player, action: PlayerAction) -> Error | None:
 
     try:
         if isinstance(action, Start):
-            if player is not room.players[0]:
+            if player is not host_of(room):
                 return err(ErrorCode.INVALID_MESSAGE, "only the host starts")
+            if room.game.phase == "finished":
+                # Play again: the ended game turns back into a lobby.
+                # Whoever left for good loses the seat now; if seats
+                # are missing the room just waits there, no error
+                room.players = [p for p in room.players
+                                if p.connected or p.bot]
+                reseat(room)
+                if len(room.players) < room.settings.max_players:
+                    return None
+            elif len(room.players) < room.settings.max_players:
+                return err(ErrorCode.INVALID_MESSAGE, "the room is not full")
             room.game.start()
         elif isinstance(action, Play):
             room.game.play(player.id, action.card, action.color,
@@ -155,10 +231,13 @@ def list_rooms() -> list[dict[str, object]]:
             continue
         if room.game.phase != "lobby":
             continue
+        if len(room.players) >= room.settings.max_players:
+            continue  # full rooms are not joinable, so not listed
+        host = host_of(room)
         out.append({
             "code": code,
-            "host": room.players[0].name if room.players else "",
-            "players": len(room.players),
+            "host": host.name if host else "",
+            "players": [p.name for p in room.players],
             "max_players": room.settings.max_players,
             "settings": room.settings.model_dump(),
         })
@@ -167,7 +246,8 @@ def list_rooms() -> list[dict[str, object]]:
 
 async def seat_player(ws: WebSocket, room: Room, name: str,
                       user: str | None) -> Player:
-    player = Player(id=f"p{len(room.players) + 1}", name=name,
+    room.humans_made += 1
+    player = Player(id=f"p{room.humans_made}", name=name,
                     token=uuid4().hex, ws=ws, user=user)
     room.players.append(player)
     metrics.players_connected.inc()
@@ -205,6 +285,7 @@ async def game(ws: WebSocket, room_id: str) -> None:
                     room = Room(settings=action.settings)
                     rooms[room_id] = room
                     metrics.rooms_active.inc()
+                    asyncio.create_task(room_timer(room_id, room))
                     player = await seat_player(ws, room, action.name, user)
                     continue
 
@@ -215,7 +296,7 @@ async def game(ws: WebSocket, room_id: str) -> None:
 
                 room = rooms.get(room_id)
                 if room is None:
-                    await reject(ws, ErrorCode.INVALID_MESSAGE,
+                    await reject(ws, ErrorCode.ROOM_NOT_FOUND,
                                  "no such room")
                     continue
 
@@ -244,10 +325,11 @@ async def game(ws: WebSocket, room_id: str) -> None:
                         metrics.players_connected.inc()
                         room.game.set_connected(player.id, True)
                         await broadcast(room)
-                elif ((room.game is not None
-                       and room.game.phase != "lobby")
-                      or len(room.players) >= room.settings.max_players):
-                    await reject(ws, ErrorCode.ROOM_FULL, "cannot join now")
+                elif room.game is not None and room.game.phase != "lobby":
+                    await reject(ws, ErrorCode.GAME_ALREADY_STARTED,
+                                 "game already started")
+                elif len(room.players) >= room.settings.max_players:
+                    await reject(ws, ErrorCode.ROOM_FULL, "room is full")
                 else:
                     player = await seat_player(ws, room, action.name, user)
                 continue
@@ -263,7 +345,17 @@ async def game(ws: WebSocket, room_id: str) -> None:
         if player and room:
             player.connected = False
             metrics.players_connected.dec()
-            if all(not p.connected for p in room.players if not p.bot):
+            if room.game is not None and room.game.phase == "lobby":
+                # Leaving the lobby really frees the seat, ghosts are
+                # only worth keeping once there is a hand to come back to
+                room.players.remove(player)
+                if any(not p.bot for p in room.players):
+                    reseat(room)
+                    await broadcast(room)
+                else:
+                    rooms.pop(room_id, None)
+                    metrics.rooms_active.dec()
+            elif all(not p.connected for p in room.players if not p.bot):
                 rooms.pop(room_id, None)
                 metrics.rooms_active.dec()
             else:

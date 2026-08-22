@@ -130,6 +130,7 @@ class ErrorCode(str, Enum):
     INVALID_CHALLENGE = "INVALID_CHALLENGE"
     INVALID_MESSAGE = "INVALID_MESSAGE"
     ROOM_FULL = "ROOM_FULL"
+    ROOM_NOT_FOUND = "ROOM_NOT_FOUND"
     GAME_NOT_STARTED = "GAME_NOT_STARTED"
     GAME_ALREADY_STARTED = "GAME_ALREADY_STARTED"
 
@@ -168,15 +169,19 @@ class PublicPlayer(BaseModel):
     cards: int
     connected: bool = True
     uno: bool = False
+    # An AI seat. The room fills this in, the engine treats all alike
+    bot: bool = False
     # What the cards still in this hand are worth, 0 until the game ends
     points: int = 0
 
 
 class LastAction(BaseModel):
-    # What just happened, so the frontend knows what to animate
+    # What just happened, so the frontend knows what to animate.
+    # "timeout" is the server closing an idle turn, never a player act
     player: str
     kind: Literal[
         "join", "start", "play", "draw", "pass", "catch", "challenge",
+        "timeout",
     ]
     card: Card | None = None
 
@@ -189,6 +194,10 @@ class GameState(BaseModel):
     phase: Phase
     you: PrivateView  # the JSON field stays "you" on the wire
     players: list[PublicPlayer]  # in play order
+    # Who may start the game and manage bots, always a human
+    host_id: str | None = None
+    # The room's rules, so joining by code tells you the same as the list
+    settings: GameSettings | None = None
     top_card: Card | None = None
     # Differs from top_card.color after a wild
     active_color: Color | None = None

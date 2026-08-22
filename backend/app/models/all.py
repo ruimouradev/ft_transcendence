@@ -52,10 +52,7 @@ class UpdatePassword(SQLModel):
 class User(UserBase, table=True):
     id: UUID = Field(default_factory=uuid4, primary_key=True)
     hashed_password: str | None = Field(default=None, max_length=255)
-    created_at: datetime | None = Field(
-        default_factory=get_datetime_utc,
-        sa_type=DateTime(timezone=True),
-    )
+    created_at: datetime = Field( default_factory=get_datetime_utc, sa_type=DateTime(timezone=True))
     # items: list["Item"] = Relationship(back_populates="owner", cascade_delete=True)
     sent_requests: list["Friendship"] = Relationship(
         sa_relationship_kwargs={
@@ -69,10 +66,7 @@ class User(UserBase, table=True):
         }
     )
 
-    oauth_accounts: list["OAuthAccount"] = Relationship(
-        back_populates="user",
-        cascade_delete=True
-    )
+    oauth_accounts: list["OAuthAccount"] = Relationship(back_populates="user", cascade_delete=True)
 
 # Properties to return via API, id is always required
 class UserPublic(UserBase):
@@ -134,10 +128,7 @@ class OAuthAccount(OAuthAccountCreate, table=True):
 
     id: UUID = Field(default_factory=uuid4, primary_key=True)
 
-    created_at: datetime | None = Field(
-        default_factory=get_datetime_utc,
-        sa_type=DateTime(timezone=True),
-    )
+    created_at: datetime = Field(default_factory=get_datetime_utc, sa_type=DateTime(timezone=True))
 
     user_id: UUID = Field(foreign_key="user.id",ondelete="CASCADE")
     user: Optional[User] = Relationship(back_populates="oauth_accounts")
@@ -161,21 +152,19 @@ class Friendship(SQLModel, table=True):
 
     status: FriendshipStatus
 
-    created_at: datetime | None = Field(
-        default_factory=get_datetime_utc,
-        sa_type=DateTime(timezone=True),
-    )
-    accepted_at: datetime | None = None
+    created_at: datetime = Field(default_factory=get_datetime_utc,sa_type=DateTime(timezone=True))
+    accepted_at: datetime | None = Field(default_factory=get_datetime_utc,sa_type=DateTime(timezone=True))
 
 class Game(SQLModel, table=True):
 
     id: UUID = Field(default_factory=uuid4, primary_key=True)
 
-    status: str
+    status: str = "waiting"  # waiting, in_progress, finished
 
     created_at: datetime = Field(default_factory=get_datetime_utc,sa_type=DateTime(timezone=True))
 
-    finished_at: datetime | None = None
+    finished_at: datetime | None = Field(default_factory=get_datetime_utc,sa_type=DateTime(timezone=True))
+
 
 class GamePlayer(SQLModel, table=True):
 
@@ -288,6 +277,8 @@ class APIErrorCode(str, Enum):
 
     # business logic errors
     FRIEND_REQUEST_NOT_FOUND = "FRIEND_REQUEST_NOT_FOUND"
+    GAME_ALREADY_EXISTS = "GAME_ALREADY_EXISTS"
+    INVALID_INPUT = "INVALID_INPUT"
     
     #authentication and authorization errors
     USER_NOT_FOUND = "USER_NOT_FOUND"
