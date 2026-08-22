@@ -154,7 +154,7 @@ export default function Login() {
                         <Box sx={{ mt: 1, textAlign: 'center' }}>
                             <Typography variant="body2" color="text.secondary">
                                 Forgot your password?{' '}
-                                <Link href="#" onClick={(e) => { e.preventDefault(); navigate('/password-recovery'); }} underline="hover" sx={{ fontWeight: 600 }}>
+                                <Link href="#" onClick={(e) => { e.preventDefault(); if (formData.email) window.location.href = `/api/v1/password-recovery/${formData.email}`; }} underline="hover" sx={{ fontWeight: 600 }}>
                                     Reset Password
                                 </Link>
                             </Typography>
