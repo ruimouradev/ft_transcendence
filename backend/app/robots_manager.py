@@ -15,18 +15,18 @@ class RobotsManager:
     def is_robot(self, user_id: UUID) -> bool:
         return any(str(robot.id) == str(user_id) for robot in self.robots)
 
-    def get_robot1_id(self):
-        if self.robots and len(self.robots) > 0:
+    def get_robot1_id(self)-> UUID | None:
+        if len(self.robots) > 0:
             return self.robots[0].id
         return None
 
-    def get_robot2_id(self):
-        if self.robots and len(self.robots) > 1:
+    def get_robot2_id(self)-> UUID | None:
+        if len(self.robots) > 1:
             return self.robots[1].id
         return None
 
-    def get_robot3_id(self):
-        if self.robots and len(self.robots) > 2:
+    def get_robot3_id(self)-> UUID | None:
+        if len(self.robots) > 2:
             return self.robots[2].id
         return None
 
