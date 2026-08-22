@@ -171,11 +171,12 @@ class Game(SQLModel, table=True):
 
     id: UUID = Field(default_factory=uuid4, primary_key=True)
 
-    status: str
+    status: str = "waiting"  # waiting, in_progress, finished
 
     created_at: datetime = Field(default_factory=get_datetime_utc,sa_type=DateTime(timezone=True))
 
     finished_at: datetime | None = None
+
 
 class GamePlayer(SQLModel, table=True):
 
@@ -288,6 +289,8 @@ class APIErrorCode(str, Enum):
 
     # business logic errors
     FRIEND_REQUEST_NOT_FOUND = "FRIEND_REQUEST_NOT_FOUND"
+    GAME_ALREADY_EXISTS = "GAME_ALREADY_EXISTS"
+    INVALID_INPUT = "INVALID_INPUT"
     
     #authentication and authorization errors
     USER_NOT_FOUND = "USER_NOT_FOUND"
