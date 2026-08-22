@@ -47,8 +47,7 @@ router = APIRouter(prefix="/users", tags=["users"])
 @router.get("/", dependencies=[Depends(get_current_active_superuser)], response_model=UsersPublic)
 def read_users(session: SessionDep, skip: int = 0, limit: int = 100) -> Any:
     """
-    Retrieve users.
-    """
+    Retrieve users."""
 
     count_statement = select(func.count()).select_from(User)
     count = session.exec(count_statement).one()
@@ -128,18 +127,18 @@ def read_user_me(current_user: CurrentUser) -> Any:
     return current_user
 
 
-@router.delete("/me", response_model=Message)
-def delete_user_me(session: SessionDep, current_user: CurrentUser) -> Any:
-    """
-    Delete own user.
-    """
-    if current_user.is_superuser:
-        raise HTTPException(
-            status_code=403, detail="Super users are not allowed to delete themselves"
-        )
-    session.delete(current_user)
-    session.commit()
-    return Message(message="User deleted successfully")
+# @router.delete("/me", response_model=Message)
+# def delete_user_me(session: SessionDep, current_user: CurrentUser) -> Any:
+#     """
+#     Delete own user.
+#     """
+#     if current_user.is_superuser:
+#         raise HTTPException(
+#             status_code=403, detail="Super users are not allowed to delete themselves"
+#         )
+#     session.delete(current_user)
+#     session.commit()
+#     return Message(message="User deleted successfully")
 
 
 @router.post("/signup", response_model=UserPublic)
@@ -202,6 +201,7 @@ def get_api_key(session: SessionDep, current_user: CurrentUser) -> APIKeyStatus:
 
     return APIKeyStatus(has_api_key=hash_api_key, client_id=str(current_user.id) if hash_api_key else None)
 
+
 @router.post("/apikey", response_model=APIKeyContext)
 def regenerate_api_key(session: SessionDep, current_user: CurrentUser) -> APIKeyContext:
     """
@@ -238,49 +238,53 @@ def read_user_by_id(user_id: uuid.UUID, session: SessionDep, current_user: Curre
     return user
 
 
-@router.patch( "/{user_id}", dependencies=[Depends(get_current_active_superuser)], response_model=UserPublic,)
-def update_user( *, session: SessionDep, user_id: uuid.UUID, user_in: UserUpdate, ) -> Any:
-    """
-    Update a user.
-    """
+# @router.patch( "/{user_id}", dependencies=[Depends(get_current_active_superuser)], response_model=UserPublic,)
+# def update_user( *, session: SessionDep, user_id: uuid.UUID, user_in: UserUpdate, ) -> Any:
+#     """
+#     Update a user.
+#     """
 
-    db_user = session.get(User, user_id)
-    if not db_user:
-        raise HTTPException(
-            status_code=404,
-            detail="The user with this id does not exist in the system",
-        )
-    if user_in.email:
-        existing_user = userservice.get_user_by_email(session=session, email=user_in.email)
-        if existing_user and existing_user.id != user_id:
-            raise HTTPException(
-                status_code=409, detail="User with this email already exists"
-            )
+#     db_user = session.get(User, user_id)
+#     if not db_user:
+#         raise HTTPException(
+#             status_code=404,
+#             detail="The user with this id does not exist in the system",
+#         )
+#     if user_in.email:
+#         existing_user = userservice.get_user_by_email(session=session, email=user_in.email)
+#         if existing_user and existing_user.id != user_id:
+#             raise HTTPException(
+#                 status_code=409, detail="User with this email already exists"
+#             )
 
-    db_user = userservice.update_user(session=session, db_user=db_user, user_in=user_in)
-    return db_user
+#     db_user = userservice.update_user(session=session, db_user=db_user, user_in=user_in)
+#     return db_user
 
-@router.delete("/{user_id}", dependencies=[Depends(get_current_active_superuser)])
-def delete_user(session: SessionDep, current_user: CurrentUser, user_id: uuid.UUID) -> Message:
-    """
-    Delete a user.
-    """
-    user = session.get(User, user_id)
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
-    if user == current_user:
-        raise HTTPException(
-            status_code=403, detail="Super users are not allowed to delete themselves"
-        )
-    # statement = delete(Item).where(col(Item.owner_id) == user_id)
-    # session.exec(statement)
-    session.delete(user)
-    session.commit()
-    return Message(message="User deleted successfully")
+# @router.delete("/{user_id}", dependencies=[Depends(get_current_active_superuser)])
+# def delete_user(session: SessionDep, current_user: CurrentUser, user_id: uuid.UUID) -> Message:
+#     """
+#     Delete a user.
+#     """
+#     user = session.get(User, user_id)
+#     if not user:
+#         raise HTTPException(status_code=404, detail="User not found")
+#     if user == current_user:
+#         raise HTTPException(
+#             status_code=403, detail="Super users are not allowed to delete themselves"
+#         )
+#     # statement = delete(Item).where(col(Item.owner_id) == user_id)
+#     # session.exec(statement)
+#     session.delete(user)
+#     session.commit()
+#     return Message(message="User deleted successfully")
 
 #UploadFile
 @router.post("/uploadfile")
 async def upload_file(file: UploadFile, session: SessionDep, current_user: CurrentUser):
+    """
+    Upload a file (avatar) for the current user.
+    """
+
     if file.content_type not in ["image/jpeg", "image/png"]:
         raise HTTPException(status_code=400, detail="Invalid file type. Only JPEG and PNG are allowed.")
         # return {"error": "Invalid file type. Only JPEG and PNG are allowed."}
@@ -348,6 +352,10 @@ else:
 
 @user_presence_router.websocket("/ws/presence/{user_id}")
 async def websocket_endpoint(websocket: WebSocket, user_id: str, session: SessionDep):
+    """
+    WebSocket endpoint for user presence management.
+    """
+
     current_user = get_current_user(session=session, token=str(websocket.cookies.get("access_token")).replace("Bearer ", ""))
     
     if str(current_user.id) != user_id:
@@ -367,15 +375,12 @@ async def websocket_endpoint(websocket: WebSocket, user_id: str, session: Sessio
                 await presence_manager.handle_message(user_id, data)
 
     except WebSocketDisconnect:
-        # Standard client disconnect (closed tab, navigate away, etc.)
         logger.info(f"===> User {user_id} disconnected.")
 
     except Exception as e:
-        # Unexpected server or message processing error
         logger.error(f"===> Error in WebSocket connection for user {user_id}: {e}")
 
     finally:
-        # Guaranteed cleanup regardless of how the loop exited
         await presence_manager.disconnect(user_id)
         logger.info(
             f"===> User {user_id} disconnected. "

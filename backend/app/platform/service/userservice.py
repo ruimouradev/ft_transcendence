@@ -2,7 +2,7 @@ import logging
 from typing import Any
 from sqlmodel import Session, select
 from app.models.all import OAuthAccount, OAuthAccountCreate, OAuthAccountRead, ProviderType, User, UserCreate, UserUpdate, get_datetime_utc
-from app.platform.security import get_password_hash
+from app.platform.security import get_password_hash, verify_password
 
 logger = logging.getLogger("uvicorn.error")
 
@@ -63,3 +63,18 @@ def get_robot_user_list(*, session: Session) -> list[User]:
     statement = select(User).where(User.is_active == False and User.email.like("iamrobot%"))
     robot_users = session.exec(statement).all()
     return robot_users
+
+def authenticate_user(*, session: Session, email: str, password: str) -> User | None:
+    db_user = get_user_by_email(session=session, email=email)
+    if db_user is None:
+        verify_password(password, "$argon2id$v=19$m=65536,t=3,p=4$NVsSTp6CMmyqltNGT35QZw$Q5BBgx1XsZMjBEEqEuzkfkg1nnj/M8U82gn9u0rkdqo")
+        return None
+    verified, updated_password_hash = verify_password(password, db_user.hashed_password)
+    if not verified:
+        return None
+    if updated_password_hash:
+        db_user.hashed_password = updated_password_hash
+        session.add(db_user)
+        session.commit()
+        session.refresh(db_user)
+    return db_user

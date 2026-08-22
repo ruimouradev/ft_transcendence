@@ -1,7 +1,6 @@
 import asyncio
 import logging
 import time
-from venv import logger
 
 from app.presence_manager import presence_manager
 from app.models.all import APIError, ErrorResponse
@@ -25,7 +24,7 @@ def custom_generate_unique_id(route: APIRoute) -> str:
     tag = route.tags[0] if route.tags else "default"
     return f"{tag}-{route.name}"
 
-logger = logging.getLogger("uvicorn.error")
+# logger = logging.getLogger("uvicorn.error")
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):

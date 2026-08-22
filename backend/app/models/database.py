@@ -1,21 +1,14 @@
-import os
-import secrets
-import string
-
 from sqlmodel import Session, create_engine, SQLModel, select
 
 from app.platform.service import userservice
 from app.models.all import User, UserCreate
 from app.platform.config import settings
+from app.platform.security import generate_password
 
 if settings.DMODE == "dev":
     engine = create_engine(settings.DATABASE_URL, echo=True)
 else:
     engine = create_engine(settings.DATABASE_URL)
-
-def generate_password(length: int = 16) -> str:
-    characters = string.ascii_letters + string.digits
-    return ''.join(secrets.choice(characters) for _ in range(length))
 
 def init_db(session: Session)-> None:
     SQLModel.metadata.create_all(engine)

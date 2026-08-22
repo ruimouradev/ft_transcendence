@@ -203,13 +203,7 @@ export default function Login() {
 
                         {/* Social Buttons */}
                         <Box sx={{ display: 'flex', gap: 2 }}>
-                            <Button
-                                fullWidth
-                                variant="outlined"
-                                startIcon={<img src={myIcon} alt="42" style={{ width: 20, height: 20 }} />}
-                                onClick={() => window.location.href = 'api/v1/auth/42/login'}
-                                sx={{ textTransform: 'none', borderRadius: 2 }}
-                            >
+                            <Button fullWidth variant="outlined" startIcon={<img src={myIcon} alt="42" style={{ width: 20, height: 20 }} />} onClick={() => window.location.href = 'api/v1/auth/42/login'} sx={{ textTransform: 'none', borderRadius: 2 }} >
                                 Login 42
                             </Button>
                         </Box>
@@ -221,6 +215,14 @@ export default function Login() {
                                 
                                 <Link href="#" onClick={(e) => { e.preventDefault(); navigate('/signup'); }} underline="hover" sx={{ fontWeight: 600 }}>
                                     Sign Up
+                                </Link>
+                            </Typography>
+                        </Box>
+                        <Box sx={{ mt: 1, textAlign: 'center' }}>
+                            <Typography variant="body2" color="text.secondary">
+                                Forgot your password?{' '}
+                                <Link href="#" onClick={(e) => { e.preventDefault(); navigate('/password-recovery'); }} underline="hover" sx={{ fontWeight: 600 }}>
+                                    Reset Password
                                 </Link>
                             </Typography>
                         </Box>

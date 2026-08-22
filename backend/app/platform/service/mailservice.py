@@ -63,3 +63,20 @@ async def send_new_account_activation_email(email: EmailStr, username: str, toke
     )
     fm = FastMail(conf)
     await fm.send_message(message, template_name="email_verification.html")
+
+async def send_password_reset_email(email: EmailStr, username: str, new_password: str):
+    """Send a password reset email to the user with a reset link."""
+
+    template_data = {
+        "app_name": settings.PROJECT_NAME,
+        "username": username,
+        "new_password": new_password,
+    }
+    message = MessageSchema(
+        subject="[Password Reset] Reset Your Password",
+        recipients=[email],
+        template_body=template_data,
+        subtype=MessageType.html
+    )
+    fm = FastMail(conf)
+    await fm.send_message(message, template_name="password_reset.html")
