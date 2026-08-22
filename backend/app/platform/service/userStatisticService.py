@@ -4,6 +4,8 @@ import logging
 from sqlmodel import select, func, or_
 from app.platform.deps import CurrentUser, SessionDep
 from app.models.all import APIError, APIErrorCode, GamePlayerDetail, User, UserGameDetail, UserPublic, UserStatistic, UserStatisticInfo, UserStatisticLeaderboardEntry, UserStatisticLevel, Game, GamePlayer, Friendship, FriendshipStatus
+from app.robots_manager import robots_user_manager
+
 
 logger=logging.getLogger("uvicorn.error")
 
@@ -271,6 +273,8 @@ def save_game_result(session:SessionDep, game:Game, game_players: list[GamePlaye
     for player in game_players:
         player.game_id = game.id
         session.add(player)
+        if robots_user_manager.is_robot(player.user_id):
+            continue
         user_statistic = session.exec(select(UserStatistic).where(UserStatistic.user_id == player.user_id)).first()
         if user_statistic is None:
             user_statistic = UserStatistic(user_id=player.user_id)

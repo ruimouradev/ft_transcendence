@@ -1,4 +1,6 @@
 import os
+import secrets
+import string
 
 from sqlmodel import Session, create_engine, SQLModel, select
 
@@ -11,11 +13,15 @@ if settings.DMODE == "dev":
 else:
     engine = create_engine(settings.DATABASE_URL)
 
+def generate_password(length: int = 16) -> str:
+    characters = string.ascii_letters + string.digits
+    return ''.join(secrets.choice(characters) for _ in range(length))
+
 def init_db(session: Session)-> None:
     SQLModel.metadata.create_all(engine)
 
     user = session.exec(select(User).where(User.email == settings.FIRST_SUPERUSER)).first()
-    if not user:
+    if user is None:
         user_in = UserCreate(
             email=settings.FIRST_SUPERUSER,
             password=settings.FIRST_SUPERUSER_PASSWORD,
@@ -24,3 +30,17 @@ def init_db(session: Session)-> None:
             is_active=True
         )
         user = userservice.create_user(session=session, user_create=user_in)
+    bot_user_email = [{"email": "iamrobot1@localhost.com", "password": generate_password(), "nick_name": "BotUser", "is_superuser": False, "is_active": False},
+                      {"email": "iamrobot2@localhost.com", "password": generate_password(), "nick_name": "BotUser", "is_superuser": False, "is_active": False},
+                      {"email": "iamrobot3@localhost.com", "password": generate_password(), "nick_name": "BotUser", "is_superuser": False, "is_active": False}]
+    for bot_user_data in bot_user_email:
+        bot_user = session.exec(select(User).where(User.email == bot_user_data["email"])).first()
+        if bot_user is None:
+            bot_user_in = UserCreate(
+                email=bot_user_data["email"],
+                password=bot_user_data["password"],
+                nick_name=bot_user_data["nick_name"],
+                is_superuser=bot_user_data["is_superuser"],
+                is_active=bot_user_data["is_active"]
+            )
+            bot_user = userservice.create_user(session=session, user_create=bot_user_in)

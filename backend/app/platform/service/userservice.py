@@ -1,7 +1,10 @@
+import logging
 from typing import Any
 from sqlmodel import Session, select
 from app.models.all import OAuthAccount, OAuthAccountCreate, OAuthAccountRead, ProviderType, User, UserCreate, UserUpdate, get_datetime_utc
 from app.platform.security import get_password_hash
+
+logger = logging.getLogger("uvicorn.error")
 
 def create_user(*, session: Session, user_create: UserCreate) -> User:
     db_obj = User.model_validate(
@@ -55,3 +58,8 @@ def create_oauth_account(*, session: Session, oauth_account_create: OAuthAccount
     session.commit()
     session.refresh(db_obj)
     return db_obj
+
+def get_robot_user_list(*, session: Session) -> list[User]:
+    statement = select(User).where(User.is_active == False and User.email.like("iamrobot%"))
+    robot_users = session.exec(statement).all()
+    return robot_users
