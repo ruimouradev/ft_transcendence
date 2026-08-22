@@ -1,7 +1,7 @@
 import math
 import logging
 
-from sqlmodel import select, func, or_
+from sqlmodel import select, func, or_, Session
 from app.platform.deps import CurrentUser, SessionDep
 from app.models.all import APIError, APIErrorCode, GamePlayerDetail, User, UserGameDetail, UserPublic, UserStatistic, UserStatisticInfo, UserStatisticLeaderboardEntry, UserStatisticLevel, Game, GamePlayer, Friendship, FriendshipStatus
 from app.robots_manager import robots_user_manager
@@ -257,7 +257,7 @@ def get_friend_leaderboard(session: SessionDep, current_user: CurrentUser):
         rank += 1
     return leaderboard
 
-def save_game_result(session:SessionDep, game:Game, game_players: list[GamePlayer]):
+def save_game_result(session:Session, game:Game, game_players: list[GamePlayer]):
     '''
     saves the game result for all players in the game.
     Game need with the state of finished and the created_at and finished_at timestamp set.
