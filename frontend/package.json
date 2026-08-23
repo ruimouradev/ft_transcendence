@@ -20,7 +20,7 @@
     "react": "^19.2.7",
     "react-dom": "^19.2.7",
     "react-router-dom": "^7.11.0",
-    "styled-components": "^6.4.4",
+    "react-use-websocket": "^4.6.0",
     "tailwindcss": "^4.3.3"
   },
   "devDependencies": {

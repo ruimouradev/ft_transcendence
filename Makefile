@@ -1,3 +1,4 @@
+HOME := $(HOME)
 
 include ./.env
 
@@ -36,7 +37,7 @@ clean_host_data: clean_compose
 	@if [ -n "$$(docker volume ls -q)" ]; then \
 		docker volume rm $$(docker volume ls -q); \
 	fi
-	rm -rf /home/bliu/data
+	sudo rm -rf $(HOME)/data
 	@echo "[INFO] All persistent data on the host deleted."
 
 clean: clean_compose clean_images clean_host_data

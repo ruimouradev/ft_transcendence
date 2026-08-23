@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- O avatar por omissao: duas cartas num circulo escuro, a mesma
+       linguagem do icone do site. Desenhado a mao, como o resto. -->
+  <defs>
+    <radialGradient id="fundo" cx="0.5" cy="0.4" r="0.75">
+      <stop offset="0" stop-color="#24324f"/>
+      <stop offset="1" stop-color="#0f172a"/>
+    </radialGradient>
+    <clipPath id="circulo">
+      <circle cx="256" cy="256" r="256"/>
+    </clipPath>
+  </defs>
+  <g clip-path="url(#circulo)">
+    <rect width="512" height="512" fill="url(#fundo)"/>
+    <g transform="rotate(12 256 276)">
+      <rect x="166" y="116" width="200" height="300" rx="24" fill="#2563eb" stroke="#f8fafc" stroke-width="13"/>
+    </g>
+    <g transform="rotate(-12 256 276)">
+      <rect x="146" y="116" width="200" height="300" rx="24" fill="#dc2626" stroke="#f8fafc" stroke-width="13"/>
+      <ellipse cx="246" cy="266" rx="62" ry="106" fill="none" stroke="#f8fafc" stroke-width="15" transform="rotate(28 246 266)"/>
+    </g>
+  </g>
+</svg>

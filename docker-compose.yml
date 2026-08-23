@@ -102,6 +102,7 @@ services:
       context: ./nginx
       dockerfile: Dockerfile
     image: nginx
+    pull_policy: never
     container_name: nginx
     ports:
       - "8080:80"
