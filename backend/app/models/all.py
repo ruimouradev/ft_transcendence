@@ -48,12 +48,11 @@ class UpdatePassword(SQLModel):
     new_password: str = Field(min_length=8, max_length=128)
 
 
-# Database model, database table inferred from class name
 class User(UserBase, table=True):
     id: UUID = Field(default_factory=uuid4, primary_key=True)
     hashed_password: str | None = Field(default=None, max_length=255)
     created_at: datetime = Field( default_factory=get_datetime_utc, sa_type=DateTime(timezone=True))
-    # items: list["Item"] = Relationship(back_populates="owner", cascade_delete=True)
+
     sent_requests: list["Friendship"] = Relationship(
         sa_relationship_kwargs={
             "foreign_keys": "[Friendship.requester_id]"
@@ -68,7 +67,6 @@ class User(UserBase, table=True):
 
     oauth_accounts: list["OAuthAccount"] = Relationship(back_populates="user", cascade_delete=True)
 
-# Properties to return via API, id is always required
 class UserPublic(UserBase):
     id: UUID
     created_at: datetime | None = None
@@ -82,11 +80,9 @@ class UserOnLineStatus(SQLModel):
     user_id: UUID
     online: str
 
-# Generic message
 class Message(SQLModel):
     message: str
 
-# JSON payload containing access token
 class Token(SQLModel):
     access_token: str
     token_type: str = "bearer"
@@ -95,7 +91,6 @@ class TokenAndUser(Token):
     user: UserPublic
 
 
-# Contents of JWT token
 class TokenPayload(SQLModel):
     sub: str | None = None
 
