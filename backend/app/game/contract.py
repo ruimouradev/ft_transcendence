@@ -129,6 +129,7 @@ class ErrorCode(str, Enum):
     INVALID_CATCH = "INVALID_CATCH"
     INVALID_CHALLENGE = "INVALID_CHALLENGE"
     INVALID_MESSAGE = "INVALID_MESSAGE"
+    AUTH_REQUIRED = "AUTH_REQUIRED"
     ROOM_FULL = "ROOM_FULL"
     ROOM_NOT_FOUND = "ROOM_NOT_FOUND"
     GAME_NOT_STARTED = "GAME_NOT_STARTED"
@@ -171,6 +172,9 @@ class PublicPlayer(BaseModel):
     uno: bool = False
     # An AI seat. The room fills this in, the engine treats all alike
     bot: bool = False
+    # Avatar URL of the account in this seat. The room fills this in
+    # like the bot flag, empty for guests and bots
+    avatar: str = ""
     # What the cards still in this hand are worth, 0 until the game ends
     points: int = 0
 
