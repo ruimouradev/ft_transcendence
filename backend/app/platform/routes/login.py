@@ -20,7 +20,7 @@ from app.models.all import APIError, APIErrorCode
 from fastapi.responses import RedirectResponse, Response
 from jwt.exceptions import InvalidTokenError
 
-router = APIRouter(tags=["login"])
+router = APIRouter(tags=["login"], include_in_schema=False)
 logger = logging.getLogger("uvicorn.error")
 
 
@@ -112,7 +112,7 @@ def recover_password(email: str, session: SessionDep, background_tasks: Backgrou
 #     )
 #     return Message(message="Password updated successfully")
 
-authRouter = APIRouter(tags=["auth"])
+authRouter = APIRouter(tags=["auth"], include_in_schema=False)
 
 @authRouter.post("/auth/logout")
 def logout(response: Response):

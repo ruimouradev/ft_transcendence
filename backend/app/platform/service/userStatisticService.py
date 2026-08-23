@@ -181,7 +181,7 @@ def get_global_leaderboard(session: SessionDep, current_user: CurrentUser):
                        ).join(UserStatistic, User.id == UserStatistic.user_id
                               ).where(User.is_superuser == False,User.is_active == True
                                       ).order_by(UserStatistic.total_score.desc()
-                                                 ).limit(42)
+                                                 ).limit(10)
     leaderboard_records = session.exec(statement).all()
     leaderboard = []
     rank = 1

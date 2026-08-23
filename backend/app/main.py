@@ -42,9 +42,39 @@ async def lifespan(app: FastAPI):
     except asyncio.CancelledError:
         pass
 
-app = FastAPI(title=settings.PROJECT_NAME, openapi_url=f"{settings.API_V1_STR}/openapi.json", generate_unique_id_function=custom_generate_unique_id, lifespan=lifespan)
+app = FastAPI(title=settings.PROJECT_NAME, openapi_url=f"{settings.API_V1_STR}/openapi.json", generate_unique_id_function=custom_generate_unique_id, lifespan=lifespan, 
+              description="""
+## UNO Online Game API
 
-Instrumentator().instrument(app).expose(app)
+This API provides functionality for:
+
+- get all online users
+- get user information
+- get all friends of a user with rankings
+- get global leaderboard
+- get history of all games played by a user
+
+### Authentication
+
+#### All endpoints require authentication via an API key.
+This endpoint requires a valid API key and client ID to access.
+
+To obtain an API key and client ID, get the apikey through the [API key] page. Include the following headers in your request:
+- `X-API-Key`: Your API key (get from apikey request page)
+- `X-Client-ID`: Your client ID (get from apikey request page)
+
+#### Example:
+``` shell
+curl -X 'GET' \n
+  'Endpoint URL as https://localhost:8443/api/v1/xxxx/xxxx' \n
+  -H 'accept: application/json' \n
+  -H 'X-Client-ID: your_client_id_here' \n
+  -H 'X-API-Key: your_api_key_here\''
+```
+
+""",)
+
+Instrumentator().instrument(app).expose(app, include_in_schema=False)
 
 app.add_middleware(
     CORSMiddleware,
@@ -57,7 +87,7 @@ app.add_middleware(
 app.mount("/static", StaticFiles(directory="app/static"), name="static")
 
 app.include_router(api_router, prefix=f"{settings.API_V1_STR}")
-app.include_router(game_router)
+app.include_router(game_router, include_in_schema=False)
 app.include_router(user_presence_router)
 
 # Health check endpoint

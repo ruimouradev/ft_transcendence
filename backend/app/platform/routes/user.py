@@ -42,42 +42,42 @@ from app.platform.service.mailservice import (
 )
 from app.platform.deps import get_current_user
 
-router = APIRouter(prefix="/users", tags=["users"])
+router = APIRouter(prefix="/users", tags=["users"], include_in_schema=False)
 
-@router.get("/", dependencies=[Depends(get_current_active_superuser)], response_model=UsersPublic)
-def read_users(session: SessionDep, skip: int = 0, limit: int = 100) -> Any:
-    """
-    Retrieve users."""
+# @router.get("/", dependencies=[Depends(get_current_active_superuser)], response_model=UsersPublic)
+# def read_users(session: SessionDep, skip: int = 0, limit: int = 100) -> Any:
+#     """
+#     Retrieve users."""
 
-    count_statement = select(func.count()).select_from(User)
-    count = session.exec(count_statement).one()
+#     count_statement = select(func.count()).select_from(User)
+#     count = session.exec(count_statement).one()
 
-    statement = (
-        select(User).order_by(col(User.created_at).desc()).offset(skip).limit(limit)
-    )
-    users = session.exec(statement).all()
+#     statement = (
+#         select(User).order_by(col(User.created_at).desc()).offset(skip).limit(limit)
+#     )
+#     users = session.exec(statement).all()
 
-    users_public = [UserPublic.model_validate(user) for user in users]
-    return UsersPublic(data=users_public, count=count)
+#     users_public = [UserPublic.model_validate(user) for user in users]
+#     return UsersPublic(data=users_public, count=count)
 
 
-@router.post("/", dependencies=[Depends(get_current_active_superuser)], response_model=UserPublic)
-def create_user(*, session: SessionDep, user_in: UserCreate) -> Any:
-    """
-    Create new user.
-    """
-    user = userservice.get_user_by_email(session=session, email=user_in.email)
-    if user:
-        raise HTTPException(
-            status_code=400,
-            detail="The user with this email already exists in the system.",
-        )
+# @router.post("/", dependencies=[Depends(get_current_active_superuser)], response_model=UserPublic)
+# def create_user(*, session: SessionDep, user_in: UserCreate) -> Any:
+#     """
+#     Create new user.
+#     """
+#     user = userservice.get_user_by_email(session=session, email=user_in.email)
+#     if user:
+#         raise HTTPException(
+#             status_code=400,
+#             detail="The user with this email already exists in the system.",
+#         )
 
-    user = userservice.create_user(session=session, user_create=user_in)
-    if settings.EMAILS_ENABLED and user_in.email:
-        token = create_verification_token(user_in.email, expire_minutes=0)
-        background_tasks.add_task(send_new_account_activation_email, user_in.email, user_in.username, token)
-    return user
+#     user = userservice.create_user(session=session, user_create=user_in)
+#     if settings.EMAILS_ENABLED and user_in.email:
+#         token = create_verification_token(user_in.email, expire_minutes=0)
+#         background_tasks.add_task(send_new_account_activation_email, user_in.email, user_in.username, token)
+#     return user
 
 
 @router.patch("/me", response_model=UserPublic)
