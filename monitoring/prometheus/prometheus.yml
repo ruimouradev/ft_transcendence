@@ -8,6 +8,7 @@ global:
 rule_files:
   # path inside the container where compose mounts monitoring/prometheus
   - /etc/prometheus/alerts.yml
+  - /etc/prometheus/records.yml
 
 scrape_configs:
   - job_name: backend

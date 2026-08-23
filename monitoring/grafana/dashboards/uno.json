@@ -1,16 +1,31 @@
 {
   "uid": "uno-game",
   "title": "Uno",
+  "tags": ["transcendence", "game"],
   "timezone": "browser",
   "schemaVersion": 39,
   "refresh": "10s",
+  "graphTooltip": 1,
   "time": { "from": "now-1h", "to": "now" },
   "panels": [
     {
       "id": 1,
       "type": "stat",
       "title": "Active rooms",
-      "gridPos": { "h": 5, "w": 4, "x": 0, "y": 0 },
+      "description": "Rooms that exist right now, lobby and playing.",
+      "gridPos": { "h": 6, "w": 4, "x": 0, "y": 0 },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "noValue": "0",
+          "color": { "mode": "fixed", "fixedColor": "blue" }
+        }
+      },
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"] },
+        "colorMode": "value",
+        "graphMode": "area"
+      },
       "targets": [
         { "refId": "A", "expr": "uno_rooms_active" }
       ]
@@ -19,16 +34,64 @@
       "id": 2,
       "type": "stat",
       "title": "Players connected",
-      "gridPos": { "h": 5, "w": 4, "x": 4, "y": 0 },
+      "description": "Humans with a socket open right now, bots not counted.",
+      "gridPos": { "h": 6, "w": 4, "x": 4, "y": 0 },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "noValue": "0",
+          "color": { "mode": "fixed", "fixedColor": "yellow" }
+        }
+      },
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"] },
+        "colorMode": "value",
+        "graphMode": "area"
+      },
       "targets": [
         { "refId": "A", "expr": "uno_players_connected" }
       ]
     },
     {
       "id": 3,
+      "type": "stat",
+      "title": "Games finished, last 24h",
+      "description": "Games that reached a winner in the last day.",
+      "gridPos": { "h": 6, "w": 4, "x": 8, "y": 0 },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "noValue": "0",
+          "decimals": 0,
+          "color": { "mode": "fixed", "fixedColor": "purple" }
+        }
+      },
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"] },
+        "colorMode": "value",
+        "graphMode": "none"
+      },
+      "targets": [
+        { "refId": "A", "expr": "sum(increase(uno_games_finished_total[24h]))" }
+      ]
+    },
+    {
+      "id": 4,
       "type": "timeseries",
       "title": "Games finished per hour",
-      "gridPos": { "h": 5, "w": 8, "x": 8, "y": 0 },
+      "description": "The pace games end at, as an hourly rate.",
+      "gridPos": { "h": 6, "w": 12, "x": 12, "y": 0 },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "min": 0,
+          "color": { "mode": "fixed", "fixedColor": "purple" }
+        }
+      },
+      "options": {
+        "legend": { "displayMode": "list", "placement": "bottom" },
+        "tooltip": { "mode": "multi", "sort": "desc" }
+      },
       "targets": [
         {
           "refId": "A",
@@ -38,10 +101,25 @@
       ]
     },
     {
-      "id": 4,
+      "id": 5,
       "type": "timeseries",
       "title": "Moves per second, by kind",
-      "gridPos": { "h": 5, "w": 8, "x": 16, "y": 0 },
+      "description": "Accepted actions split by what they were.",
+      "gridPos": { "h": 7, "w": 8, "x": 0, "y": 6 },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ops",
+          "min": 0
+        }
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": ["mean", "max"]
+        },
+        "tooltip": { "mode": "multi", "sort": "desc" }
+      },
       "targets": [
         {
           "refId": "A",
@@ -51,28 +129,104 @@
       ]
     },
     {
-      "id": 5,
+      "id": 6,
       "type": "timeseries",
-      "title": "+4 challenges: bluffs caught vs wrong calls",
-      "gridPos": { "h": 6, "w": 12, "x": 0, "y": 5 },
+      "title": "+4 challenges per hour: bluffs caught vs wrong calls",
+      "description": "Green is justice, the +4 was a bluff and the challenger caught it. Red is a wrong call, the challenger drew six.",
+      "gridPos": { "h": 7, "w": 8, "x": 8, "y": 6 },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "min": 0
+        },
+        "overrides": [
+          {
+            "matcher": { "id": "byName", "options": "caught" },
+            "properties": [
+              { "id": "color", "value": { "mode": "fixed", "fixedColor": "green" } }
+            ]
+          },
+          {
+            "matcher": { "id": "byName", "options": "wrong" },
+            "properties": [
+              { "id": "color", "value": { "mode": "fixed", "fixedColor": "red" } }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": ["mean", "max"]
+        },
+        "tooltip": { "mode": "multi", "sort": "desc" }
+      },
       "targets": [
         {
           "refId": "A",
-          "expr": "sum by (outcome) (rate(uno_challenges_total[1h]))",
+          "expr": "sum by (outcome) (rate(uno_challenges_total[1h])) * 3600",
           "legendFormat": "{{outcome}}"
         }
       ]
     },
     {
-      "id": 6,
+      "id": 7,
       "type": "timeseries",
-      "title": "Refused moves, by error code",
-      "gridPos": { "h": 6, "w": 12, "x": 12, "y": 5 },
+      "title": "Refused moves per minute, by error code",
+      "description": "Actions the engine turned down, by the reason it gave. A spike usually means a confused client, not a cheater.",
+      "gridPos": { "h": 7, "w": 8, "x": 16, "y": 6 },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "min": 0
+        }
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": ["mean", "max"]
+        },
+        "tooltip": { "mode": "multi", "sort": "desc" }
+      },
       "targets": [
         {
           "refId": "A",
-          "expr": "sum by (code) (rate(uno_rejected_total[5m]))",
+          "expr": "sum by (code) (rate(uno_rejected_total[5m])) * 60",
           "legendFormat": "{{code}}"
+        }
+      ]
+    },
+    {
+      "id": 8,
+      "type": "stat",
+      "title": "Database recording failures, last 24h",
+      "description": "Finished games the server could not write to the database. The table itself never breaks because of this, but anything above zero deserves a look at the backend logs.",
+      "gridPos": { "h": 5, "w": 6, "x": 0, "y": 13 },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "noValue": "0",
+          "decimals": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "red", "value": 1 }
+            ]
+          }
+        }
+      },
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"] },
+        "colorMode": "value",
+        "graphMode": "none"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum(increase(uno_rejected_total{code=\"RECORD_FAILED\"}[24h]))"
         }
       ]
     }
