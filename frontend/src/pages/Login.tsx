@@ -64,6 +64,8 @@ export default function Login() {
 
 	const handleSubmit = async (e) => {
 		e.preventDefault();
+        setError('');
+        setInfo('');
 		if (!formData.email || !formData.password) {
 			setError('Please fill in all fields.');
 			return;

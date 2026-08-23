@@ -236,6 +236,7 @@ class UserGameDetail(SQLModel):
     game_id: UUID
     is_winner: bool
     score: int
+    opponents: str
     finished_at: datetime | None = None
 
 class Friend(SQLModel):

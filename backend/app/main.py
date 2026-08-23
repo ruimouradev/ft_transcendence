@@ -1,7 +1,8 @@
 import asyncio
 import logging
+import time
 
-from app.presence_manager import check_heartbeat_timeouts
+from app.presence_manager import check_heartbeat_timeouts, presence_manager
 from app.models.all import APIError, ErrorResponse
 from app.platform.service.userservice import get_robot_user_list
 from fastapi import FastAPI, Request
