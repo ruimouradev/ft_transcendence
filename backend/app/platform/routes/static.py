@@ -34,7 +34,7 @@ async def get_global_leaderboard(session: SessionDep, current_user: CurrentUser)
     global_leaderboard = userStatisticService.get_global_leaderboard(session=session, current_user=current_user)
     return global_leaderboard
 
-@router.post("/save_game_result")
-async def save_game_result(session: SessionDep, current_user: CurrentUser, game:Game, game_players: list[GamePlayer]):
-    userStatisticService.save_game_result(session=session, game=game, game_players=game_players)
-    return {"message": "Game result saved successfully."}
+# @router.post("/save_game_result")
+# async def save_game_result(session: SessionDep, current_user: CurrentUser, game:Game, game_players: list[GamePlayer]):
+#     userStatisticService.save_game_result(session=session, game=game, game_players=game_players)
+#     return {"message": "Game result saved successfully."}

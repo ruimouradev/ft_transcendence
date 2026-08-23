@@ -40,7 +40,7 @@ class Settings(BaseSettings):
             self.FRONTEND_HOST
         ]
 
-    PROJECT_NAME: str = "UNO"
+    PROJECT_NAME: str = "UNOpposed"
     EMAIL_RESET_TOKEN_EXPIRE_HOURS: int = 48
 
     FIRST_SUPERUSER: EmailStr ="not set"
