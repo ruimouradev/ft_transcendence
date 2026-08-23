@@ -8,7 +8,7 @@ from uuid import UUID
 
 from app.models.database import engine
 from sqlmodel import Session
-from app.models.all import Game as DBGame, GamePlayer
+from app.models.all import Game as DBGame, GamePlayer, User
 from app.platform.service.userStatisticService import save_game_result
 from app.robots_manager import robots_user_manager
 from app.game.rules import points
@@ -37,6 +37,7 @@ class Player:
     connected: bool = True
     bot: bool = False
     user: str | None = None  # account id from the login cookie
+    avatar: str = ""  # the account's picture, empty for guests and bots
 
 
 @dataclass
@@ -83,8 +84,10 @@ def snapshot_json(room: Room, player_id: str) -> str:
     host = host_of(room)
     snap.host_id = host.id if host else None
     bots = {p.id for p in room.players if p.bot}
+    avatars = {p.id: p.avatar for p in room.players}
     for seat in snap.players:
         seat.bot = seat.id in bots
+        seat.avatar = avatars.get(seat.id, "")
     return snap.model_dump_json()
 
 
@@ -159,6 +162,7 @@ async def async_save_game_result(db_game: DBGame, game_players: list[GamePlayer]
                 session.commit()
             except Exception as e:
                 logging.error(f"Failed to save game result: {e}")
+                metrics.rejected.labels(code="RECORD_FAILED").inc()
     
     await asyncio.to_thread(_sync_save)
 
@@ -319,8 +323,16 @@ def list_rooms() -> list[dict[str, object]]:
 async def seat_player(ws: WebSocket, room: Room, name: str,
                       user: str | None) -> Player:
     room.humans_made += 1
+    avatar = ""
+    if user:
+        # one small read at seat time, so the avatar can ride in every
+        # state update without anyone querying the database again
+        with Session(engine) as session:
+            account = session.get(User, UUID(user))
+            if account and account.avatar:
+                avatar = account.avatar
     player = Player(id=f"p{room.humans_made}", name=name,
-                    token=uuid4().hex, ws=ws, user=user)
+                    token=uuid4().hex, ws=ws, user=user, avatar=avatar)
     room.players.append(player)
     metrics.players_connected.inc()
     reseat(room)
@@ -335,6 +347,12 @@ async def seat_player(ws: WebSocket, room: Room, name: str,
 async def game(ws: WebSocket, room_id: str) -> None:
     await ws.accept()
     user = user_from_cookies(ws)
+    if user is None:
+        # registration is required to play, the rule holds on the
+        # server too, not only behind the frontend's login gate
+        await reject(ws, ErrorCode.AUTH_REQUIRED, "login required to play")
+        await ws.close()
+        return
     room: Room | None = None
     player: Player | None = None
     try:
