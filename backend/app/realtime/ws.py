@@ -3,6 +3,16 @@ import time
 from dataclasses import dataclass, field
 from uuid import uuid4
 
+import logging
+from uuid import UUID
+
+from app.models.database import engine
+from sqlmodel import Session
+from app.models.all import Game as DBGame, GamePlayer
+from app.platform.service.userStatisticService import save_game_result
+from app.robots_manager import robots_user_manager
+from app.game.rules import points
+
 import jwt
 import pydantic
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
@@ -141,7 +151,19 @@ def reseat(room: Room) -> None:
     room.game.seq = prev + 1
 
 
-def apply(room: Room, player: Player, action: PlayerAction) -> Error | None:
+async def async_save_game_result(db_game: DBGame, game_players: list[GamePlayer]) -> None:
+    def _sync_save():
+        with Session(engine) as session:
+            try:
+                save_game_result(session=session, game=db_game, game_players=game_players)
+                session.commit()
+            except Exception as e:
+                logging.error(f"Failed to save game result: {e}")
+    
+    await asyncio.to_thread(_sync_save)
+
+
+async def apply(room: Room, player: Player, action: PlayerAction) -> Error | None:
     # The engine is the single source of truth for the rules, here we
     # only translate messages into calls
     if isinstance(action, (Create, Join)):
@@ -212,7 +234,57 @@ def apply(room: Room, player: Player, action: PlayerAction) -> Error | None:
 
     if room.game.phase == "finished":
         metrics.games_finished.inc()
-        pass  # record_match goes here (Bin's stats)
+        has_guests = any(not p.bot and p.user is None for p in room.players)
+        if not has_guests:
+            db_game = DBGame(status="finished")
+            game_players = []
+            bot_count = 0
+            
+            total_remain_points = sum(
+                sum(points(c) for c in h.cards) for h in room.game.hands
+            )
+            
+            for i, p in enumerate(room.players):
+                user_id = None
+                if p.bot:
+                    bot_count += 1
+                    if bot_count == 1:
+                        user_id = robots_user_manager.get_robot1_id()
+                    elif bot_count == 2:
+                        user_id = robots_user_manager.get_robot2_id()
+                    elif bot_count == 3:
+                        user_id = robots_user_manager.get_robot3_id()
+                elif p.user:
+                    try:
+                        user_id = UUID(p.user)
+                    except ValueError:
+                        pass
+                
+                if user_id is None:
+                    continue
+                    
+                hand = next((h for h in room.game.hands if h.id == p.id), None)
+                if not hand:
+                    continue
+                    
+                remain_points = sum(points(card) for card in hand.cards)
+                is_winner = (p.id == room.game.winner)
+                score = total_remain_points if is_winner else 0
+                
+                gp = GamePlayer(
+                    game_id=db_game.id,
+                    user_id=user_id,
+                    is_winner=is_winner,
+                    score=score,
+                    seat=i,
+                    remain_points=remain_points,
+                    cards_left=len(hand.cards),
+                    is_connected=p.connected
+                )
+                game_players.append(gp)
+                
+            if len(game_players) == len(room.players):
+                await async_save_game_result(db_game, game_players)
 
     # the AI loop plays for bot seats when it is their turn (Alexandre)
 
@@ -334,7 +406,7 @@ async def game(ws: WebSocket, room_id: str) -> None:
                     player = await seat_player(ws, room, action.name, user)
                 continue
 
-            error = apply(room, player, action)
+            error = await apply(room, player, action)
             if error:
                 metrics.rejected.labels(code=error.code.value).inc()
                 await ws.send_text(error.model_dump_json())
