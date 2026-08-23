@@ -1,24 +1,9 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
-  <defs>
-    <!-- 阴影滤镜 -->
-    <filter id="shadow" x="-10%" y="-10%" width="120%" height="120%">
-      <feDropShadow dx="0" dy="8" stdDeviation="10" flood-color="#000000" flood-opacity="0.25"/>
-    </filter>
-  </defs>
-
-  <!-- 圆形暗色图标背景底板 -->
-  <circle cx="256" cy="256" r="224" fill="#1E293B" filter="url(#shadow)"/>
-
-  <!-- 4 色 'U' 字型矢量路径 -->
-  <!-- 红色 (左竖) -->
-  <path d="M 140 100 L 210 100 L 210 270 L 140 270 Z" fill="#EF4444"/>
-
-  <!-- 蓝色 (右竖) -->
-  <path d="M 302 100 L 372 100 L 372 270 L 302 270 Z" fill="#3B82F6"/>
-
-  <!-- 黄色 (左下弧) -->
-  <path d="M 140 270 A 116 116 0 0 0 256 386 L 256 316 A 46 46 0 0 1 210 270 Z" fill="#EAB308"/>
-
-  <!-- 绿色 (右下弧) -->
-  <path d="M 256 386 A 116 116 0 0 0 372 270 L 302 270 A 46 46 0 0 1 256 316 Z" fill="#22C55E"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- O icone do site: um verso de carta vermelho com o oval classico,
+       desenhado a mao como o resto dos graficos do projeto. -->
+  <rect width="512" height="512" rx="110" fill="#0f172a"/>
+  <g transform="rotate(-14 256 256)">
+    <rect x="136" y="76" width="240" height="360" rx="30" fill="#dc2626" stroke="#f8fafc" stroke-width="16"/>
+    <ellipse cx="256" cy="256" rx="82" ry="140" fill="none" stroke="#f8fafc" stroke-width="20" transform="rotate(28 256 256)"/>
+  </g>
 </svg>

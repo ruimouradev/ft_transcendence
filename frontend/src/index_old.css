@@ -1,0 +1,296 @@
+/* Estilos globais. O tailwind e importado aqui uma vez e as classes
+   utilitarias dele ficam disponiveis em todos os componentes. O resto
+   do estilo base (margens a zero, fundo, tipografia) vem do proprio
+   tailwind e do CssBaseline do MUI, por isso este ficheiro e curto. */
+@import "tailwindcss";
+
+.nav_group {
+	background-color: #444455;
+	margin: 0;
+	padding: 0;
+	display: flex;
+	align-items: center;
+}
+
+.nav_mid:hover a, .nav_right:hover a{
+	color: yellow;
+}
+
+.nav_left {
+	margin-right: auto;
+	color: white;
+	display: inline-block;
+	padding: 10px 16px;
+}
+
+.nav_mid {
+	color: white;
+	display: inline-block;
+	padding: 10px 16px;
+	text-align: center;
+}
+
+.nav_right {
+	margin-left: auto;
+	color: white;
+	display: inline-block;
+	padding: 10px 16px;
+}
+
+.footer {
+	position: fixed;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	font-size: 14px;
+	align-items: center;
+	border-top: 1px solid;
+}
+
+.footer_items {
+	display: inline-block
+}
+
+a {
+    display: block;
+    padding: 10px 16px;
+    color: white;
+    text-decoration: none;
+}
+
+:root {
+	background-color: #333355;
+	text-align: center;
+}
+
+h1 {
+	font-size: 100px;
+	letter-spacing: -1.68px;
+	margin: 32px 0;
+	font-weight: bold;
+}
+
+h3 {
+	font-size: 42px;
+	line-height: 118%;
+	letter-spacing: -0.24px;
+	margin: 0 0 8px;
+}
+
+.tmp {
+	color: white;
+	font-size: 27px;
+}
+
+.game-area {
+	position: relative;
+	width: 100%;
+	height: 90vh;
+}
+
+.full-board {
+	width: 100%;
+	height: 100%;
+	background-color: black;
+	margin-top: 15px;
+	display: grid;
+    grid-template-columns: repeat(10, 1fr);
+    grid-template-rows: repeat(12, 1fr);
+}
+
+.avatar-board {
+ 	position: absolute;
+    inset: 0;
+    display: grid;
+    grid-template-columns: repeat(9, 1fr);
+    grid-template-rows: repeat(9, 1fr);
+    pointer-events: none;
+}
+
+.avatar-north {
+	transform: translateY(90px);
+}
+
+.avatar-west {
+	transform: translateX(70px);
+}
+
+.avatar-east {
+	transform: translateX(-70px);
+}
+
+.board-south {
+    grid-column: 3 / 9;
+    grid-row: 10 / 13;
+	background-color: #1e0f8f;
+}
+
+.board-north {
+    grid-column: 3 / 9;
+    grid-row: 1 / 4;
+	background-color: #c62727;
+}
+
+.board-east {
+    grid-column: 9 / 11;
+    grid-row: 2 / 10;
+	background-color: #12b85f;
+}
+
+.board-west {
+    grid-column: 1 / 3;
+    grid-row: 2 / 10;
+	background-color: #cdc719;
+}
+
+.board-center {
+	grid-column: 4 / 8;
+    grid-row: 5 / 9;
+	background-color: #6d6d6d;
+}
+
+.card {
+	height: 140px;
+	width: 100px;
+	user-select: none;
+    -webkit-user-drag: none;
+	border-radius: 8px;
+	object-fit: cover;
+    box-sizing: border-box;
+	border: 6px solid white;
+	box-shadow: 4.0px 8.0px 8.0px black;
+}
+
+.card-south {
+	margin: -10px;
+	transform: translateY(10px)
+}
+
+.card-south:hover {
+	transform: translateY(-20px);
+	z-index: 10;
+	height: 154px;
+    width: 110px;
+}
+
+.deck_card {
+	transform: translateX(0px) translateY(-60px);
+}
+
+/* .card-north, .card-east, .card-west {
+    height: 120px;
+    width: 85px;
+} */
+
+.card-north {
+	transform: rotate(180deg) translateY(20px);
+	margin: -15px;
+}
+
+.card-east {
+	transform: rotate(270deg) translateY(60px);
+	margin: 0px 0px -70px;
+}
+
+.card-west {
+	transform: rotate(90deg) translateY(60px);
+	margin: 0px 0px -70px;
+}
+
+.card-north, .card-east, .card-west {
+    height: 120px;
+    width: 85px;
+}
+
+/* .card-north:hover {
+	transform: translateY(10px);
+} */
+
+/* .card-west:hover {
+	transform: translateX(10px) rotate(90deg);
+}
+
+.card-east:hover {
+	transform: translateX(-10px) rotate(270deg);;
+} */
+
+ul {
+	list-style-type: none;
+	display: flex;
+	margin: 0;
+    padding: 0;
+	width: 100%;
+    height: 100%;
+	align-items: center;
+    justify-content: center;
+}
+
+.ul-vertical {
+    flex-direction: column;
+}
+
+.ul-horizontal {
+	flex-direction: row;
+}
+
+.list {
+	display: inline-block;
+	padding: 4px;
+	flex-shrink: 0;
+}
+
+.rainbow-button {
+	animation: rainbow-button 15s linear infinite;
+}
+
+@keyframes rainbow-button {
+		100%,0%{
+			background-color: rgb(188, 0, 0);
+		}
+		8%{
+			background-color: rgb(198, 100, 1);
+		}
+		16%{
+			background-color: rgb(188, 188, 0);
+		}
+		25%{
+			background-color: rgb(93, 187, 0);
+		}
+		33%{
+			background-color: rgb(0, 184, 0);
+		}
+		41%{
+			background-color: rgb(0, 180, 90);
+		}
+		50%{
+			background-color: rgb(0, 189, 189);
+		}
+		58%{
+			background-color: rgb(0, 101, 203);
+		}
+		66%{
+			background-color: rgb(0, 0, 190);
+		}
+		75%{
+			background-color: rgb(92, 0, 184);
+		}
+		83%{
+			background-color: rgb(184, 0, 184);
+		}
+		91%{
+			background-color: rgb(186, 0, 93);
+		}
+}
+
+.rooms {
+	display: block;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    overflow-y: auto;
+    max-height: 100%;
+}
+
+.terms {
+	display: block;
+}
