@@ -1,9 +1,9 @@
 import asyncio
 import logging
-import time
 
-from app.presence_manager import presence_manager
+from app.presence_manager import check_heartbeat_timeouts
 from app.models.all import APIError, ErrorResponse
+from app.platform.service.userservice import get_robot_user_list
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
@@ -16,16 +16,32 @@ from app.platform.config import settings
 from prometheus_fastapi_instrumentator import Instrumentator
 from app.realtime.ws import router as game_router
 from app.platform.routes.user import user_presence_router
+from contextlib import asynccontextmanager
+from app.robots_manager import robots_user_manager
 
 def custom_generate_unique_id(route: APIRoute) -> str:
     tag = route.tags[0] if route.tags else "default"
     return f"{tag}-{route.name}"
 
-app = FastAPI(
-    title=settings.PROJECT_NAME,
-    openapi_url=f"{settings.API_V1_STR}/openapi.json",
-    generate_unique_id_function=custom_generate_unique_id
-)
+# logger = logging.getLogger("uvicorn.error")
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    with Session(engine) as session:
+        init_db(session)
+        robots_user_manager.set_robots(get_robot_user_list(session=session))
+
+    heartbeat_task = asyncio.create_task(check_heartbeat_timeouts())
+
+    yield
+
+    heartbeat_task.cancel()
+    try:
+        await heartbeat_task
+    except asyncio.CancelledError:
+        pass
+
+app = FastAPI(title=settings.PROJECT_NAME, openapi_url=f"{settings.API_V1_STR}/openapi.json", generate_unique_id_function=custom_generate_unique_id, lifespan=lifespan)
 
 Instrumentator().instrument(app).expose(app)
 
@@ -38,14 +54,6 @@ app.add_middleware(
 )
 
 app.mount("/static", StaticFiles(directory="app/static"), name="static")
-
-@app.on_event("startup")
-def on_startup():
-    asyncio.create_task(check_heartbeat_timeouts())
-    with Session(engine) as session:
-        init_db(session)
-    
-
 
 app.include_router(api_router, prefix=f"{settings.API_V1_STR}")
 app.include_router(game_router)
@@ -63,26 +71,21 @@ class SuppressHealthCheckFilter(logging.Filter):
 
 logging.getLogger("uvicorn.access").addFilter(SuppressHealthCheckFilter())
 
-# Background task to check for frontend player's heartbeat timeouts and mark them as offline if necessary
-async def check_heartbeat_timeouts():
-    while True:
-        await asyncio.sleep(10)
-        now = time.time()
-        for user_id, last_ping in list(presence_manager.last_seen.items()):
-            if presence_manager.get_status(user_id) == "ONLINE" and (now - last_ping) > 25:
-                await presence_manager.disconnect(user_id, grace_period=10)
 
+async def check_heartbeat_timeouts():
+    try:
+        while True:
+            await asyncio.sleep(10)
+            now = time.time()
+            for user_id, last_ping in list(presence_manager.last_seen.items()):
+                if presence_manager.get_status(user_id) == "ONLINE" and (now - last_ping) > 25:
+                    await presence_manager.disconnect(user_id, grace_period=10)
+    except asyncio.CancelledError:
+        raise
 
 @app.exception_handler(APIError)
-async def api_error_handler(
-    request: Request,
-    exc: APIError,
-)-> ErrorResponse:
+async def api_error_handler(request: Request, exc: APIError)-> ErrorResponse:
     return JSONResponse(
         status_code=exc.status_code,
-        content={
-            "code": exc.code,
-            "message": exc.message,
-            "details": exc.details,
-        },
+        content={"code": exc.code, "message": exc.message, "details": exc.details}
     )

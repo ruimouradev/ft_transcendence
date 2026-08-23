@@ -1,4 +1,6 @@
 from datetime import datetime, timedelta, timezone
+import secrets
+import string
 from typing import Any
 
 import jwt
@@ -15,9 +17,11 @@ password_hash = PasswordHash(
     )
 )
 
-
 ALGORITHM = "HS256"
 
+def generate_password(length: int = 16) -> str:
+    characters = string.ascii_letters + string.digits
+    return ''.join(secrets.choice(characters) for _ in range(length))
 
 def create_access_token(subject: str | Any, expires_delta: timedelta) -> str:
     expire = datetime.now(timezone.utc) + expires_delta
@@ -26,9 +30,7 @@ def create_access_token(subject: str | Any, expires_delta: timedelta) -> str:
     return encoded_jwt
 
 
-def verify_password(
-    plain_password: str, hashed_password: str
-) -> tuple[bool, str | None]:
+def verify_password(plain_password: str, hashed_password: str) -> tuple[bool, str | None]:
     return password_hash.verify_and_update(plain_password, hashed_password)
 
 
