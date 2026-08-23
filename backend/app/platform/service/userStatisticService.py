@@ -2,6 +2,7 @@ import math
 import logging
 
 from sqlmodel import select, func, or_, Session
+from sqlalchemy.dialects.postgresql import aggregate_order_by
 from app.platform.deps import CurrentUser, SessionDep
 from app.models.all import APIError, APIErrorCode, GamePlayerDetail, User, UserGameDetail, UserPublic, UserStatistic, UserStatisticInfo, UserStatisticLeaderboardEntry, UserStatisticLevel, Game, GamePlayer, Friendship, FriendshipStatus
 from app.robots_manager import robots_user_manager
@@ -127,11 +128,9 @@ def get_user_all_game_detail_records(session: SessionDep, current_user: CurrentU
     '''
 
     player_names = (
-        select(
-            func.string_agg(User.nick_name, ", ")
-        )
+        select(func.string_agg(User.nick_name, ", "))
         .join(GamePlayer, GamePlayer.user_id == User.id)
-        .where(GamePlayer.game_id == Game.id)
+        .where(GamePlayer.game_id == Game.id, User.id != current_user.id)
         .scalar_subquery()
     )
 

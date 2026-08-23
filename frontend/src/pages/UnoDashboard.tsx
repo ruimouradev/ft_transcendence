@@ -357,7 +357,8 @@ export default function UnoDashboard() {
                                             <Table size="small">
                                                 <TableHead>
                                                     <TableRow>
-                                                        <TableCell sx={{ fontWeight: 'bold' }}>Match ID</TableCell>
+                                                        {/* <TableCell sx={{ fontWeight: 'bold' }}>Match ID</TableCell> */}
+                                                        <TableCell sx={{ fontWeight: 'bold' }}>Opponents</TableCell>
                                                         <TableCell sx={{ fontWeight: 'bold' }}>Result</TableCell>
                                                         <TableCell sx={{ fontWeight: 'bold' }}>Score</TableCell>
                                                         <TableCell sx={{ fontWeight: 'bold' }} align="right">Time</TableCell>
@@ -366,8 +367,15 @@ export default function UnoDashboard() {
                                                 <TableBody>
                                                     {filteredMatches.map((match) => (
                                                         <TableRow key={match.game_id} hover onClick={(event) => { handleGameRowClick(match.game_id); setAnchorEl(event.currentTarget); }} sx={{ cursor: 'pointer' }}>
-                                                            <TableCell component="th" scope="row" sx={{ fontFamily: 'monospace' }}>
-                                                                {match.game_id.slice(0, 0) + '...' + match.game_id.slice(-5)}
+                                                            {/* <TableCell component="th" scope="row" sx={{ fontFamily: 'monospace' }}>
+                                                                {match.game_id.slice(0, 0) + '...' + match.game_id.slice(-2)}
+                                                            </TableCell> */}
+                                                            <TableCell sx={{ fontFamily: 'monospace' }}>
+                                                                <Tooltip title={match.opponents} arrow>
+                                                                    <span>
+                                                                        {match.opponents.length > 10 ? match.opponents.slice(0, 10) + '...' : match.opponents}
+                                                                    </span>
+                                                                </Tooltip>
                                                             </TableCell>
                                                             <TableCell>
                                                                 <Chip
