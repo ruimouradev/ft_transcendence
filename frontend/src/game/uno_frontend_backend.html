@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="utf-8">
+<title>Uno - protocolo do jogo</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  body { font-family: -apple-system, "Segoe UI", Roboto, sans-serif;
+         max-width: 900px; margin: 0 auto; padding: 24px;
+         color: #222; line-height: 1.55; background: #fafafa; }
+  h1 { border-bottom: 3px solid #c0392b; padding-bottom: 8px; }
+  h2 { margin-top: 42px; border-bottom: 1px solid #ddd; padding-bottom: 4px; }
+  h3 { margin-top: 26px; }
+  code { background: #eee; padding: 1px 5px; border-radius: 4px;
+         font-size: 0.92em; }
+  pre { background: #2d2d2d; color: #eee; padding: 14px;
+        border-radius: 8px; overflow-x: auto; font-size: 0.87em; }
+  pre code { background: none; padding: 0; color: inherit; }
+  table { border-collapse: collapse; width: 100%; margin: 12px 0;
+          font-size: 0.93em; }
+  th, td { border: 1px solid #ccc; padding: 7px 10px; text-align: left;
+           vertical-align: top; }
+  th { background: #f0f0f0; }
+  .tip { background: #eaf4ea; border-left: 4px solid #2e7d32;
+         padding: 10px 14px; border-radius: 0 6px 6px 0; margin: 14px 0; }
+  nav { display: flex; gap: 10px; flex-wrap: wrap; margin: 18px 0 6px; }
+  nav a { text-decoration: none; background: #fff; color: #c0392b;
+          border: 1px solid #c0392b; border-radius: 20px;
+          padding: 7px 16px; font-size: 0.92em; font-weight: 600; }
+  nav a:hover { background: #c0392b; color: #fff; }
+  h2 { scroll-margin-top: 12px; }
+</style>
+</head>
+<body>
+
+<h1>Uno - o protocolo do jogo</h1>
+<p>O jogo vive num websocket por sala, em
+<code>wss://&lt;site&gt;/ws/game/{sala}</code>. O cliente envia ações
+("quero jogar esta carta") e, depois de cada jogada aceite, o servidor
+envia a todos o estado completo do jogo - tudo JSON em texto. Este
+documento lista essas mensagens nos dois sentidos; a definição oficial
+está em <code>backend/app/game/contract.py</code>.</p>
+
+<nav>
+  <a href="#vida">00 &middot; A vida de uma sala</a>
+  <a href="#envias">01 &middot; O que envias</a>
+  <a href="#recebes">02 &middot; O que recebes</a>
+  <a href="#calculado">03 &middot; Já calculado</a>
+  <a href="#servidor">04 &middot; O servidor</a>
+</nav>
+
+<h2 id="vida">00 &middot; A vida de uma sala</h2>
+
+<p>Antes do dicionário, o filme. Uma sala nasce, enche, joga, esvazia
+e morre, e cada momento tem as suas regras.</p>
+
+<p><b>Entrar</b> tem duas portas no mesmo ecrã: a lista das públicas
+(o <code>GET /api/rooms</code> da secção 01) e o campo de código para
+as privadas. O código é inventado por quem cria a sala, viaja no
+endereço do websocket (<code>/ws/game/{codigo}</code>) e é ao mesmo
+tempo convite e chave, como no Among Us. Convém que viva no endereço
+da própria página (tipo <code>/game/ABC123</code>) enquanto se está lá
+dentro: assim um F5 sabe onde voltar.</p>
+
+<p><b>Quem joga tem conta</b>: ficou decidido em equipa que só se
+joga com login feito - o ecrã só deixa chegar ao jogo quem tem sessão
+aberta, e o cookie dela viaja sozinho no handshake do websocket, a
+identificar a pessoa. O token do <code>welcome</code> continua a
+existir como chave de reconexão.</p>
+
+<p><b>No lobby</b>, quem manda é o host (o <code>host_id</code> do
+estado, sempre um humano) e só dele o servidor aceita o start e os
+bots. Entra-se com join enquanto há lugar. <b>Sair é fechar o
+websocket</b>, sem mensagem nenhuma: o lugar liberta-se, a lista
+encolhe para todos, e se saiu o host a coroa passa sozinha ao humano
+seguinte. Uma sala só com bots fecha-se.</p>
+
+<p><b>O start</b> só é aceite com a sala cheia (o
+<code>max_players</code> escolhido no create, bots a contar). A ideia
+de UX combinada: mostrar "waiting for the room to be full 3/4" e
+libertar o botão do host quando encher.</p>
+
+<p><b>Durante o jogo</b> já ninguém entra e sair é diferente: o lugar
+fica guardado, cinzento (<code>connected: false</code>), com a mão à
+espera no servidor. Quem tem login volta ao lugar só com um join (o
+cookie identifica-o), convidados voltam com o token do welcome. A mesa
+nunca muda de tamanho nem de ordem a meio de um jogo.</p>
+
+<p><b>E ninguém congela a mesa</b>: cada vez tem um relógio de 60
+segundos no servidor. Se o jogador da vez não mexer (adormeceu, saiu,
+ou é um bot sem AI), a vez fecha-se sozinha: sem jogada possível na
+mão, ou a dever cartas de um +4 ou de uma pilha de +2, compra o que
+devia e segue; com jogada possível, perde simplesmente a vez. O ecrã
+fica a saber pelo <code>last_action</code> com kind
+<code>timeout</code> (entra no próximo merge do ws).</p>
+
+<p><b>No fim</b>, o host pode carregar em play again, que é
+simplesmente outro <code>start</code>: jogo novo do zero, com quem
+ficou. A sala morre quando fica sem humanos, e o código liberta-se
+para quem o quiser reutilizar.</p>
+
+<p>O exemplo a andar, numa sala de 3 lugares:</p>
+<table>
+<tr><th>Acontece</th><th>O que o servidor manda a todos</th></tr>
+<tr><td>A cria a sala de 3</td><td>estado com <code>[A]</code>, phase lobby</td></tr>
+<tr><td>B entra</td><td>estado com <code>[A, B]</code></td></tr>
+<tr><td>C entra</td><td>estado com <code>[A, B, C]</code>, sala cheia</td></tr>
+<tr><td>B carrega em sair (o browser fecha a ligação)</td>
+    <td>estado com <code>[A, C]</code></td></tr>
+<tr><td>A mete um bot no lugar vago</td>
+    <td>estado com <code>[A, C, Bot 1]</code>, cheia outra vez</td></tr>
+<tr><td>A carrega em start</td>
+    <td>estado com phase playing, cartas na mão</td></tr>
+</table>
+<p>Repara no padrão: aconteça o que acontecer, a resposta é sempre um
+estado novo com a sala como ela ficou. O ecrã não gere nada, recebe
+estado e desenha estado.</p>
+
+<h2 id="envias">01 &middot; O que envias (ações)</h2>
+
+<h3>create - abrir uma sala</h3>
+<pre><code>{ "type": "create", "name": "ana",
+  "settings": { "hand_size": 7, "stacking": false, "seven_zero": false,
+                "max_players": 4, "public": false } }</code></pre>
+<p>Cria a sala e o criador fica logo sentado como primeiro jogador.
+<code>settings</code> é opcional: omitido = regras oficiais, sala
+privada de 4 lugares. As opções ficam fixas para o jogo todo (é isto
+que o formulário do "Create Game" envia; é a parte da UI do módulo de
+customization). Com <code>public: true</code> a sala aparece na lista
+de salas enquanto estiver em lobby.</p>
+
+<h3>join - entrar numa sala</h3>
+<pre><code>{ "type": "join", "name": "ana" }
+{ "type": "join", "name": "ana", "token": "abc123..." }</code></pre>
+<p>A primeira forma pede um lugar novo - a sala tem de existir (o join
+já não cria salas, isso é o create) e estar em lobby com lugar livre
+(o limite é o <code>max_players</code> dela). A segunda é o
+<b>rejoin</b>: com o token que recebeste no <code>welcome</code>,
+recuperas o teu lugar e a tua mão depois de uma queda de ligação,
+mesmo a meio do jogo. E se a pessoa tiver feito login no site, nem do
+token precisa: o servidor reconhece-a pelo cookie e devolve-lhe o
+lugar só com o join simples.</p>
+
+<h3>add_bot e remove_bot - bots no lobby</h3>
+<pre><code>{ "type": "add_bot" }
+{ "type": "remove_bot", "target": "b1" }</code></pre>
+<p>Só para o host e só no lobby. O add_bot senta um jogador AI na
+próxima cadeira livre (conta para o <code>max_players</code>); o
+remove_bot tira o bot com aquele id. Os bots aparecem no
+<code>players</code> como jogadores normais, com nomes "Bot 1",
+"Bot 2"... Dá para jogar sozinho contra bots ou em mesas mistas.</p>
+
+<h3>start - começar a partida</h3>
+<pre><code>{ "type": "start" }</code></pre>
+<p>Só o host pode - e o host é sempre o primeiro <u>humano</u> da lista
+de players, nunca um bot. A sala tem de estar <b>cheia</b> (o
+<code>max_players</code> escolhido no create, com bots a contar), senão
+o servidor recusa. Baralha, dá as cartas e vira a primeira carta da
+mesa. E o mesmo <code>start</code> num jogo <u>acabado</u> é o <b>play
+again</b>: o jogo renasce do zero com quem está na sala, e se
+entretanto saiu alguém a sala volta ao lobby à espera de encher.</p>
+
+<h3>play - jogar uma carta</h3>
+<pre><code>{ "type": "play", "card": "c42" }
+{ "type": "play", "card": "c42", "color": "red" }
+{ "type": "play", "card": "c42", "uno": true }
+{ "type": "play", "card": "c42", "target": "p3" }</code></pre>
+<table>
+<tr><th>Campo</th><th>Quando</th></tr>
+<tr><td><code>card</code></td><td>Sempre: o id da carta (vem na tua mão,
+    em <code>you.hand</code>)</td></tr>
+<tr><td><code>color</code></td><td>Obrigatório quando a carta é wild:
+    a cor escolhida ("red", "yellow", "green", "blue"). Vai na própria
+    jogada - não existe uma segunda mensagem para a cor.</td></tr>
+<tr><td><code>uno</code></td><td>Dizer UNO também viaja na jogada:
+    <code>true</code> na carta que deixa o jogador com apenas 1. Sem
+    isso, fica sujeito ao <code>catch</code> dos outros.</td></tr>
+<tr><td><code>target</code></td><td>Só para um 7 com a regra seven-zero
+    ativa: o id do jogador com quem trocar de mão.</td></tr>
+</table>
+
+<h3>draw - comprar</h3>
+<pre><code>{ "type": "draw" }</code></pre>
+<p>Três significados, o servidor sabe qual é: compra normal (1 carta;
+se ela for jogável a vez <u>continua</u> tua para a jogares ou passares),
+aceitar um +4 pendente (comes as 4 e és saltado), ou comprar uma pilha
+de +2 acumulada. Só uma compra normal por turno.</p>
+
+<h3>pass - passar</h3>
+<pre><code>{ "type": "pass" }</code></pre>
+<p>Só válido depois de comprares uma carta jogável e decidires não a
+jogar. (Sem teres comprado, não podes passar - no Uno ninguém passa de
+graça.)</p>
+
+<h3>challenge - desafiar um +4</h3>
+<pre><code>{ "type": "challenge" }</code></pre>
+<p>Só para a vítima de um +4 pendente, em alternativa ao draw. Se quem
+o jogou tinha carta da cor ativa na mão (bluff): ele é que come as 4 e
+tu jogas normalmente. Se o +4 era limpo: comes 6 (4+2 de castigo) e és
+saltado.</p>
+
+<h3>catch - apanhar quem não disse UNO</h3>
+<pre><code>{ "type": "catch", "target": "p3" }</code></pre>
+<p>Qualquer jogador pode, a qualquer momento, contra quem está com 1
+carta e não disse UNO: o apanhado compra 2. Não podes apanhar-te a ti
+próprio.</p>
+
+<h3>a lista de salas (HTTP, fora do socket)</h3>
+<pre><code>GET /api/rooms
+
+[ { "code": "A7F3", "host": "ana", "players": ["ana", "Bot 1"],
+    "max_players": 4,
+    "settings": { "hand_size": 7, "stacking": false, "seven_zero": true,
+                  "max_players": 4, "public": true } } ]</code></pre>
+<p>Devolve as salas públicas que ainda estão em lobby <u>com lugar
+livre</u> - as privadas, as cheias e os jogos a decorrer nunca
+aparecem, portanto tudo o que a lista mostra é entrável.
+<code>players</code> é a lista dos nomes de quem lá está (bots
+incluídos), e o "2/4" faz-se contando os nomes. O resto alimenta o
+ecrã da lista: o código para o botão de entrar, quem criou, e as
+opções da sala para mostrares o "Default/Custom Game". Atenção ao
+caminho: esta rota vive em <code>/api/rooms</code>, <u>sem</u> o
+/api/v1 da plataforma (é do servidor do jogo), portanto pede-se com
+axios ou fetch diretos e não com o cliente que tem o /api/v1 no
+baseURL.</p>
+
+<h2 id="recebes">02 &middot; O que recebes</h2>
+
+<h3>welcome - o teu lugar</h3>
+<pre><code>{ "type": "welcome", "id": "p1", "token": "abc123..." }</code></pre>
+<p>Chega uma vez, quando te sentas. O <code>id</code> é como apareces
+no estado; o <code>token</code> é a tua chave de rejoin - guarda-o e
+usa-o no join se a ligação cair.</p>
+
+<h3>state - o jogo completo, da tua perspetiva</h3>
+<p>Chega a todos depois de <u>cada</u> jogada aceite (cada um recebe a sua
+versão: a tua mão vai só para ti, dos outros só vês contagens). A UI
+redesenha a partir do último recebido - não há deltas nem replay.</p>
+<p>Durante o <b>lobby</b> o estado é o mesmo mas quase vazio: a mão e o
+<code>playable</code> vêm vazios, <code>turn</code> e
+<code>top_card</code> a null - o que interessa nessa fase é o
+<code>players</code>, quem já entrou e está à espera do start.</p>
+<pre><code>{ "type": "state", "seq": 17, "phase": "playing",
+  "you": { "id": "p1",
+           "hand": [ { "id": "c42", "color": "red", "value": "7" }, ... ],
+           "playable": ["c42", "c51"],
+           "drawn": null },
+  "players": [ { "id": "p1", "name": "ana", "cards": 5,
+                 "connected": true, "uno": false, "bot": false,
+                 "points": 0 }, ... ],
+  "host_id": "p1",
+  "settings": { "hand_size": 7, "stacking": false, "seven_zero": false,
+                "max_players": 4, "public": false },
+  "top_card": { "id": "c13", "color": "blue", "value": "4" },
+  "active_color": "blue", "direction": 1, "turn": "p1",
+  "draw_pile": 34, "stack": 0, "plus4_by": null,
+  "last_action": { "player": "p2", "kind": "draw", "card": null },
+  "winner": null, "winner_score": null }</code></pre>
+<table>
+<tr><th>Campo</th><th>Significado</th></tr>
+<tr><td><code>seq</code></td><td>Cresce a cada atualização; um estado
+    atrasado reconhece-se por ter seq menor que o último recebido.</td></tr>
+<tr><td><code>phase</code></td><td>"lobby" (sala de espera), "playing"
+    (jogo a decorrer), "finished" (há vencedor).</td></tr>
+<tr><td><code>you.hand</code></td><td>As tuas cartas. Cada uma tem id
+    único, cor ("red"/"yellow"/"green"/"blue"/"wild") e valor ("0"-"9",
+    "+2", "skip", "reverse", "wild", "+4").</td></tr>
+<tr><td><code>you.playable</code></td><td>Os ids das cartas que o
+    jogador pode jogar neste momento, já calculados pelo servidor com
+    as regras todas. Vazia = não há jogada possível na mão.</td></tr>
+<tr><td><code>you.drawn</code></td><td>O id da carta acabada de
+    comprar, enquanto ainda pode ser jogada ou passada.</td></tr>
+<tr><td><code>players</code></td><td>Todos, na ordem da mesa (a ordem é
+    fixa). <code>cards</code> = quantas têm;
+    <code>connected</code> = se a ligação dele está viva;
+    <code>uno</code> = se disse UNO; <code>bot</code> = se a cadeira é
+    de um bot; <code>points</code> = valor da mão no <u>fim</u> do jogo
+    (0 durante).</td></tr>
+<tr><td><code>host_id</code></td><td>Quem manda na sala (start e bots).
+    É sempre um humano; se o host sair, o campo passa sozinho ao
+    seguinte. Serve, por exemplo, para decidir a quem mostrar esses
+    botões.</td></tr>
+<tr><td><code>settings</code></td><td>As regras da sala, sempre no
+    estado: quem entra por código ou volta de um F5 fica a saber o
+    mesmo que quem veio da lista. Serve, por exemplo, para o lobby
+    mostrar as opções e o "3/4" (o <code>max_players</code> vem cá
+    dentro).</td></tr>
+<tr><td><code>top_card</code></td><td>A carta no topo da mesa.</td></tr>
+<tr><td><code>active_color</code></td><td>A cor que conta agora - é
+    esta que decide o que combina, e depois de um wild difere da cor
+    da carta do topo.</td></tr>
+<tr><td><code>direction</code></td><td>1 ou -1, o sentido da roda.</td></tr>
+<tr><td><code>turn</code></td><td>O id de quem joga; null fora do
+    "playing".</td></tr>
+<tr><td><code>draw_pile</code></td><td>Cartas no monte de compra (quando
+    esgota, o servidor rebaralha o descarte sozinho).</td></tr>
+<tr><td><code>stack</code></td><td>Com o stacking ativo: cartas
+    acumuladas na pilha de +2 que o jogador da vez deve. &gt;0 = ele ou
+    responde com outro +2 ou compra tudo com draw.</td></tr>
+<tr><td><code>plus4_by</code></td><td>Id de quem jogou um +4 que ainda
+    não foi respondido. A vítima (quem está em <code>turn</code>) tem
+    duas saídas: draw aceita as 4, challenge desafia.</td></tr>
+<tr><td><code>last_action</code></td><td>O que acabou de acontecer:
+    quem (<code>player</code>), o quê (<code>kind</code>: join, start,
+    play, draw, pass, catch, challenge, timeout) e a carta, quando ela
+    ficou pública. O <code>timeout</code> é o servidor a fechar uma
+    vez adormecida, nunca vem de um jogador: numa compra forçada
+    chegam dois estados seguidos, um draw e depois o timeout, para
+    poderes animar os dois.</td></tr>
+<tr><td><code>winner</code> / <code>winner_score</code></td><td>No fim:
+    quem ganhou e a pontuação (a soma das cartas que sobraram aos
+    outros; os <code>points</code> de cada player dão o ranking -
+    menos pontos = melhor classificado).</td></tr>
+</table>
+
+<h3>error - jogada recusada</h3>
+<pre><code>{ "type": "error", "code": "INVALID_CARD",
+  "msg": "card matches neither color nor value" }</code></pre>
+<p>Vai <u>só</u> para quem errou; o estado não muda e mais ninguém vê nada.
+O <code>code</code> é estável (bom para traduzir); a <code>msg</code>
+é em inglês para debug.</p>
+<table>
+<tr><th>Código</th><th>Quando</th></tr>
+<tr><td><code>NOT_YOUR_TURN</code></td><td>Jogada fora de vez</td></tr>
+<tr><td><code>INVALID_CARD</code></td><td>A carta não combina com a mesa;
+    ou há pilha de +2 e isto não é um +2; ou depois de comprar só a
+    carta comprada é válida</td></tr>
+<tr><td><code>COLOR_REQUIRED</code></td><td>Wild sem cor escolhida</td></tr>
+<tr><td><code>TARGET_REQUIRED</code></td><td>7 (seven-zero) sem alvo</td></tr>
+<tr><td><code>CARD_NOT_IN_HAND</code></td><td>Id que não está na mão</td></tr>
+<tr><td><code>INVALID_CATCH</code></td><td>O alvo disse UNO, não tem 1
+    carta, ou tentaste apanhar-te a ti</td></tr>
+<tr><td><code>INVALID_CHALLENGE</code></td><td>Não há +4 para desafiar</td></tr>
+<tr><td><code>ROOM_NOT_FOUND</code></td><td>Join com um código que não
+    corresponde a nenhuma sala</td></tr>
+<tr><td><code>ROOM_FULL</code></td><td>Sala cheia, não há lugar</td></tr>
+<tr><td><code>GAME_NOT_STARTED</code> /
+    <code>GAME_ALREADY_STARTED</code></td><td>Ação na fase errada,
+    incluindo o join a um jogo a decorrer (sem token nem login)</td></tr>
+<tr><td><code>INVALID_MESSAGE</code></td><td>JSON malformado, tipo
+    desconhecido, e casos como "só o host começa", "compra ou desafia
+    o +4 primeiro", "a sala já existe" (create repetido), "a sala não
+    está cheia" (start cedo demais) ou "só o host mexe nos bots"</td></tr>
+</table>
+
+<h2 id="calculado">03 &middot; O que o estado já traz calculado</h2>
+<p>Alguns campos existem para a UI não ter de calcular nada. O que
+fazer com eles é contigo - ficam alguns exemplos de uso possível:</p>
+<ul>
+<li><code>you.playable</code> - as cartas jogáveis naquele momento, já
+    com as regras todas pesadas pelo servidor. Serve, por exemplo, para
+    iluminar essas cartas, ou para filtrar cliques antes de enviar -
+    em qualquer dos casos, sem escrever uma única regra do Uno em
+    TypeScript.</li>
+<li><code>you.drawn</code> - o momento em que o jogador comprou uma
+    carta jogável e ainda pode decidir. Um exemplo clássico: aparecer
+    a escolha "jogas ou passas?".</li>
+<li><code>plus4_by</code> - há um +4 à espera de resposta. É a
+    informação para, por exemplo, a vítima ver as duas saídas
+    (comprar ou desafiar).</li>
+<li><code>stack</code> - quantas cartas a pilha de +2 já acumulou (com
+    o stacking ligado). Dá, por exemplo, para um aviso "deves X
+    cartas".</li>
+<li><code>last_action</code> - quem fez o quê, com a carta quando ela
+    ficou pública. É a matéria-prima natural para animações, se as
+    quiseres.</li>
+<li><code>players[].uno</code> e <code>players[].connected</code> - se
+    alguém disse UNO e se está ligado, por exemplo para badges.</li>
+<li><code>points</code> e <code>winner_score</code> - no fim do jogo,
+    a informação do ranking vem feita: a pontuação do vencedor e os
+    pontos que sobraram a cada um (menos = melhor).</li>
+</ul>
+
+<h2 id="servidor">04 &middot; Como o servidor se comporta</h2>
+<p>O ciclo de vida de uma sala, do princípio ao fim:</p>
+<ul>
+<li><b>Entrada</b>: a primeira mensagem de um socket tem de ser
+    <code>join</code> ou <code>create</code> - qualquer outra coisa
+    antes disso é respondida com "create or join first". A sala nasce
+    no create, aceita jogadores até ao <code>max_players</code> dela e
+    só enquanto está em lobby (o join numa sala que não existe dá
+    erro).</li>
+<li><b>Durante o jogo</b>: cada jogada aceite gera um broadcast - todos
+    recebem o estado novo, cada um com a <u>sua</u> versão (a mão de cada
+    jogador só vai para ele, os outros recebem contagens; o baralho
+    nunca sai do servidor). Uma jogada recusada não gera broadcast
+    nenhum: só o autor recebe o <code>error</code> e mais ninguém
+    percebe que algo foi tentado.</li>
+<li><b>Ordem</b>: o <code>seq</code> de cada estado é sempre crescente,
+    por isso um estado atrasado reconhece-se por ter seq menor que o
+    último recebido.</li>
+<li><b>Sair e quedas de ligação</b>: para o servidor são a mesma coisa,
+    a ligação fechou (um botão de sair é só fechar o websocket, não há
+    mensagem). O que muda é a fase: <u>no lobby</u> o lugar liberta-se a
+    sério - a lista encolhe, e se saiu o host o humano seguinte herda a
+    coroa sozinho. <u>Em jogo</u> o lugar fica guardado, marcado como
+    desligado (os outros veem pelo <code>connected</code>), e nada se
+    perde - o jogo continua e a mão fica à espera. Um <code>join</code>
+    com o token do <code>welcome</code> (ou só com o cookie, para quem
+    tem login) devolve o mesmo lugar, e o servidor reenvia logo o
+    estado atual: a reconexão não precisa de repor nada.</li>
+<li><b>Validação</b>: todas as ações passam pelas regras no servidor -
+    nada de ilegal entra no jogo, venha de onde vier. Podes usar o
+    <code>playable</code> para nem deixar tentar, ou simplesmente
+    enviar e tratar o erro; as duas abordagens funcionam.</li>
+<li><b>Play again</b>: no fim de um jogo, um novo <code>start</code> do
+    host reconstrói tudo do zero com quem ficou na sala - baralho novo,
+    mãos novas, mesmo código. Quem saiu de vez perde o lugar nessa
+    altura; se a sala ficou por encher, volta ao lobby à espera (e
+    enche-se com bots ou gente nova).</li>
+<li><b>Fim</b>: a sala morre quando fica sem humanos - no lobby quando
+    o último sai (bots não seguram salas), em jogo quando todos estão
+    desligados ao mesmo tempo. Salas diferentes são jogos completamente
+    independentes.</li>
+</ul>
+
+<div class="tip">Se algum campo ou ação te fizer falta, ou se quiseres
+alterar alguma coisa, diz - muda-se no contract do servidor e
+combinamos os dois lados.</div>
+
+</body>
+</html>
