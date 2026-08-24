@@ -91,6 +91,10 @@ class Pass(BaseModel):
     type: Literal["pass"] = "pass"
 
 
+class SayUno(BaseModel):
+    type: Literal["say_uno"] = "say_uno"
+
+
 class Catch(BaseModel):
     # For a player who has one card remaining but failed to declare UNO
     # The target must draw two cards as a penalty
