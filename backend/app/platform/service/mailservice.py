@@ -49,7 +49,7 @@ def verify_token(token: str) -> str:
 async def send_new_account_activation_email(email: EmailStr, username: str, token: str):
     """Send an account activation email to the user with a verification link."""
 
-    verify_url = f"https://localhost:8443/api/v1/users/verify-email?token={token}"
+    verify_url = f"{settings.FRONTEND_HOST}/api/v1/users/verify-email?token={token}"
     template_data = {
         "username": username,
         "verify_url": verify_url,

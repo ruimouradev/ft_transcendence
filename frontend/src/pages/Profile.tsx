@@ -26,6 +26,7 @@ import { useAuth } from '../components/AuthContext';
 import { api } from '../client';
 import NotificationSnackbar from '../components/NotificationSnackbar';
 import CardBackSelector from '../components/CardBackSelector';
+import Enable2FADialog from '../components/Enable2FADialog';
 
 type NotificationState = {
     open: boolean;
@@ -51,6 +52,7 @@ export default function ProfileCard() {
     const [isEditingName, setIsEditingName] = useState(false);
     const [nickName, setNickName] = useState('');
     const fileInputRef = useRef<HTMLInputElement | null>(null);
+    const [enable2FADialogOpen, setEnable2FADialogOpen] = useState(false);
 
     useEffect(() => {
         if (!user?.nick_name) {
@@ -85,26 +87,17 @@ export default function ProfileCard() {
                 headers: {
                     'Content-Type': 'multipart/form-data',
                 },
-                withCredentials: true,
             });
 
             const uploadedUrl = response.data?.url || tempPreviewUrl;
             login({ ...user, avatar: uploadedUrl+`?v=${Date.now()}` });
-            setNotification({
-                open: true,
-                message: 'Avatar updated successfully.',
-                severity: 'success',
-            });
+            setNotification({ open: true, message: 'Avatar updated successfully.', severity: 'success', });
         } catch (error: any) {
             if (error?.response?.status === 403) {
                 navigate('/login');
             } else {
                 login({ ...user, avatar: oldAvatarUrl });
-                setNotification({
-                    open: true,
-                    message: 'Failed to upload avatar. Please try again.',
-                    severity: 'error',
-                });
+                setNotification({ open: true, message: 'Failed to upload avatar. Please try again.', severity: 'error', });
             }
         } finally {
             setUploading(false);
@@ -120,22 +113,14 @@ export default function ProfileCard() {
 
         const newNickName = nickName.trim();
         try {
-            await api.patch('/users/me', { nick_name: newNickName }, { withCredentials: true });
+            await api.patch('/users/me', { nick_name: newNickName });
         } catch (error) {
-            setNotification({
-                open: true,
-                message: 'Failed to update nickName. Please try again.',
-                severity: 'error',
-            });
+            setNotification({ open: true, message: 'Failed to update nickName. Please try again.', severity: 'error', });
             return;
         }
         login({ ...user, nick_name: newNickName || user.nick_name });
         setIsEditingName(false);
-        setNotification({
-            open: true,
-            message: 'NickName updated successfully.',
-            severity: 'success',
-        });
+        setNotification({ open: true, message: 'NickName updated successfully.', severity: 'success', });
     };
 
     const handleNameCancel = () => {
@@ -159,10 +144,7 @@ export default function ProfileCard() {
 
     if (!user) return null;
 
-    const handleSnackbarClose = (
-        _event?: React.SyntheticEvent | Event,
-        reason?: string,
-    ) => {
+    const handleSnackbarClose = ( _event?: React.SyntheticEvent | Event, reason?: string, ) => {
         if (reason === 'clickaway') {
             return;
         }
@@ -170,47 +152,38 @@ export default function ProfileCard() {
         setNotification((prev: NotificationState) => ({ ...prev, open: false }));
     };
 
+    const handleCardBackChange = async (newCardBack: string) => {
+        if (!user) return;
+        try {
+            await api.patch('/users/me', { card_back: newCardBack });
+            login({ ...user, card_back: newCardBack });
+            setNotification({ open: true, message: 'Card back updated successfully.', severity: 'success', });
+        } catch (error) {
+            setNotification({ open: true, message: 'Failed to update card back. Please try again.', severity: 'error', });
+        }
+    };
+
+    const handle2FAClick = () => {
+        setEnable2FADialogOpen(true);
+    };
+
+    const handle2FAEnabled = () => {
+        if (!user) return;
+        login({ ...user, user2fa: true });
+        setNotification({ open: true, message: '2FA enabled successfully.', severity: 'success', });
+    }
+
     return (
         <Container maxWidth="sm" sx={{ mt: 6, mb: 6 }}>
-            <NotificationSnackbar
-                open={notification.open}
-                message={notification.message}
-                severity={notification.severity}
-                onClose={handleSnackbarClose}
-            />
+            <NotificationSnackbar open={notification.open} message={notification.message} severity={notification.severity} onClose={handleSnackbarClose} />
 
             <Card elevation={3} sx={{ borderRadius: 3, overflow: 'hidden' }}>
 
-                {/* <Box sx={{ height: 120, bgcolor: 'primary.main' }} /> */}
                 <Tooltip title="Click to change card back" arrow with="auto" height="auto">
                     <Box sx={{ position: 'relative', top: 0, display: 'flex', justifyContent: 'left' }}>
-                        <CardBackSelector
-                            cardBacks={cardBacks}
-                            value={user.card_back}
-                            onChange={async (newCardBack) => {
-                                console.log('Selected card back:', newCardBack);
-                                await api.patch('/users/me', { card_back: newCardBack }, { withCredentials: true })
-                                    .then(() => {
-                                        login({ ...user, card_back: newCardBack });
-                                        setNotification({
-                                            open: true,
-                                            message: 'Card back updated successfully.',
-                                            severity: 'success',
-                                        });
-                                    })
-                                    .catch(() => {
-                                        setNotification({
-                                            open: true,
-                                            message: 'Failed to update card back. Please try again.',
-                                            severity: 'error',
-                                        });
-                                    });
-                            }}
-                            cardWidth={600}
-                            cardHeight={120}
-                            optionWidth={65}
-                            columns={5}
-                        />
+                        <CardBackSelector cardBacks={cardBacks} value={user.card_back}
+                            onChange={handleCardBackChange}
+                            cardWidth={600} cardHeight={120} optionWidth={65} columns={5} />
                     </Box>
                 </Tooltip>
 
@@ -218,50 +191,23 @@ export default function ProfileCard() {
 
                     <Box display="flex" sx={{ justifyContent: 'center', mt: -7, mb: 2 ,width: '100'}}>
                     <Tooltip title={uploading ? "Uploading..." : "Click to change avatar"} arrow>
-                        <Avatar
-                            src={user.avatar}
-                            alt={user.nick_name}
-                            onClick={handleAvatarClick}
-                            sx={{
-                                width: 100,
-                                height: 100,
-                                border: '4px solid white',
-                                boxShadow: 2,
-                                fontSize: 36,
-                                bgcolor: 'secondary.main',
-                                cursor: 'pointer',
-                                opacity: uploading ? 0.6 : 1,
-                                transition: 'all 0.2s ease-in-out',
+                        <Avatar src={user.avatar} alt={user.nick_name} onClick={handleAvatarClick}
+                            sx={{ width: 100, height: 100, border: '4px solid white', boxShadow: 2, fontSize: 36, bgcolor: 'secondary.main', cursor: 'pointer', opacity: uploading ? 0.6 : 1, transition: 'all 0.2s ease-in-out',
                                 '&:hover': {
                                     transform: 'scale(1.04)',
                                     boxShadow: 4,
-                                },
-                            }}
-                        >
+                                }, }} >
                             {user.nick_name ? user.nick_name.charAt(0).toUpperCase() : 'U'}
                         </Avatar>
                     </Tooltip>
-                        <input
-                            type="file"
-                            ref={fileInputRef}
-                            accept="image/*"
-                            disabled={uploading}
-                            onChange={handleFileUpload}
-                            style={{ display: 'none' }}
-                        />
+                        <input type="file" ref={fileInputRef} accept="image/*" disabled={uploading} onChange={handleFileUpload} style={{ display: 'none' }} />
                     </Box>
 
                     <Stack spacing={1} sx={{ alignItems: 'center', textAlign: 'center' }}>
                         {isEditingName ? (
                             <Stack spacing={1} sx={{ width: '100%', alignItems: 'center' }}>
                                 <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1} sx={{ width: '100%', justifyContent: 'center' }}>
-                                    <TextField
-                                        label="Nick name"
-                                        size="small"
-                                        value={nickName}
-                                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNickName(e.target.value)}
-                                        sx={{ minWidth: 140 }}
-                                    />
+                                    <TextField label="Nick name" size="small" value={nickName} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNickName(e.target.value)} sx={{ minWidth: 140 }} />
                                 </Stack>
                                 <Stack direction="row" spacing={1}>
                                     <Button variant="contained" size="small" onClick={handleNameSave}>
@@ -273,13 +219,7 @@ export default function ProfileCard() {
                                 </Stack>
                             </Stack>
                         ) : (
-                            <Typography
-                                variant="h5"
-                                component="h1"
-                                fontWeight="bold"
-                                onDoubleClick={handleNameDoubleClick}
-                                sx={{ cursor: 'pointer', userSelect: 'none' }}
-                            >
+                            <Typography variant="h5" component="h1" fontWeight="bold" onDoubleClick={handleNameDoubleClick} sx={{ cursor: 'pointer', userSelect: 'none' }} >
                                 {user.nick_name}
                             </Typography>
                         )}
@@ -290,39 +230,26 @@ export default function ProfileCard() {
                         </Stack>
                         <Stack direction="row" spacing={1} sx={{ mt: 2 }}>
                             {user.is_superuser ? (
-                                <Chip
-                                    icon={<AdminIcon />}
-                                    label="Superuser"
-                                    color="secondary"
-                                    variant="filled"
-                                    size="small"
-                                />
+                                <Chip icon={<AdminIcon />} label="Superuser" color="secondary" variant="filled" size="small" />
                             ) : (
-                                <Chip
-                                    icon={<UserIcon />}
-                                    label="Standard User"
-                                    variant="outlined"
-                                    size="small"
-                                />
+                                <Chip icon={<UserIcon />} label="Standard User" variant="outlined" size="small" />
                             )}
 
                             {user.is_active ? (
-                                <Chip
-                                    icon={<ActiveIcon />}
-                                    label="Active"
-                                    color="success"
-                                    variant="soft"
-                                    size="small"
-                                />
+                                <Chip icon={<ActiveIcon />} label="Active" color="success" variant="soft" size="small" />
                             ) : (
-                                <Chip
-                                    icon={<InactiveIcon />}
-                                    label="Inactive"
-                                    color="error"
-                                    variant="soft"
-                                    size="small"
-                                />
+                                <Chip icon={<InactiveIcon />} label="Inactive" color="error" variant="soft" size="small" />
                             )}
+                            <Tooltip title="Click to manage 2FA settings" arrow>
+                                <Button variant="outlined" size="small" onClick={handle2FAClick} sx={{ textTransform: 'none',borderWidth:0 }}>
+                                    {user.user2fa ? (
+                                        <Chip icon={<ActiveIcon />} label="2FA Enabled" color="primary" variant="soft" size="small" />
+                                    ) : (
+                                        <Chip icon={<InactiveIcon />} label="2FA Disabled" color="warning" variant="soft" size="small" />
+                                    )}
+                                </Button>
+                            </Tooltip>
+                            <Enable2FADialog open={enable2FADialogOpen} onClose={() => setEnable2FADialogOpen(false)} onSuccess={handle2FAEnabled} />
                         </Stack>
                     </Stack>
                 </CardContent>

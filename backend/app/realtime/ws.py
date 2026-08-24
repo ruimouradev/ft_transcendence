@@ -3,6 +3,16 @@ import time
 from dataclasses import dataclass, field
 from uuid import uuid4
 
+import logging
+from uuid import UUID
+
+from app.models.database import engine
+from sqlmodel import Session
+from app.models.all import Game as DBGame, GamePlayer, User
+from app.platform.service.userStatisticService import save_game_result
+from app.robots_manager import robots_user_manager
+from app.game.rules import points
+
 import jwt
 import pydantic
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
@@ -27,6 +37,7 @@ class Player:
     connected: bool = True
     bot: bool = False
     user: str | None = None  # account id from the login cookie
+    avatar: str = ""  # the account's picture, empty for guests and bots
 
 
 @dataclass
@@ -73,8 +84,10 @@ def snapshot_json(room: Room, player_id: str) -> str:
     host = host_of(room)
     snap.host_id = host.id if host else None
     bots = {p.id for p in room.players if p.bot}
+    avatars = {p.id: p.avatar for p in room.players}
     for seat in snap.players:
         seat.bot = seat.id in bots
+        seat.avatar = avatars.get(seat.id, "")
     return snap.model_dump_json()
 
 
@@ -124,7 +137,7 @@ async def room_timer(room_id: str, room: Room) -> None:
                 pass
             else:
                 metrics.moves.labels(kind="draw").inc()
-                await broadcast(room)
+                
         game.timeout_skip(pid)
         metrics.moves.labels(kind="timeout").inc()
         await broadcast(room)
@@ -141,7 +154,20 @@ def reseat(room: Room) -> None:
     room.game.seq = prev + 1
 
 
-def apply(room: Room, player: Player, action: PlayerAction) -> Error | None:
+async def async_save_game_result(db_game: DBGame, game_players: list[GamePlayer]) -> None:
+    def _sync_save():
+        with Session(engine) as session:
+            try:
+                save_game_result(session=session, game=db_game, game_players=game_players)
+                session.commit()
+            except Exception as e:
+                logging.error(f"Failed to save game result: {e}")
+                metrics.rejected.labels(code="RECORD_FAILED").inc()
+    
+    await asyncio.to_thread(_sync_save)
+
+
+async def apply(room: Room, player: Player, action: PlayerAction) -> Error | None:
     # The engine is the single source of truth for the rules, here we
     # only translate messages into calls
     if isinstance(action, (Create, Join)):
@@ -212,7 +238,57 @@ def apply(room: Room, player: Player, action: PlayerAction) -> Error | None:
 
     if room.game.phase == "finished":
         metrics.games_finished.inc()
-        pass  # record_match goes here (Bin's stats)
+        has_guests = any(not p.bot and p.user is None for p in room.players)
+        if not has_guests:
+            db_game = DBGame(status="finished")
+            game_players = []
+            bot_count = 0
+            
+            total_remain_points = sum(
+                sum(points(c) for c in h.cards) for h in room.game.hands
+            )
+            
+            for i, p in enumerate(room.players):
+                user_id = None
+                if p.bot:
+                    bot_count += 1
+                    if bot_count == 1:
+                        user_id = robots_user_manager.get_robot1_id()
+                    elif bot_count == 2:
+                        user_id = robots_user_manager.get_robot2_id()
+                    elif bot_count == 3:
+                        user_id = robots_user_manager.get_robot3_id()
+                elif p.user:
+                    try:
+                        user_id = UUID(p.user)
+                    except ValueError:
+                        pass
+                
+                if user_id is None:
+                    continue
+                    
+                hand = next((h for h in room.game.hands if h.id == p.id), None)
+                if not hand:
+                    continue
+                    
+                remain_points = sum(points(card) for card in hand.cards)
+                is_winner = (p.id == room.game.winner)
+                score = total_remain_points if is_winner else 0
+                
+                gp = GamePlayer(
+                    game_id=db_game.id,
+                    user_id=user_id,
+                    is_winner=is_winner,
+                    score=score,
+                    seat=i,
+                    remain_points=remain_points,
+                    cards_left=len(hand.cards),
+                    is_connected=p.connected
+                )
+                game_players.append(gp)
+                
+            if len(game_players) == len(room.players):
+                await async_save_game_result(db_game, game_players)
 
     # the AI loop plays for bot seats when it is their turn (Alexandre)
 
@@ -247,8 +323,16 @@ def list_rooms() -> list[dict[str, object]]:
 async def seat_player(ws: WebSocket, room: Room, name: str,
                       user: str | None) -> Player:
     room.humans_made += 1
+    avatar = ""
+    if user:
+        # one small read at seat time, so the avatar can ride in every
+        # state update without anyone querying the database again
+        with Session(engine) as session:
+            account = session.get(User, UUID(user))
+            if account and account.avatar:
+                avatar = account.avatar
     player = Player(id=f"p{room.humans_made}", name=name,
-                    token=uuid4().hex, ws=ws, user=user)
+                    token=uuid4().hex, ws=ws, user=user, avatar=avatar)
     room.players.append(player)
     metrics.players_connected.inc()
     reseat(room)
@@ -263,6 +347,12 @@ async def seat_player(ws: WebSocket, room: Room, name: str,
 async def game(ws: WebSocket, room_id: str) -> None:
     await ws.accept()
     user = user_from_cookies(ws)
+    if user is None:
+        # registration is required to play, the rule holds on the
+        # server too, not only behind the frontend's login gate
+        await reject(ws, ErrorCode.AUTH_REQUIRED, "login required to play")
+        await ws.close()
+        return
     room: Room | None = None
     player: Player | None = None
     try:
@@ -334,7 +424,7 @@ async def game(ws: WebSocket, room_id: str) -> None:
                     player = await seat_player(ws, room, action.name, user)
                 continue
 
-            error = apply(room, player, action)
+            error = await apply(room, player, action)
             if error:
                 metrics.rejected.labels(code=error.code.value).inc()
                 await ws.send_text(error.model_dump_json())

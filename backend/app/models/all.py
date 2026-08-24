@@ -52,7 +52,6 @@ class User(UserBase, table=True):
     id: UUID = Field(default_factory=uuid4, primary_key=True)
     hashed_password: str | None = Field(default=None, max_length=255)
     created_at: datetime = Field( default_factory=get_datetime_utc, sa_type=DateTime(timezone=True))
-
     sent_requests: list["Friendship"] = Relationship(
         sa_relationship_kwargs={
             "foreign_keys": "[Friendship.requester_id]"

@@ -1,22 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import {
-	Box,
-	Button,
-	Container,
-	Divider,
-	IconButton,
-	InputAdornment,
-	Link,
-	Paper,
-	TextField,
-	Typography,
-	Alert,
-	Avatar,
-} from '@mui/material';
-import {
-	Visibility,
-	VisibilityOff,
-} from '@mui/icons-material';
+import { Box, Button, Container, Divider, IconButton, InputAdornment, Link, Paper, TextField, Typography, Alert, Avatar,} from '@mui/material';
+import { Visibility, VisibilityOff, } from '@mui/icons-material';
 
 import myIcon from '../assets/i42.ico';
 import { api, getErrorMessage } from '../client';
@@ -27,7 +11,6 @@ export default function Login() {
 	const [formData, setFormData] = useState({
 		email: '',
 		password: '',
-		rememberMe: false,
 	});
 	const [showPassword, setShowPassword] = useState(false);
 	const [error, setError] = useState('');
@@ -39,12 +22,13 @@ export default function Login() {
 	const [searchParams] = useSearchParams();
 
 	const handleChange = (e) => {
-		const { name, value, checked, type } = e.target;
+		const { name, value } = e.target;
 		setFormData((prev) => ({
 			...prev,
-			[name]: type === 'checkbox' ? checked : value,
+			[name]: value,
 		}));
 		if (error) setError('');
+        if (info) setInfo('');
 	};
 
 	useEffect(() => {
