@@ -13,7 +13,7 @@
       "type": "stat",
       "title": "Active rooms",
       "description": "Rooms that exist right now, lobby and playing.",
-      "gridPos": { "h": 6, "w": 4, "x": 0, "y": 0 },
+      "gridPos": { "h": 6, "w": 3, "x": 0, "y": 0 },
       "fieldConfig": {
         "defaults": {
           "unit": "short",
@@ -24,7 +24,8 @@
       "options": {
         "reduceOptions": { "calcs": ["lastNotNull"] },
         "colorMode": "value",
-        "graphMode": "area"
+        "graphMode": "area",
+        "text": { "valueSize": 80 }
       },
       "targets": [
         { "refId": "A", "expr": "uno_rooms_active" }
@@ -35,7 +36,7 @@
       "type": "stat",
       "title": "Players connected",
       "description": "Humans with a socket open right now, bots not counted.",
-      "gridPos": { "h": 6, "w": 4, "x": 4, "y": 0 },
+      "gridPos": { "h": 6, "w": 3, "x": 3, "y": 0 },
       "fieldConfig": {
         "defaults": {
           "unit": "short",
@@ -46,18 +47,19 @@
       "options": {
         "reduceOptions": { "calcs": ["lastNotNull"] },
         "colorMode": "value",
-        "graphMode": "area"
+        "graphMode": "area",
+        "text": { "valueSize": 80 }
       },
       "targets": [
         { "refId": "A", "expr": "uno_players_connected" }
       ]
     },
     {
-      "id": 3,
+      "id": 9,
       "type": "stat",
-      "title": "Games finished, last 24h",
-      "description": "Games that reached a winner in the last day.",
-      "gridPos": { "h": 6, "w": 4, "x": 8, "y": 0 },
+      "title": "Games last 24h",
+      "description": "How many games reached a winner in the last day.",
+      "gridPos": { "h": 6, "w": 3, "x": 9, "y": 0 },
       "fieldConfig": {
         "defaults": {
           "unit": "short",
@@ -69,10 +71,35 @@
       "options": {
         "reduceOptions": { "calcs": ["lastNotNull"] },
         "colorMode": "value",
-        "graphMode": "none"
+        "graphMode": "none",
+        "text": { "valueSize": 80 }
       },
       "targets": [
         { "refId": "A", "expr": "sum(increase(uno_games_finished_total[24h]))" }
+      ]
+    },
+    {
+      "id": 10,
+      "type": "stat",
+      "title": "Games last week",
+      "description": "How many games reached a winner in the last seven days.",
+      "gridPos": { "h": 6, "w": 3, "x": 12, "y": 0 },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "noValue": "0",
+          "decimals": 0,
+          "color": { "mode": "fixed", "fixedColor": "purple" }
+        }
+      },
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"] },
+        "colorMode": "value",
+        "graphMode": "none",
+        "text": { "valueSize": 80 }
+      },
+      "targets": [
+        { "refId": "A", "expr": "sum(increase(uno_games_finished_total[7d]))" }
       ]
     },
     {
@@ -80,7 +107,7 @@
       "type": "timeseries",
       "title": "Games finished per hour",
       "description": "The pace games end at, as an hourly rate.",
-      "gridPos": { "h": 6, "w": 12, "x": 12, "y": 0 },
+      "gridPos": { "h": 6, "w": 9, "x": 15, "y": 0 },
       "fieldConfig": {
         "defaults": {
           "unit": "short",
@@ -203,7 +230,7 @@
       "type": "stat",
       "title": "Database recording failures, last 24h",
       "description": "Finished games the server could not write to the database. The table itself never breaks because of this, but anything above zero deserves a look at the backend logs.",
-      "gridPos": { "h": 5, "w": 6, "x": 0, "y": 13 },
+      "gridPos": { "h": 6, "w": 3, "x": 6, "y": 0 },
       "fieldConfig": {
         "defaults": {
           "unit": "short",
@@ -221,7 +248,8 @@
       "options": {
         "reduceOptions": { "calcs": ["lastNotNull"] },
         "colorMode": "value",
-        "graphMode": "none"
+        "graphMode": "none",
+        "text": { "valueSize": 80 }
       },
       "targets": [
         {
