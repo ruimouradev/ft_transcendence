@@ -145,7 +145,7 @@ export default function Enable2FADialog({
         try {
 
             const response = await api.post<Setup2FAResponse>(
-                '/auth/2fa/setup',
+                '/2fa/setup',
                 {
                     password,
                 },
@@ -210,7 +210,7 @@ export default function Enable2FADialog({
         try {
 
             const response = await api.post<Verify2FAResponse>(
-                '/auth/2fa/verify-setup',
+                '/2fa/verify-setup',
                 {
                     code,
                 },

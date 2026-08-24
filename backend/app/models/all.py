@@ -19,22 +19,23 @@ class UserBase(SQLModel):
     avatar: str | None = Field(default="/static/a00.jpeg", max_length=255)
     card_back: str | None = Field(default="/static/cardback.jpeg", max_length=255)
     use2fa: bool = False
+    two_factor_secret: str | None = Field(default=None, max_length=255)
 
 
 # Properties to receive via API on creation
 class UserCreate(UserBase):
-    password: str = Field(min_length=8, max_length=128)
+    password: str = Field(min_length=8, max_length=32)
 
 
 class UserRegister(SQLModel):
     email: EmailStr = Field(max_length=255)
-    password: str = Field(min_length=8, max_length=128)
+    password: str = Field(min_length=8, max_length=32)
     nick_name: str | None = Field(default=None, max_length=50)
 
 # Properties to receive via API on update, all are optional
 class UserUpdate(UserBase):
     email: EmailStr | None = Field(default=None, max_length=255)  # type: ignore[assignment]
-    password: str | None = Field(default=None, min_length=8, max_length=128)
+    password: str | None = Field(default=None, min_length=8, max_length=32)
 
 
 class UserUpdateMe(SQLModel):
@@ -44,8 +45,8 @@ class UserUpdateMe(SQLModel):
 
 
 class UpdatePassword(SQLModel):
-    current_password: str = Field(min_length=8, max_length=128)
-    new_password: str = Field(min_length=8, max_length=128)
+    current_password: str = Field(min_length=8, max_length=32)
+    new_password: str = Field(min_length=8, max_length=32)
 
 
 class User(UserBase, table=True):
@@ -96,7 +97,7 @@ class TokenPayload(SQLModel):
 
 class NewPassword(SQLModel):
     token: str
-    new_password: str = Field(min_length=8, max_length=128)
+    new_password: str = Field(min_length=8, max_length=32)
 
 class ProviderType(str, Enum):
     t42 = "t42"
@@ -301,3 +302,17 @@ class ErrorResponse(SQLModel):
     code: APIErrorCode
     message: str
     details: dict | None = None
+
+class TwoFactorSetupRequest(SQLModel):
+    password: str = Field(min_length=8, max_length=32)
+
+
+class TwoFactorSetupResponse(SQLModel):
+    otpauth_url: str
+    secret: str
+
+class TwoFactorVerifyRequest(SQLModel):
+    code: str = Field(min_length=6, max_length=6)
+
+class TwoFactorVerifyResponse(SQLModel):
+    recovery_codes: list[str] | None = None
