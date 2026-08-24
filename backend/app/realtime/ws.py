@@ -55,12 +55,12 @@ TURN_TIMEOUT = 60  # seconds an idle turn is allowed to sit
 TIMER_TICK = 5  # how often each room looks at its clock
 
 
-def err(code: ErrorCode, msg: str) -> Error:
-    return Error(code=code, msg=msg)
+def err(code: ErrorCode, msg: str, room: str | None = None) -> Error:
+    return Error(code=code, msg=msg, room=room)
 
 
-async def reject(ws: WebSocket, code: ErrorCode, msg: str) -> None:
-    await ws.send_text(err(code, msg).model_dump_json())
+async def reject(ws: WebSocket, code: ErrorCode, msg: str, room: str | None = None) -> None:
+    await ws.send_text(err(code, msg, room).model_dump_json())
 
 
 def user_from_cookies(ws: WebSocket) -> str | None:
@@ -367,6 +367,19 @@ async def game(ws: WebSocket, room_id: str) -> None:
                 continue
 
             if player is None:
+                if isinstance(action, (Create, Join)) and user:
+                    other_room_id = next(
+                        (rid for rid, r in rooms.items()
+                         if rid != room_id and any(p.user == user and not p.bot for p in r.players)),
+                        None
+                    )
+                    if other_room_id:
+                        await reject(
+                            ws, ErrorCode.ALREADY_IN_ROOM,
+                            "already in another room", other_room_id
+                        )
+                        continue
+
                 if isinstance(action, Create):
                     if room_id in rooms:
                         await reject(ws, ErrorCode.INVALID_MESSAGE,
@@ -414,6 +427,9 @@ async def game(ws: WebSocket, room_id: str) -> None:
                         player.connected = True
                         metrics.players_connected.inc()
                         room.game.set_connected(player.id, True)
+                        await ws.send_text(
+                            Welcome(id=player.id, token=player.token).model_dump_json()
+                        )
                         await broadcast(room)
                 elif room.game is not None and room.game.phase != "lobby":
                     await reject(ws, ErrorCode.GAME_ALREADY_STARTED,
@@ -443,11 +459,16 @@ async def game(ws: WebSocket, room_id: str) -> None:
                     reseat(room)
                     await broadcast(room)
                 else:
-                    rooms.pop(room_id, None)
-                    metrics.rooms_active.dec()
-            elif all(not p.connected for p in room.players if not p.bot):
-                rooms.pop(room_id, None)
-                metrics.rooms_active.dec()
+                    # Give them 5 seconds to F5/reconnect before closing the room
+                    await asyncio.sleep(5)
+                    if room_id in rooms and not any(not p.bot for p in room.players):
+                        rooms.pop(room_id, None)
+                        metrics.rooms_active.dec()
             else:
                 room.game.set_connected(player.id, False)
                 await broadcast(room)
+                if all(not p.connected for p in room.players if not p.bot):
+                    await asyncio.sleep(5)
+                    if room_id in rooms and all(not p.connected for p in room.players if not p.bot):
+                        rooms.pop(room_id, None)
+                        metrics.rooms_active.dec()
