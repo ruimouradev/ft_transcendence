@@ -390,7 +390,6 @@ export default function UnoDashboard() {
                             currentUserAvatar={playerData.user.avatar}
                         />
                     </Grid>
-
                 </Grid>
             </Container>
         </ThemeProvider>
