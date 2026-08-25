@@ -13,10 +13,8 @@ from .contract import Card, Color, Value
 
 
 COLORS: tuple[Color, ...] = ("red", "yellow", "green", "blue")
-# Each color has:
-# one zero card
-# two cards of each number from 1-9
-# two cards from +2, skip and reverse
+# Each color has one zero, two of each number 1 to 9, and two each of
+# +2, skip and reverse
 VALUES: list[Value] = [
     "0",
     "1", "2", "3", "4", "5", "6", "7", "8", "9", "+2", "skip", "reverse",
