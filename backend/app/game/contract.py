@@ -1,6 +1,6 @@
 """
 The message types the server and the client exchange. A player sends
-actions (create, join, add_bot, remove_bot, start, play, draw, pass,
+actions (create, join, add_bot, remove_bot, kick, start, play, draw, pass,
 say_uno, catch, challenge), the server sends back the game state after each
 move, or an error when a move is refused.
 """
@@ -59,11 +59,23 @@ class Join(BaseModel):
 class AddBot(BaseModel):
     # Host only, in the lobby: seats an AI player on the next free chair
     type: Literal["add_bot"] = "add_bot"
+    # Difficulty the host picked for this bot. The AI reads it when
+    # choosing moves, the engine treats all seats alike
+    level: Literal["easy", "medium", "hard"] = "medium"
 
 
 class RemoveBot(BaseModel):
     # Host only, in the lobby: frees the chair of that bot
     type: Literal["remove_bot"] = "remove_bot"
+    target: str
+
+
+class Kick(BaseModel):
+    # Host only, in the lobby: throws a player out of the room and
+    # frees the chair. Not a ban, the same player may join again with
+    # the room code. The kicked player hears KICKED before the socket
+    # closes
+    type: Literal["kick"] = "kick"
     target: str
 
 
@@ -117,8 +129,8 @@ class Challenge(BaseModel):
 
 # the type field tells pydantic which model to build from the raw text
 PlayerAction = Annotated[
-    Create | Join | AddBot | RemoveBot | Start | Play | Draw | Pass
-    | SayUno | Catch | Challenge,
+    Create | Join | AddBot | RemoveBot | Kick | Start | Play | Draw
+    | Pass | SayUno | Catch | Challenge,
     Field(discriminator="type"),
 ]
 
@@ -141,6 +153,7 @@ class ErrorCode(str, Enum):
     INVALID_MESSAGE = "INVALID_MESSAGE"
     AUTH_REQUIRED = "AUTH_REQUIRED"
     ALREADY_IN_ROOM = "ALREADY_IN_ROOM"
+    KICKED = "KICKED"
     ROOM_FULL = "ROOM_FULL"
     ROOM_NOT_FOUND = "ROOM_NOT_FOUND"
     GAME_NOT_STARTED = "GAME_NOT_STARTED"
@@ -186,6 +199,8 @@ class PublicPlayer(BaseModel):
     uno: bool = False
     # An AI seat. The room fills this in, the engine treats all alike
     bot: bool = False
+    # Difficulty of an AI seat, None on humans. The room fills this in
+    bot_level: Literal["easy", "medium", "hard"] | None = None
     # Avatar URL of the account in this seat. The room fills this in
     # like the bot flag, empty for guests and bots
     avatar: str = ""
