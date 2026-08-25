@@ -16,7 +16,7 @@ export default function Login() {
 	const [error, setError] = useState('');
 	const [info, setInfo] = useState('');
 	const [loading, setLoading] = useState(false);
-	const { login } = useAuth();
+	const { user, login } = useAuth();
 
 	const navigate = useNavigate();
 	const [searchParams] = useSearchParams();
@@ -31,6 +31,12 @@ export default function Login() {
         if (info) setInfo('');
 	};
 
+    useEffect(() => {
+        if (!loading && user) {
+            navigate('/dashboard', { replace: true });
+        }
+    }, [user, loading, navigate]);
+
 	useEffect(() => {
 		setInfo('');
 		setError('');
@@ -44,6 +50,7 @@ export default function Login() {
 		} else {
 			setError(errorParam || '');
 		}
+        window.history.replaceState({}, document.title, window.location.pathname);
 	}, [searchParams]);
 
 	const handleSubmit = async (e) => {
@@ -61,12 +68,11 @@ export default function Login() {
 			params.append('password', formData.password);
 
 			const response = await api.post('/login/access-token', params, {
-				headers: {
-					'Content-Type': 'application/x-www-form-urlencoded',
-				}
+				headers: { 'Content-Type': 'application/x-www-form-urlencoded'}
 			});
-			if (response.data.token_type && response.data.access_token) {
-				login(response.data.user);
+			if (response.data.code === 'success') {
+                const userResponse = await api.get('/users/me');
+                login(userResponse.data);
 				navigate('/dashboard', { replace: true });
 			}
 		} catch (error) {
@@ -75,6 +81,15 @@ export default function Login() {
 			setLoading(false);
 		}
 	};
+
+    const handlePasswordReset = (e) => {
+        e.preventDefault();
+        if (!formData.email) {
+            setError('Please enter your email to reset your password.');
+            return;
+        }
+        window.location.href = `/api/v1/password-recovery/${encodeURIComponent(formData.email)}`;
+    };
 
 	return (
 		<Box sx={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', p: 2, }} >
@@ -140,7 +155,7 @@ export default function Login() {
                         <Box sx={{ mt: 1, textAlign: 'center' }}>
                             <Typography variant="body2" color="text.secondary">
                                 Forgot your password?{' '}
-                                <Link href="#" onClick={(e) => { e.preventDefault(); if (formData.email) window.location.href = `/api/v1/password-recovery/${formData.email}`; }} underline="hover" sx={{ fontWeight: 600 }}>
+                                <Link href="#" onClick={handlePasswordReset} underline="hover" sx={{ fontWeight: 600 }}>
                                     Reset Password
                                 </Link>
                             </Typography>

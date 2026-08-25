@@ -96,7 +96,7 @@ export default function Enable2FADialog({
             if (error.response?.status === 401) {
                 setError('Your password is incorrect. Please try again.',);
             } else {
-                setError(error.response?.data?.detail ?? 'Failed to initialize two-factor authentication.',);
+                setError(error.response?.data?.message ?? 'Failed to initialize two-factor authentication.',);
             }
         } finally {
             setLoading(false);
@@ -124,7 +124,7 @@ export default function Enable2FADialog({
             if (error.response?.status === 400) {
                 setError('The verification code is invalid or expired.',);
             } else {
-                setError(error.response?.data?.detail ?? 'Failed to verify the authentication code.',);
+                setError(error.response?.data?.message ?? 'Failed to verify the authentication code.',);
             }
         } finally {
             setLoading(false);

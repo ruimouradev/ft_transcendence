@@ -14,8 +14,6 @@ import UnoDashboard from './pages/UnoDashboard'
 import APIKeyPage from './pages/ApiKeyPage'
 
 function App() {
-    const [count, setCount] = useState(0)
-
     return (
         <Routes>
             <Route path="/" element={<Home />}>
@@ -32,7 +30,6 @@ function App() {
                     <Route path="apikey" element={<APIKeyPage />} />
                     <Route path="statistics" element={<UnoDashboard />} />
                 </Route>
-
             </Route>
         </Routes>
     )

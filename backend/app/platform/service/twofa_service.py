@@ -1,5 +1,3 @@
-
-
 import pyotp
 
 
@@ -32,3 +30,13 @@ def store_secret(session, user, secret: str):
     user.two_factor_secret = secret
     session.add(user)
     session.commit()
+
+def generate_recovery_codes(session, user, num_codes: int = 8) -> list[str]:
+    """
+    Generate a list of recovery codes for the user.
+    """
+    recovery_codes = [pyotp.random_base32() for _ in range(num_codes)]
+    user.recovery_codes = recovery_codes
+    session.add(user)
+    session.commit()
+    return recovery_codes

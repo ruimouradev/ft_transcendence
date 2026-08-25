@@ -19,6 +19,7 @@ from app.platform.deps import (
 from app.platform.config import settings
 from app.platform.security import get_password_hash, verify_password
 from app.models.all import (
+    APIError,
     APIKeyContext,
     APIKeyStatus,
     Message,
@@ -116,7 +117,7 @@ def update_password_me( *, session: SessionDep, body: UpdatePassword, current_us
     current_user.hashed_password = hashed_password
     session.add(current_user)
     session.commit()
-    return Message(message="Password updated successfully")
+    return Message(status_code=200, code="success", message="Password updated successfully")
 
 
 @router.get("/me", response_model=UserPublic)
@@ -141,24 +142,25 @@ def read_user_me(current_user: CurrentUser) -> Any:
 #     return Message(message="User deleted successfully")
 
 
-@router.post("/signup", response_model=UserPublic)
-def register_user(session: SessionDep, user_in: UserRegister, background_tasks: BackgroundTasks) -> Any:
+@router.post("/signup", response_model=Message)
+def register_user(session: SessionDep, user_in: UserRegister, background_tasks: BackgroundTasks) -> Message:
     """
     Create new user without the need to be logged in.
     """
+    same_nick_name_user = userservice.get_user_by_nick_name(session=session, nick_name=user_in.nick_name)
+    if same_nick_name_user:
+        raise APIError(status_code=400, code="NICKNAME_EXISTS", msg="This nick name is already taken. Please try a different one.")
+    
     user = userservice.get_user_by_email(session=session, email=user_in.email)
     if user:
-        raise HTTPException(
-            status_code=400,
-            detail="The user with this email already exists in the system",
-        )
+        raise APIError(status_code=400, code="USER_EXISTS", msg="This email is already registered. Please try a different one.")
     user_create = UserCreate.model_validate(user_in)
     user_create.avatar = "/static/a00.jpeg"
     user = userservice.create_user(session=session, user_create=user_create)
     if settings.EMAILS_ENABLED and user_in.email:
         token = create_verification_token(user_in.email, expire_minutes=0)
         background_tasks.add_task(send_new_account_activation_email, user_in.email, user_in.nick_name, token)
-    return user
+    return Message(status_code=200, code="success", message="User created successfully")
 
 @router.get("/verify-email")
 def verify_email(session: SessionDep, token: str):

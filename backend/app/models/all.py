@@ -30,7 +30,7 @@ class UserCreate(UserBase):
 class UserRegister(SQLModel):
     email: EmailStr = Field(max_length=255)
     password: str = Field(min_length=8, max_length=32)
-    nick_name: str | None = Field(default=None, max_length=50)
+    nick_name: str | None = Field(default=None,min_length=3, max_length=50)
 
 # Properties to receive via API on update, all are optional
 class UserUpdate(UserBase):
@@ -39,7 +39,7 @@ class UserUpdate(UserBase):
 
 
 class UserUpdateMe(SQLModel):
-    nick_name: str | None = Field(default=None, max_length=50)
+    nick_name: str | None = Field(default=None,min_length=3, max_length=50)
     card_back: str | None = Field(default=None, max_length=255)
     email: EmailStr | None = Field(default=None, max_length=255)
 
@@ -81,6 +81,8 @@ class UserOnLineStatus(SQLModel):
     online: str
 
 class Message(SQLModel):
+    status_code: int
+    code: str | None = None
     message: str
 
 class Token(SQLModel):

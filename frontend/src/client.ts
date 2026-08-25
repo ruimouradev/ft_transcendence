@@ -39,7 +39,7 @@ export function getErrorMessage(error: unknown): string {
         return 'An unknown error occurred';
     }
     if (error.response) {
-        const message = error.response.data?.message;
+        const message = error.response.data?.message|| error.response.data?.detail;
         if (message === 'Inactive user') {
             return 'Inactive user. Please check your email for the activation link.';
         }

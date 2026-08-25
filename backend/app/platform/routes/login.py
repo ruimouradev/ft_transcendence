@@ -14,7 +14,7 @@ from app.platform import security
 from app.platform.config import settings
 
 from app.platform.service.mailservice import send_password_reset_email
-from app.models.all import ErrorResponse, Message, NewPassword, OAuthAccountCreate, ProviderType, Token, TokenAndUser, UserCreate, UserPublic, UserUpdate, User
+from app.models.all import ErrorResponse, Message, OAuthAccountCreate, ProviderType, TokenAndUser, UserCreate, UserPublic, UserUpdate, User
 from app.models.all import APIError, APIErrorCode
 
 from fastapi.responses import RedirectResponse, Response
@@ -44,7 +44,7 @@ def generate_password_reset_token(email: str) -> str:
     return encoded_jwt
 
 
-@router.post("/login/access-token", response_model=TokenAndUser, responses={401: {"model": ErrorResponse}})
+@router.post("/login/access-token", response_model=Message, responses={401: {"model": ErrorResponse}})
 def login_access_token(session: SessionDep, form_data: Annotated[OAuth2PasswordRequestForm, Depends()],response: Response) -> TokenAndUser:
     """
     OAuth2 compatible token login, get an access token for future requests
@@ -70,11 +70,11 @@ def login_access_token(session: SessionDep, form_data: Annotated[OAuth2PasswordR
     )
     public_user = UserPublic.model_validate(user)
 
-    return TokenAndUser(access_token=access_token, user=public_user)
+    return Message(status_code=200, code="success", message="Login successful")
 
 
 @router.get("/password-recovery/{email}")
-def recover_password(email: str, session: SessionDep, background_tasks: BackgroundTasks) -> Message:
+def recover_password(email: str, session: SessionDep, background_tasks: BackgroundTasks):
     """
     Password Recovery
     """
