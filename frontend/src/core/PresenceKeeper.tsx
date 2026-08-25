@@ -7,6 +7,7 @@ import { useAuth } from './AuthContext';
 // websocket do jogo, que abre e fecha com cada sala e fala outro
 // protocolo. Não desenha nada nem expõe nada: se um dia precisares
 // do estado da ligação no ecrã, é aqui que ele nasce.
+
 const MAX_RECONNECT_ATTEMPTS = 5;
 const BASE_RECONNECT_DELAY = 1000; // primeiro reencontro ao fim de 1s
 const HEARTBEAT_INTERVAL = 10000; // uma batida a cada 10s

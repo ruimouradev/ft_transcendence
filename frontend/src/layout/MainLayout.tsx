@@ -34,6 +34,7 @@ export default function MainLayout() {
                     	<Outlet />
 					</GameWebSocket>
                 </main>
+				{isHome && <Footer />}
             </div>
         </div>
     );

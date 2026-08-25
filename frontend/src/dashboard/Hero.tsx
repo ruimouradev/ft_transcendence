@@ -8,8 +8,8 @@ import Footer from "../layout/Footer";
 // a lista pública de salas (GET /api/rooms) dá-te os verdadeiros.
 export default function Hero() {
     return (
-        <section className="max-w-7xl mx-auto px-8 py-16">
-            <div className="grid md:grid-cols-2 items-center">
+        <section className="max-w-7xl mx-auto px-8 py-16 ">
+            <div className="grid md:grid-cols-2 items-center ">
                 <div>
                     {/* titulo sobrio: branco forte, e a cor fica toda
                         num unico detalhe, o ponto final em vermelho */}
@@ -38,7 +38,6 @@ export default function Hero() {
                     </div>
                 </div>
             </div>
-			<Footer />
         </section>
     );
 }

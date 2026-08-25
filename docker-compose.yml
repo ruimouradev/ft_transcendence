@@ -38,6 +38,7 @@ services:
       context: ./backend
       dockerfile: Dockerfile
     image: backend
+    pull_policy: never
     container_name: backend
     volumes:
       - ./backend:/app
@@ -80,6 +81,7 @@ services:
       context: ./frontend
       dockerfile: Dockerfile
     image: frontend
+    pull_policy: never
     container_name: frontend
     volumes:
       - ./frontend:/app

@@ -1,0 +1,62 @@
+export type Color = 'red' | 'blue' | 'green' | 'yellow' | 'wild'
+export type valueNum = '0' | '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9'
+export type valueAction = '+2' | 'reverse' | 'skip'
+export type valueWild = '+4' | 'wild'
+
+export type GameCard = {
+		id: string,
+		color: Color,
+		value: valueNum
+	} | {
+		id: string,
+		color: Color,
+		value: valueAction
+	} | {
+		id: string,
+		color: 'wild'
+		value: valueWild
+	}
+
+export type PublicPlayer = {
+	id: string,
+	name: string,
+	cards: number,
+	connected: boolean,
+	uno: boolean,
+	bot: boolean,
+	avatar: string,
+	points: number
+}
+
+export type PrivatePlayer = {
+	id: string,
+	hand: GameCard[],
+	playable: GameCard[],
+	drawn: string | null
+}
+
+export type GameState = {
+	type : 'state',
+	seq : number,
+	phase : "lobby" | "playing" | "finished",
+	you : PrivatePlayer,
+	players : PublicPlayer[],
+	host_id : string | null,
+	settings : {
+		hand_size: number, 
+		stacking: boolean, 
+		seven_zero: boolean,
+		max_players: number,
+		public: boolean
+	} | null,
+	top_card : null,
+	active_color : Color | null,
+	direction : 1 | -1,
+	turn : string | null,
+	draw_pile : number,
+	stack : number,
+	plus4_by : string | null,
+	last_action : null,
+	winner : string | null,
+	winner_score : string | null
+}
