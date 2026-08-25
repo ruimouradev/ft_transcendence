@@ -190,6 +190,17 @@ console.log();
 startGame(gameState);
 
 
+let new_players: Player[] = gameState.players.slice(3);
+
+console.log("new 1!")
+console.log(new_players);
+
+new_players.push(...gameState.players.slice(0, 3));
+
+
+console.log("new 2!")
+console.log(new_players);
+
 // // console.log(gameState.players[1]);
 // // drawCard(gameState.deck, gameState.players[1], 7);
 // // console.log(gameState.players[1]);

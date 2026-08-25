@@ -18,16 +18,6 @@ import type { ReactNode } from 'react';
 
 import { getGameContext } from '../core/GameWebSocket'
 
-// type Room = {
-// 	id: number,
-// 	type: 'Default' | 'Custom',
-// 	handSize?: number,
-// 	stacking: boolean,
-// 	seven_zero: boolean,
-// 	player_count: number,
-// 	player_max: 2 | 3 | 4,
-// }
-
 type Room = {
 	code: string,
 	host: string,
@@ -230,9 +220,9 @@ function CreateRoom()
 	}
 
 	return (
-		<Box sx={{ height: '100%', width: '50%' }}>
-			<Box sx={{ width: '100%', height: '85%' }}>
-				<Box sx={{height: '25%', borderBottom: '1pxsolid', display: 'flex', alignItems: 'center', justify: 'center', overflow: 'auto', whiteSpace: 'pre-line', textAlign: 'center'}} >
+		<Box sx={{width: '100%', height: '85%'}}>
+			<Box sx={{ width: '50%', height: '85%', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+				<Box sx={{height: '25%', borderBottom: '1pxsolid', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'auto', whiteSpace: 'pre-line', textAlign: 'center'}} >
 					<Typography sx={{fontSize: {xs: '0.6rem', sm: '0.8rem', md: '1rem'}}}>{optionsTooltip}</Typography>
 				</Box>
 				<HandCount handCount={handCount} setHandCount={setHandCount} defaultTooltip={defaultTooltip} setOptionsTooltip={setOptionsTooltip} />
@@ -240,8 +230,8 @@ function CreateRoom()
 				<PlayerCount playerCount={playerCount} setPlayerCount={setPlayerCount} defaultTooltip={defaultTooltip} setOptionsTooltip={setOptionsTooltip} />
 				<SevenZero sevenZero={sevenZero} setSevenZero={setSevenZero} defaultTooltip={defaultTooltip} setOptionsTooltip={setOptionsTooltip} />
 				<Privacy privacy={privacy} setPrivacy={setPrivacy} defaultTooltip={defaultTooltip} setOptionsTooltip={setOptionsTooltip} />
-				<Button onClick={CreateRoom} variant="contained" sx={{ my:0.7, width: '100%', height: '15%'}}>CREATE ROOM</Button>
 			</Box>
+				<Button onClick={CreateRoom} variant="contained" sx={{ my:1, width: '98%', height: '15%' }}>CREATE ROOM</Button>
 		</Box>
 	)
 }
@@ -311,7 +301,9 @@ function JoinPrivate()
 					<OutlinedInput placeholder="Room Code" value={code} onChange={(event) => setCode(event.target.value)}/>
 				</Box>
 			</Box>
-			<Button onClick={PrivateClick} variant="contained" disabled={code === ''} sx={{ my: 1, width: '99%', height: '15%' }}>JOIN WITH CODE</Button>
+			<Button onClick={PrivateClick} variant="contained" disabled={code === ''} sx={{ my: 1, width: '99%', height: '15%' }}>
+				<Typography>JOIN WITH CODE</Typography>
+			</Button>
 		</Box>
 	)
 }
@@ -343,7 +335,7 @@ function JoinCreateLobby({ rooms }: { rooms: Room[]})
 					<Tab sx={{ width: '50%'}} label="JOIN GAME" />
 					<Tab sx={{ width: '50%'}} label="CREATE GAME" />
 				</Tabs>
-				<Box sx={{height: '90%', display: 'flex', flexDirection: 'column'}}>
+				<Box sx={{height: '90%', display: 'flex', flexDirection: 'column', justifyContent: 'center'}}>
 						{value === 0 ? <JoinRoom rooms={rooms}/> : <CreateRoom/>}
 				</Box>
 			</Container>
@@ -366,22 +358,15 @@ function Lobby()
 
 	useEffect(() => {
 		async function getRooms() {
-			const response = await fetch('https://localhost:8443/api/rooms');
+			const response = await fetch('/api/rooms');
 			const rooms = await response.json();
 
 			setRooms(rooms);
 		}
 		const interval = setInterval(getRooms, 1500);
-		
 		return () => clearInterval(interval);
 	}, []);
 
-	const { roomID } = getGameContext();
-
-	// console.log(rooms);
-
-	// There is no WaitLobby anymore, move it to play
-//	return (roomID !== null ? <WaitLobby /> : <JoinCreateLobby rooms={rooms}/>);
 	return (<JoinCreateLobby rooms={rooms}/>);
 }
 

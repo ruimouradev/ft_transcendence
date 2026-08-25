@@ -5,8 +5,8 @@ import { Link } from "react-router-dom";
 // existem e são acessíveis a partir do site.
 export default function Footer() {
   return (
-    <footer className="border-t border-white/10 py-6 text-center text-gray-400 fixed left-0 right-0 bottom-0">
-      <div className="flex justify-center gap-6 text-sm fixed left-0 right-0 bottom-3">
+    <footer className="border-t border-white/10 py-6 text-center text-gray-400">
+      <div className="flex justify-center gap-6 text-sm">
         <Link to="/privacy" className="hover:text-white transition-colors">
           Privacy Policy
         </Link>

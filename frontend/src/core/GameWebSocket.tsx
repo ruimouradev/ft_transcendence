@@ -16,6 +16,17 @@ import { useAuth } from './AuthContext';
 // const BASE_RECONNECT_DELAY = 1000; // primeiro reencontro ao fim de 1s
 // const HEARTBEAT_INTERVAL = 10000; // uma batida a cada 10s
 
+
+const originalSetItem = sessionStorage.setItem;
+
+sessionStorage.setItem = function (key, value) {
+    console.log("sessionStorage SET:", key, value);
+    console.trace();
+    return originalSetItem.call(this, key, value);
+};
+
+import type { GameState } from '../game/types.ts'
+
 type ConnectionState = 'online' | 'offline' | 'retry'
 
 type GameContextType = {
@@ -23,6 +34,7 @@ type GameContextType = {
 	connected: ConnectionState,
 	error: string | null,
 	lastMessage: string | null,
+	gameState: GameState | null,
 
 	leaveRoom: () => void
 	sendMessage: (message: object) => void
@@ -36,13 +48,14 @@ export function getGameContext() {
 
 	if (!context)
 		throw new Error('Illegal try to acces getGameContext');
-	return (context);	
+	return (context);
 }
 
 function GameWebSocket({ children }: { children: React.ReactNode }) {
 	const [lastMessage, setLastMessage] = useState<string | null>(null);
 	const [error, setError] = useState<string | null>(null);
 	const [roomID, setRoomID] = useState<string | null>(null);
+	const [gameState, setGameState] = useState<GameState | null>(null);
 	const [connected, setConnected] = useState<ConnectionState>('offline');
 
 	const socketRef = useRef<WebSocket | null>(null);
@@ -55,19 +68,44 @@ function GameWebSocket({ children }: { children: React.ReactNode }) {
 		setError(null);
 
 		// Create new socket
-		const socket = new WebSocket("wss://localhost:8443/ws/game/" + roomID);
+		const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws';
+		const socket = new WebSocket(`${protocol}://${window.location.host}/ws/game/${roomID}`)
 		socketRef.current = socket;
 
 		// Wait to connect
 		socket.onopen = () => {
 			socket.send(JSON.stringify(message));
-			setConnected('online');
-			setRoomID(roomID);
 		}
 
 		socket.onmessage = (event) => {
 			// Handle backend message
 			const message = JSON.parse(event.data);
+
+			const { type, code, msg } = message;
+
+			switch (type) {
+				case 'welcome':
+					const { token } = message;
+					setConnected('online');
+					setRoomID(roomID);
+					sessionStorage.setItem('roomID', roomID);
+					sessionStorage.setItem('reconnectToken', token);
+					break ;
+				case 'error':
+					alert(`${type} ${msg}`);
+					socket.close();
+					break ;
+				case 'state':
+					setGameState(message);
+					break ;
+				default:
+					alert('undefined error');
+			}
+
+
+
+
+
 			console.log("game engine: ", message);
 			setLastMessage(message);
 		}
@@ -83,7 +121,7 @@ function GameWebSocket({ children }: { children: React.ReactNode }) {
 			socketRef.current = null;
 			setConnected('offline');
 			setRoomID(null);
-		} 
+		}
 	}
 
 	function leaveRoom()
@@ -98,7 +136,7 @@ function GameWebSocket({ children }: { children: React.ReactNode }) {
 	}
 
 	return (
-		<GameContext.Provider value={{ roomID, connected, error, lastMessage, joinRoom, leaveRoom, sendMessage }}>
+		<GameContext.Provider value={{ roomID, connected, error, lastMessage, gameState, joinRoom, leaveRoom, sendMessage }}>
 			{ children }
 		</GameContext.Provider>
 	)
