@@ -1,7 +1,7 @@
 """
 The message types the server and the client exchange. A player sends
 actions (create, join, add_bot, remove_bot, start, play, draw, pass,
-catch, challenge), the server sends back the game state after each
+say_uno, catch, challenge), the server sends back the game state after each
 move, or an error when a move is refused.
 """
 
@@ -76,7 +76,8 @@ class Play(BaseModel):
     card: str
     # Color is required when the card is a wild
     color: Color | None = None
-    # Saying uno travels with the play
+    # Saying uno may travel with the play; say_uno is the richer way
+    # and also works right after, until someone catches you
     uno: bool = False
     # Whose hand you take, required for a 7 under the seven-zero rule
     target: str | None = None
@@ -89,6 +90,14 @@ class Draw(BaseModel):
 class Pass(BaseModel):
     # Can only be played after drawing a playable card
     type: Literal["pass"] = "pass"
+
+
+class SayUno(BaseModel):
+    # The Uno call as its own message, so it can race the catch.
+    # Valid on turn holding two cards (calling before the play)
+    # or holding one undeclared card (calling late, before anyone
+    # catches player). The server settles ties by order of arrival.
+    type: Literal["say_uno"] = "say_uno"
 
 
 class Catch(BaseModel):
@@ -109,7 +118,7 @@ class Challenge(BaseModel):
 # the type field tells pydantic which model to build from the raw text
 PlayerAction = Annotated[
     Create | Join | AddBot | RemoveBot | Start | Play | Draw | Pass
-    | Catch | Challenge,
+    | SayUno | Catch | Challenge,
     Field(discriminator="type"),
 ]
 
@@ -127,6 +136,7 @@ class ErrorCode(str, Enum):
     TARGET_REQUIRED = "TARGET_REQUIRED"
     CARD_NOT_IN_HAND = "CARD_NOT_IN_HAND"
     INVALID_CATCH = "INVALID_CATCH"
+    INVALID_UNO = "INVALID_UNO"
     INVALID_CHALLENGE = "INVALID_CHALLENGE"
     INVALID_MESSAGE = "INVALID_MESSAGE"
     AUTH_REQUIRED = "AUTH_REQUIRED"
@@ -189,7 +199,7 @@ class LastAction(BaseModel):
     player: str
     kind: Literal[
         "join", "start", "play", "draw", "pass", "catch", "challenge",
-        "timeout",
+        "timeout", "uno",
     ]
     card: Card | None = None
 
