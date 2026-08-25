@@ -19,8 +19,8 @@ from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 
 from app.game.contract import (
     AddBot, Catch, Challenge, Create, Draw, Error, ErrorCode,
-    GameSettings, Join, Pass, Play, PlayerAction, RemoveBot, Start,
-    Welcome, parse_action,
+    GameSettings, Join, Pass, Play, PlayerAction, RemoveBot, SayUno,
+    Start, Welcome, parse_action,
 )
 from app.game.engine import Game, GameError
 from app.platform.config import settings
@@ -47,12 +47,15 @@ class Room:
     settings: GameSettings = field(default_factory=GameSettings)
     bots_made: int = 0  # grows forever so bot ids never repeat
     humans_made: int = 0  # same idea, seats freed in the lobby come back
+    # when a hand last dropped to one undeclared card, for the grace
+    solo_at: float = 0.0
 
 
 rooms: dict[str, Room] = {}
 
 TURN_TIMEOUT = 60  # seconds an idle turn is allowed to sit
 TIMER_TICK = 5  # how often each room looks at its clock
+UNO_GRACE = 0.5  # seconds a fresh one-card hand is safe from the catch
 
 
 def err(code: ErrorCode, msg: str, room: str | None = None) -> Error:
@@ -221,11 +224,23 @@ async def apply(room: Room, player: Player, action: PlayerAction) -> Error | Non
         elif isinstance(action, Play):
             room.game.play(player.id, action.card, action.color,
                            action.uno, action.target)
+            hand = next(
+                (h for h in room.game.hands if h.id == player.id), None
+            )
+            if hand and len(hand.cards) == 1 and not hand.said_uno:
+                # the race is on, but the player gets half a second of
+                # air before anyone may catch them
+                room.solo_at = time.monotonic()
+        elif isinstance(action, SayUno):
+            room.game.say_uno(player.id)
         elif isinstance(action, Draw):
             room.game.draw(player.id)
         elif isinstance(action, Pass):
             room.game.do_pass(player.id)
         elif isinstance(action, Catch):
+            if time.monotonic() - room.solo_at < UNO_GRACE:
+                return err(ErrorCode.INVALID_CATCH,
+                           "too soon, the call is still open")
             room.game.catch(player.id, action.target)
         elif isinstance(action, Challenge):
             plus4 = room.game.plus4
