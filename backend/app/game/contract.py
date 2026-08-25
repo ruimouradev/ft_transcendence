@@ -65,16 +65,16 @@ class AddBot(BaseModel):
 
 
 class RemoveBot(BaseModel):
-    # Host only, in the lobby: frees the chair of that bot
+    # Host only, in the lobby: frees the chair of that bot. Kick does
+    # the same for any chair, one message for the whole list
     type: Literal["remove_bot"] = "remove_bot"
     target: str
 
 
 class Kick(BaseModel):
-    # Host only, in the lobby: throws a player out of the room and
-    # frees the chair. Not a ban, the same player may join again with
-    # the room code. The kicked player hears KICKED before the socket
-    # closes
+    # Host only, in the lobby: frees any other chair, bot or human.
+    # A human target hears KICKED before the socket closes. Not a ban,
+    # the same player may join again with the room code
     type: Literal["kick"] = "kick"
     target: str
 
