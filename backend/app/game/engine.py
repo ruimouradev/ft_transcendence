@@ -191,7 +191,8 @@ class Game:
         hand.cards.remove(card)
         self.discard.append(card)
         self.active_color = color if card.color == "wild" else card.color
-        hand.said_uno = uno
+        # an uno said just before by say_uno is not erased here
+        hand.said_uno = hand.said_uno or uno
         self.drawn = None
         self.last = LastAction(player=player_id, kind="play", card=card)
         self.seq += 1
@@ -314,6 +315,37 @@ class Game:
             # the bluff is exposed, the penalty changes hands and the
             # challenger's own turn still stands
             self._deal(self._hand(plus4.by), penalty)
+
+    def say_uno(self, player_id: str) -> None:
+        """Register a player's Uno call, sent as its own message.
+
+        Two moments make it valid: holding two cards on player own turn,
+        calling before the play, or holding one undeclared card, the
+        late call that races the opponents' catch. Ties are settled by
+        whichever message reached the server first.
+
+        Args:
+            player_id: Who is calling Uno.
+
+        Raises:
+            GameError: If no game is running, the call was already
+                made, or the player is in neither valid moment.
+        """
+        if self.phase != "playing":
+            raise GameError(ErrorCode.GAME_NOT_STARTED, "no game running")
+        hand = self._hand(player_id)
+        if hand.said_uno:
+            raise GameError(ErrorCode.INVALID_UNO, "uno already said")
+        on_turn = self.hands[self.turn].id == player_id
+        before = len(hand.cards) == 2 and on_turn
+        late = len(hand.cards) == 1
+        if not (before or late):
+            raise GameError(
+                ErrorCode.INVALID_UNO, "not the moment to say uno"
+            )
+        hand.said_uno = True
+        self.last = LastAction(player=player_id, kind="uno")
+        self.seq += 1
 
     def catch(self, player_id: str, target_id: str) -> None:
         """Punish a player who reached one card without calling Uno.
@@ -514,3 +546,4 @@ class Game:
         # with two players a reverse just skips, like the rules say
         two_player_reverse = effect.reverse and len(self.hands) == 2
         self._step(2 if effect.skip or two_player_reverse else 1)
+        
