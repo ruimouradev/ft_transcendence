@@ -129,6 +129,8 @@ class ErrorCode(str, Enum):
     INVALID_CATCH = "INVALID_CATCH"
     INVALID_CHALLENGE = "INVALID_CHALLENGE"
     INVALID_MESSAGE = "INVALID_MESSAGE"
+    AUTH_REQUIRED = "AUTH_REQUIRED"
+    ALREADY_IN_ROOM = "ALREADY_IN_ROOM"
     ROOM_FULL = "ROOM_FULL"
     ROOM_NOT_FOUND = "ROOM_NOT_FOUND"
     GAME_NOT_STARTED = "GAME_NOT_STARTED"
@@ -140,6 +142,9 @@ class Error(BaseModel):
     type: Literal["error"] = "error"
     code: ErrorCode
     msg: str
+    # Only on ALREADY_IN_ROOM: the code of the room holding the seat,
+    # so the frontend can offer the way back to it
+    room: str | None = None
 
 
 class Welcome(BaseModel):
@@ -171,6 +176,9 @@ class PublicPlayer(BaseModel):
     uno: bool = False
     # An AI seat. The room fills this in, the engine treats all alike
     bot: bool = False
+    # Avatar URL of the account in this seat. The room fills this in
+    # like the bot flag, empty for guests and bots
+    avatar: str = ""
     # What the cards still in this hand are worth, 0 until the game ends
     points: int = 0
 
