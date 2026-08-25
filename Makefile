@@ -1,16 +1,16 @@
-HOME := $(HOME)
-
 include ./.env
 
-all: secrets vinit
-	docker compose -f ./docker-compose.yml up -d 
+all: vinit
+	docker compose -f ./docker-compose.yml up -d
 
 build:
 	docker compose -f ./docker-compose.yml build --no-cache
 
+re: down all
+
 vinit:
 	@mkdir -p ${DBDATAPATH}
-	
+
 dev: vinit
 	docker compose -f ./docker-compose.yml up db backend frontend adminer nginx
 
@@ -33,11 +33,15 @@ clean_host_data: clean_compose
 		exit 1; \
 	fi
 	@echo "[CONFIRM] Deleting persistent data..."
-	
+
 	@if [ -n "$$(docker volume ls -q)" ]; then \
 		docker volume rm $$(docker volume ls -q); \
 	fi
-	sudo rm -rf $(HOME)/data
+	@if [ -z "${DBDATAPATH}" ]; then \
+		echo "[ERROR] DBDATAPATH is empty, refusing to delete."; \
+		exit 1; \
+	fi
+	sudo rm -rf ${DBDATAPATH}
 	@echo "[INFO] All persistent data on the host deleted."
 
 clean: clean_compose clean_images clean_host_data
@@ -50,15 +54,17 @@ log:
 
 help:
 	@echo "Available Makefile targets:"
-	@echo "  all            - Create and run Inception services using Docker Compose."
+	@echo "  all            - Build and start the whole stack in the background."
 	@echo "  build          - Build Docker images without using cache."
+	@echo "  re             - Stop everything and start it again."
+	@echo "  dev            - Start part of the stack in the foreground, for development."
 	@echo "  vinit          - Initialize host directories for persistent data."
-	@echo "  down           - Stop Inception services."
-	@echo "  clean          - Stop services, remove containers, images, and volumes and ⚠️ delete all persistent data ⚠️"
+	@echo "  down           - Stop and remove the containers."
+	@echo "  clean          - Stop services, remove containers, images, and volumes, and delete all persistent data on the host."
 	@echo "  clean_compose  - Stop services, remove containers, images, and volumes."
 	@echo "  clean_images   - Remove all Docker images."
-	@echo "  clean_host_data- ⚠️ Remove all persistent data on the host (use with caution) ⚠️"
-	@echo "  ps             - List running containers for Inception services."
-	@echo "  log            - View logs of Inception services."
+	@echo "  clean_host_data- Remove all persistent data on the host, use with caution."
+	@echo "  ps             - List the running containers."
+	@echo "  log            - View the logs of every service."
 
-.PHONY: all build secrets vinit down clean_compose clean_images clean_host_data ps log help clean
+.PHONY: all build vinit dev re down clean_compose clean_images clean_host_data ps log help clean
