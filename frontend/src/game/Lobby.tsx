@@ -343,15 +343,6 @@ function JoinCreateLobby({ rooms }: { rooms: Room[]})
 	)
 }
 
-function WaitLobby()
-{
-	return (
-		<Container sx={{ bgcolor: 'white', height: '65vh', width: '50%', display: 'flex', flexDirection: 'column', my: 2, p: 0.5, borderRadius: 1 }}>
-			WAITING GAME TO START
-		</Container>
-	)
-}
-
 function Lobby()
 {
 	const [rooms, setRooms] = useState<Room[]>([]);

@@ -1,7 +1,10 @@
-import { Box, Button, Card, CardMedia, Container, Typography } from '@mui/material';
+import { Box, Button, Card, CardMedia, Container, ThemeProvider, Typography } from '@mui/material';
 import { useState, Fragment } from 'react';
 
 import { useAuth } from '../core/AuthContext';
+
+import { unoTheme } from '../ui/unoTheme';
+
 import { getGameContext } from '../core/GameWebSocket';
 
 import { cardBacks, defaultCardBack } from '../ui/cardBacks';
@@ -179,6 +182,8 @@ function PlayersUI({players, popUp, setPopUp}:
 {
 	const { user  } = useAuth();
 
+	console.log(players);
+
 	let player_pos: string[];
 
 	if (players.length == 2) {
@@ -205,9 +210,12 @@ function PlayersUI({players, popUp, setPopUp}:
 			return (
 				<Box key={player.id} className={`board-${player_pos[i]}`} sx={{ position: 'relative' }}>
 					<Box sx={{ position: 'absolute', inset: 0, display: 'flex', justifyContent: 'center' }}>
-						<Card elevation={0} sx={{ height: 85, width: 100, backgroundColor: 'rgba(255, 255, 255, 0)', transform: 'translateY(-90px)', display: 'flex', justifyContent: 'center' }}>
-							<CardMedia component="img" sx={{ border: 3, height: 64, width: 64, borderRadius: '50%' }} image={user?.avatar} draggable={false}/>
-							<Typography sx={{ color: 'black', bgcolor: 'orange', border: 3, my: '60px', zIndex: '10', position: 'absolute', px: 1 }}>{user?.nick_name}</Typography>
+						<Card elevation={0} sx={{ height: 85, width: 100, backgroundColor: 'rgba(255, 255, 255, 0)',
+							transform: 'translateY(-90px)', display: 'flex', justifyContent: 'center' }}>
+							<CardMedia component="img" sx={{ border: 3, height: 64, width: 64,
+								borderRadius: '50%' }} image={user?.avatar} draggable={false}/>
+							<Typography sx={{ color: 'black', bgcolor: 'orange', border: 3,
+								my: '60px', zIndex: '10', position: 'absolute', px: 1 }}>{user?.nick_name}</Typography>
 						</Card>
 					</Box>
 					<Box sx={{ position: 'absolute', inset: 0 }}>
@@ -219,10 +227,14 @@ function PlayersUI({players, popUp, setPopUp}:
 		else {
 			return (
 				<Box key={player.id} className={`board-${player_pos[i]}`} sx={{ position: 'relative' }}>
-					<Box className={`avatar-${player_pos[i]}`} sx={{ position: 'absolute', inset: 0, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-						<Card elevation={0} sx={{ height: 95, width: 100, backgroundColor: 'rgba(255, 255, 255, 0)', transform: 'translateY(0px)', display: 'flex', justifyContent: 'center' }}>
-							<CardMedia component="img" sx={{ border: 3, height: 64, width: 64, borderRadius: '50%' }} image="/avatar/f01.png" draggable={false}/>
-							<Typography sx={{ color: 'black', bgcolor: 'orange', border: 3, my: '60px', position: 'absolute', px: 1 }}>{player.name}</Typography>
+					<Box className={`avatar-${player_pos[i]}`} sx={{ position: 'absolute', inset: 0,
+						display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+						<Card elevation={0} sx={{ height: 95, width: 100, backgroundColor: 'rgba(255, 255, 255, 0)',
+							transform: 'translateY(0px)', display: 'flex', justifyContent: 'center' }}>
+							<CardMedia component="img" sx={{ border: 3, height: 64, width: 64,
+								borderRadius: '50%' }} image={player.avatar} draggable={false}/>
+							<Typography sx={{ color: 'black', bgcolor: 'orange', border: 3, my: '60px',
+								position: 'absolute', px: 1 }}>{player.name}</Typography>
 						</Card>
 					</Box>
 					<Box sx={{position: 'absolute', inset: 0}}>
@@ -234,13 +246,13 @@ function PlayersUI({players, popUp, setPopUp}:
 	}))
 }
 
-function GameRoom()
+function RotatePlayers(): PublicPlayer[]
 {
 	const { gameState } = getGameContext();
-	const [popUp, setPopUp] = useState<Pops>('disabled');
+	const player = gameState?.you;
 
 	let players: PublicPlayer[] = [];
-	const player = gameState?.you;
+
 	if (gameState !== null)
 		players = gameState.players;
 
@@ -250,6 +262,59 @@ function GameRoom()
 
 	let new_players: PublicPlayer[] = players.slice(i);
 	new_players.push(...players.slice(0, i));
+	return (new_players);
+}
+
+function WaitRoom()
+{
+	const { gameState, sendMessage } = getGameContext();
+
+	const host = gameState?.you.id !== gameState?.host_id;
+	const disable = gameState?.players.length !== gameState?.settings?.max_players;
+	const text = disable ? `WAITING FOR PLAYERS ${gameState?.players.length} / ${gameState?.settings?.max_players}` : 'START';
+
+	return (
+		<ThemeProvider theme={unoTheme}>
+			<Container sx={{ bgcolor: 'orange', height: '65vh', width: '50%', display: 'flex', flexDirection: 'column', my: 2, p: 0.5, borderRadius: 1 }}>
+				<Box sx={{height: '10%', width: '100%'}}>
+					<Typography sx={{  height: '100%', width: '100%', display: 'flex', justifyContent: 'center' }}>WAITING ROOM</Typography>
+				</Box>
+				<Box sx={{height: '90%', width: '100%'}}>
+					<Box sx={{height: '85%', width: '100%', bgcolor: 'black'}}>
+						LIST ALL PLAYERS !!!!
+
+					</Box>
+					<Box sx={{height: '15%', width: '100%', bgcolor: 'red'}}>
+						<Button variant="contained" disabled={disable || host} onClick={() => sendMessage({"type": "start"})}
+						sx={{ height: '100%', width: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+							<Typography>{text}</Typography>
+						</Button>
+					</Box>
+				</Box>
+			</Container>
+		</ThemeProvider>
+	)
+}
+
+function GameRoom()
+{
+	const [popUp, setPopUp] = useState<Pops>('disabled');
+
+	const new_players = RotatePlayers();
+	if (new_players === null)
+		return ;
+
+	const { gameState } = getGameContext();
+
+	console.log(gameState);
+
+	// let i = 0;
+	// for (; i < players.length && players[i].id !== player?.id; i++)
+	// 	;
+
+	// let new_players: PublicPlayer[] = players.slice(i);
+	// new_players.push(...players.slice(0, i));
+
 
 	// const room = sessionStorage.getItem('roomID');
 	// const token = sessionStorage.getItem('reconnectToken');
@@ -262,9 +327,10 @@ function GameRoom()
 
 	// const [game, setGameState] = useState<typeof gameState>(gameState);
 
-	return (
+	return ( gameState?.phase === 'lobby' ? <WaitRoom /> : 
 		<Box sx={{ width: '100%', height: '85vh', position: 'relative'}}>
-		<Container sx={{ bgcolor: 'black', width: '100%', height: '100%', mtop: '15px', display: 'grid', gridTemplateColumns: 'repeat(10, 1fr)', gridTemplateRows: 'repeat(12, 1fr)' }}>
+		<Container sx={{ bgcolor: 'black', width: '100%', height: '100%', mtop: '15px',
+			display: 'grid', gridTemplateColumns: 'repeat(10, 1fr)', gridTemplateRows: 'repeat(12, 1fr)' }}>
 			<PlayersUI players={new_players} popUp={popUp} setPopUp={setPopUp} />
 			<Box sx={{ gridColumn: '4/8', gridRow: '5/9', bgcolor: '#6d6d6d'}}>
 					<PopUp popUp={popUp} setPopUp={setPopUp} />

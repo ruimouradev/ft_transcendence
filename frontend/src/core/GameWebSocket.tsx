@@ -121,6 +121,8 @@ function GameWebSocket({ children }: { children: React.ReactNode }) {
 			socketRef.current = null;
 			setConnected('offline');
 			setRoomID(null);
+			sessionStorage.removeItem('roomID');
+			sessionStorage.removeItem('reconnectToken');
 		}
 	}
 
