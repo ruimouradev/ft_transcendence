@@ -8,12 +8,9 @@ import { useAuth } from './AuthContext';
 // protocolo. Não desenha nada nem expõe nada: se um dia precisares
 // do estado da ligação no ecrã, é aqui que ele nasce.
 
-// const MAX_RECONNECT_ATTEMPTS = 5;
+const MAX_RECONNECT_ATTEMPTS = 5;
 const BASE_RECONNECT_DELAY = 1000; // primeiro reencontro ao fim de 1s
-// const HEARTBEAT_INTERVAL = 10000; // uma batida a cada 10s
-
-const MAX_RECONNECT_ATTEMPTS = 150;
-const HEARTBEAT_INTERVAL = 100000; // uma batida a cada 10s
+const HEARTBEAT_INTERVAL = 10000; // uma batida a cada 10s
 
 export default function PresenceKeeper() {
   const { user, isLoading } = useAuth();

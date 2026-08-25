@@ -39,15 +39,3 @@
 .avatar-east {
 	transform: translateX(-70px);
 }
-
-.card {
-	height: 140px;
-	width: 100px;
-	user-select: none;
-    -webkit-user-drag: none;
-	border-radius: 8px;
-	object-fit: cover;
-    box-sizing: border-box;
-	border: 6px solid white;
-	box-shadow: 4.0px 8.0px 8.0px black;
-}

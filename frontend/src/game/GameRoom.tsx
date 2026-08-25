@@ -1,5 +1,7 @@
-import { Box, Button, Card, CardMedia, Container, ThemeProvider, Typography } from '@mui/material';
+import { Box, Button, Card, CardContent , CardMedia, Container, IconButton,  List, ListItem, ThemeProvider, Typography } from '@mui/material';
 import { useState, Fragment } from 'react';
+
+import ExitToAppOutlinedIcon from '@mui/icons-material/ExitToAppOutlined';
 
 import { useAuth } from '../core/AuthContext';
 
@@ -11,7 +13,7 @@ import { cardBacks, defaultCardBack } from '../ui/cardBacks';
 
 import type {Color, valueNum, valueAction, valueWild, GameCard, PublicPlayer, PrivatePlayer, GameState} from './types.ts'
 
-type Pops = 'wildcard' | 'seven' | 'game_end' | 'disabled'
+type PopUpTypes = 'wildcard' | 'seven' | 'game_end' | 'disabled'
 
 function getCardName({card}: {card: GameCard})
 {
@@ -27,7 +29,7 @@ function DrawCard()
 function PlayCard({card, popUp, setPopUp}:
 	{card: GameCard,
 	popUp: string,
-	setPopUp: React.Dispatch<React.SetStateAction<Pops>>})
+	setPopUp: React.Dispatch<React.SetStateAction<PopUpTypes>>})
 {
 	const {gameState} = getGameContext();
 	if (popUp !== 'disabled')
@@ -96,7 +98,7 @@ function DeckArea()
 	);
 }
 
-function WildCard({setPopUp}: {setPopUp: React.Dispatch<React.SetStateAction<Pops>>})
+function WildCard({setPopUp}: {setPopUp: React.Dispatch<React.SetStateAction<PopUpTypes>>})
 {
 	return (
 		<Box sx={{ bgcolor: 'white', width: '99%', height: '15vh', display: 'flex', justifyContent: 'center', alignItems: 'center', border: 3, borderRadius: '2%' }}>
@@ -116,7 +118,7 @@ function WildCard({setPopUp}: {setPopUp: React.Dispatch<React.SetStateAction<Pop
 	)
 }
 
-function PopUp({popUp, setPopUp}: {popUp: Pops, setPopUp: React.Dispatch<React.SetStateAction<Pops>>})
+function PopUp({popUp, setPopUp}: {popUp: PopUpTypes, setPopUp: React.Dispatch<React.SetStateAction<PopUpTypes>>})
 {
 	if (popUp === 'disabled')
 		return null;
@@ -129,8 +131,8 @@ function DrawHands({deck, amount, card_class, popUp, setPopUp}:
 	{deck: GameCard[] | undefined,
 	amount: number,
 	card_class: string,
-	popUp: Pops,
-	setPopUp: React.Dispatch<React.SetStateAction<Pops>>})
+	popUp: PopUpTypes,
+	setPopUp: React.Dispatch<React.SetStateAction<PopUpTypes>>})
 {
 
 	if (deck === undefined)
@@ -163,27 +165,48 @@ function DrawHidden({amount, card_class}: {amount: number, card_class: string})
 {
 	const { user } = useAuth();
 
-	const ul_class = (card_class === 'card-north' || card_class === 'card-south' ? "ul-horizontal" : "ul-vertical")
+	// const ul_class = (card_class === 'card-north' || card_class === 'card-south' ? "ul-horizontal" : "ul-vertical")
 
 	const arr = Array.from({ length: amount });
 	return (
-		<ul className={ul_class}>
+		<ul >
 		{arr.map((_, index) => (
-			<li className="list" key={index}>
-				{/* <img className={`card ${card_class}`} src={cardBacks[user?.card_back ?? ''] ?? defaultCardBack} alt="" draggable={false}/> */}
+			<li key={index}>
+				<img src={cardBacks[user?.card_back ?? ''] ?? defaultCardBack} alt="" draggable={false}/>
 			</li>
 		))}
 		</ul>
 	)
 }
 
-function PlayersUI({players, popUp, setPopUp}:
-	{players: PublicPlayer[], popUp: Pops, setPopUp: React.Dispatch<React.SetStateAction<Pops>>})
+function PlayerOneHand()
 {
-	const { user  } = useAuth();
+	const { user } = useAuth();
+	const { gameState } = getGameContext();
+	const player = gameState?.you !== undefined ? gameState?.you : {id: 0, hand: [], platable: [], drawn: null};
 
-	console.log(players);
+	return (
+		<Box key={player.id} className={`board-${player_pos[i]}`} sx={{ position: 'relative' }}>
+			<Box sx={{ position: 'absolute', inset: 0, display: 'flex', justifyContent: 'center' }}>
+				<Card elevation={0} sx={{ height: 85, width: 100, backgroundColor: 'rgba(255, 255, 255, 0)',
+					transform: 'translateY(-90px)', display: 'flex', justifyContent: 'center' }}>
+					<CardMedia component="img" sx={{ border: 3, height: 64, width: 64,
+						borderRadius: '50%' }} image={user?.avatar} draggable={false}/>
+					<Typography sx={{ color: 'black', bgcolor: 'orange', border: 3,
+						my: '60px', zIndex: '10', position: 'absolute', px: 1 }}>{user?.nick_name}</Typography>
+				</Card>
+			</Box>
+			<Box sx={{ position: 'absolute', inset: 0 }}>
+				<DrawHands deck={player.hand} amount={player.hand.length} card_class={`card-${player_pos[i]}`} popUp={popUp} setPopUp={setPopUp} />
+			</Box>
+		</Box>
+	)
+}
 
+function PlayersUI({players, popUp, setPopUp}:
+	{players: PublicPlayer[], popUp: PopUpTypes, setPopUp: React.Dispatch<React.SetStateAction<PopUpTypes>>})
+{
+	const { user } = useAuth();
 	let player_pos: string[];
 
 	if (players.length == 2) {
@@ -206,23 +229,9 @@ function PlayersUI({players, popUp, setPopUp}:
 	}
 
 	return (players.map((player, i) => {
+		console.log(player.cards);
 		if (i == 0) {
-			return (
-				<Box key={player.id} className={`board-${player_pos[i]}`} sx={{ position: 'relative' }}>
-					<Box sx={{ position: 'absolute', inset: 0, display: 'flex', justifyContent: 'center' }}>
-						<Card elevation={0} sx={{ height: 85, width: 100, backgroundColor: 'rgba(255, 255, 255, 0)',
-							transform: 'translateY(-90px)', display: 'flex', justifyContent: 'center' }}>
-							<CardMedia component="img" sx={{ border: 3, height: 64, width: 64,
-								borderRadius: '50%' }} image={user?.avatar} draggable={false}/>
-							<Typography sx={{ color: 'black', bgcolor: 'orange', border: 3,
-								my: '60px', zIndex: '10', position: 'absolute', px: 1 }}>{user?.nick_name}</Typography>
-						</Card>
-					</Box>
-					<Box sx={{ position: 'absolute', inset: 0 }}>
-						{/* <DrawHands deck={player.hand} amount={player.handCount} card_class={`card-${player_pos[i]}`} popUp={popUp} setPopUp={setPopUp} /> */}
-					</Box>
-				</Box>
-			)
+			return (<PlayerOneHand />)
 		}
 		else {
 			return (
@@ -238,7 +247,7 @@ function PlayersUI({players, popUp, setPopUp}:
 						</Card>
 					</Box>
 					<Box sx={{position: 'absolute', inset: 0}}>
-						<DrawHidden amount={player.cards} card_class={`card-${player_pos[i]}`}/>
+						<DrawHidden amount={player.cards} card_class={`card-${player_pos[i]}`} />
 					</Box>
 				</Box>
 			)
@@ -269,22 +278,37 @@ function WaitRoom()
 {
 	const { gameState, sendMessage } = getGameContext();
 
+	console.log(gameState);
+
 	const host = gameState?.you.id !== gameState?.host_id;
 	const disable = gameState?.players.length !== gameState?.settings?.max_players;
 	const text = disable ? `WAITING FOR PLAYERS ${gameState?.players.length} / ${gameState?.settings?.max_players}` : 'START';
 
 	return (
 		<ThemeProvider theme={unoTheme}>
-			<Container sx={{ bgcolor: 'orange', height: '65vh', width: '50%', display: 'flex', flexDirection: 'column', my: 2, p: 0.5, borderRadius: 1 }}>
+			<Container sx={{ bgcolor: 'orange', height: '65vh', width: '50%', display: 'flex', flexDirection: 'column', my: 2, p: 0.5, borderRadius: 1, position: 'relative' }}>
 				<Box sx={{height: '10%', width: '100%'}}>
-					<Typography sx={{  height: '100%', width: '100%', display: 'flex', justifyContent: 'center' }}>WAITING ROOM</Typography>
+					<Typography sx={{  height: '100%', width: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>WAITING ROOM</Typography>
+					<IconButton size="large" sx={{ position: 'absolute', top: 0, right: 0, zIndex: 1 }} >
+						<ExitToAppOutlinedIcon fontSize="inherit"/>
+					</IconButton>
 				</Box>
 				<Box sx={{height: '90%', width: '100%'}}>
 					<Box sx={{height: '85%', width: '100%', bgcolor: 'black'}}>
-						LIST ALL PLAYERS !!!!
-
+						<List sx={{ height: '100%', width: '100%', display: 'flex', flexDirection: 'column', p: 0 }}>
+							{gameState?.players.map((player) => (
+								<ListItem sx={{ height: '25%', width: '100%', p: 0.5 }}>
+									<Card sx={{ height: '100%', width: '100%', display: 'flex' }}>
+										<CardMedia component="img" sx={{ width: '12%', height: 'auto', display: 'flex', alignItems: 'center' }} image={player.avatar}/>
+										<CardContent >
+											<Typography>{player.name}</Typography>
+										</CardContent>
+									</Card>
+								</ListItem>
+							))}
+						</List>
 					</Box>
-					<Box sx={{height: '15%', width: '100%', bgcolor: 'red'}}>
+					<Box sx={{ height: '15%', width: '100%', bgcolor: 'red' }}>
 						<Button variant="contained" disabled={disable || host} onClick={() => sendMessage({"type": "start"})}
 						sx={{ height: '100%', width: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
 							<Typography>{text}</Typography>
@@ -298,7 +322,7 @@ function WaitRoom()
 
 function GameRoom()
 {
-	const [popUp, setPopUp] = useState<Pops>('disabled');
+	const [popUp, setPopUp] = useState<PopUpTypes>('disabled');
 
 	const new_players = RotatePlayers();
 	if (new_players === null)
