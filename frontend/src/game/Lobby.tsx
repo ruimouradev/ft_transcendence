@@ -266,7 +266,6 @@ function JoinPublic({rooms}: {rooms: Room[]})
 						</li>
 					))}
 				</ul>
-					
 			</Box>
 			<Button onClick={PublicClick} variant="contained" disabled={selected === null} sx={{ my: 1, width: '99%', height: '15%' }}>JOIN</Button>
 		</Box>

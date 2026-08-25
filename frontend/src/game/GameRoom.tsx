@@ -2,6 +2,7 @@ import { Box, Button, Card, CardContent , CardMedia, Container, IconButton,  Lis
 import { useState, Fragment } from 'react';
 
 import ExitToAppOutlinedIcon from '@mui/icons-material/ExitToAppOutlined';
+import DisabledByDefaultOutlinedIcon from '@mui/icons-material/DisabledByDefaultOutlined';
 
 import { useAuth } from '../core/AuthContext';
 
@@ -10,6 +11,8 @@ import { unoTheme } from '../ui/unoTheme';
 import { getGameContext } from '../core/GameWebSocket';
 
 import { cardBacks, defaultCardBack } from '../ui/cardBacks';
+
+import {easy_bot, medium_bot, hard_bot, start_game} from './messages.ts'
 
 import type {Color, valueNum, valueAction, valueWild, GameCard, PublicPlayer, PrivatePlayer, GameState} from './types.ts'
 
@@ -276,7 +279,7 @@ function RotatePlayers(): PublicPlayer[]
 
 function WaitRoom()
 {
-	const { gameState, sendMessage } = getGameContext();
+	const { gameState, sendMessage, leaveRoom } = getGameContext();
 
 	console.log(gameState);
 
@@ -286,30 +289,51 @@ function WaitRoom()
 
 	return (
 		<ThemeProvider theme={unoTheme}>
-			<Container sx={{ bgcolor: 'orange', height: '65vh', width: '50%', display: 'flex', flexDirection: 'column', my: 2, p: 0.5, borderRadius: 1, position: 'relative' }}>
+			<Container sx={{ height: '65vh', width: '50%', display: 'flex', flexDirection: 'column', my: 2, p: 0.5,
+				position: 'relative', border: '1px solid', borderColor: 'divider', borderRadius: 2, bgcolor: 'background.paper' }}>
 				<Box sx={{height: '10%', width: '100%'}}>
 					<Typography sx={{  height: '100%', width: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>WAITING ROOM</Typography>
-					<IconButton size="large" sx={{ position: 'absolute', top: 0, right: 0, zIndex: 1 }} >
+					<IconButton size="large" sx={{ position: 'absolute', top: 0, right: 0, zIndex: 1 }} onClick={() => leaveRoom()}>
 						<ExitToAppOutlinedIcon fontSize="inherit"/>
 					</IconButton>
 				</Box>
-				<Box sx={{height: '90%', width: '100%'}}>
-					<Box sx={{height: '85%', width: '100%', bgcolor: 'black'}}>
+				<Box sx={{ height: '90%', width: '100%' }}>
+					<Box sx={{ height: '85%', width: '100%', bgcolor: 'black' }}>
 						<List sx={{ height: '100%', width: '100%', display: 'flex', flexDirection: 'column', p: 0 }}>
 							{gameState?.players.map((player) => (
-								<ListItem sx={{ height: '25%', width: '100%', p: 0.5 }}>
-									<Card sx={{ height: '100%', width: '100%', display: 'flex' }}>
+								<ListItem sx={{ height: '20%', width: '100%', p: 0.5 }}>
+									<Card sx={{ height: '100%', width: '100%', display: 'flex', position: 'relative' }}>
 										<CardMedia component="img" sx={{ width: '12%', height: 'auto', display: 'flex', alignItems: 'center' }} image={player.avatar}/>
-										<CardContent >
+										<CardContent>
 											<Typography>{player.name}</Typography>
+										</CardContent>
+										<CardContent>
+											{
+												(player.id !== gameState?.host_id)
+												?	<IconButton hidden={host} size="large" sx={{ position: 'absolute', right: 2, zIndex: 1, color: 'primary.main' }}
+												onClick={() => sendMessage({"type": "kick", "target": `${player.id}`})} >
+														<DisabledByDefaultOutlinedIcon fontSize="inherit"/>
+													</IconButton>
+												: <></>
+											}
 										</CardContent>
 									</Card>
 								</ListItem>
 							))}
+							<ListItem sx={{ height: '20%', width: '100%', p: 0.5 }}>
+								<Card sx={{ height: '100%', width: '100%', display: 'flex', position: 'relative', alignItems: 'center' }}>
+									<Typography sx={{ p: 3 }}>ADD BOT</Typography>
+									<CardContent sx={{ display: 'flex', position: 'absolute', alignItems: 'center', right: 0 }}>
+										<Button disabled={host} variant="contained" sx={{ mx: 2, bgcolor: '#708c08' }} onClick={() => sendMessage(easy_bot)}>EASY</Button>
+										<Button disabled={host} variant="contained" sx={{ mx: 2, bgcolor: '#c7950e' }} onClick={() => sendMessage(medium_bot)}>MEDIUM</Button>
+										<Button disabled={host} variant="contained" sx={{ mx: 2, bgcolor: '#cf5900' }} onClick={() => sendMessage(hard_bot)}>HARD</Button>
+									</CardContent>
+								</Card>
+							</ListItem>
 						</List>
 					</Box>
-					<Box sx={{ height: '15%', width: '100%', bgcolor: 'red' }}>
-						<Button variant="contained" disabled={disable || host} onClick={() => sendMessage({"type": "start"})}
+					<Box sx={{ height: '15%', width: '100%' }}>
+						<Button variant="contained" disabled={disable || host} onClick={() => sendMessage(start_game)}
 						sx={{ height: '100%', width: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
 							<Typography>{text}</Typography>
 						</Button>
