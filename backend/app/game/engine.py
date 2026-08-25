@@ -191,8 +191,9 @@ class Game:
         hand.cards.remove(card)
         self.discard.append(card)
         self.active_color = color if card.color == "wild" else card.color
-        # an uno said just before by say_uno is not erased here
-        hand.said_uno = hand.said_uno or uno
+        # an uno said just before by say_uno is not erased here, and
+        # the flag only counts when the play leaves a single card
+        hand.said_uno = hand.said_uno or (uno and len(hand.cards) == 1)
         self.drawn = None
         self.last = LastAction(player=player_id, kind="play", card=card)
         self.seq += 1
