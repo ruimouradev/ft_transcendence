@@ -27,6 +27,8 @@ async def get_user_info(session: SessionDep, user_id: str):
         raise APIError(status_code=404, code=APIErrorCode.USER_NOT_FOUND, msg="User not found")
         # raise HTTPException(status_code=404, detail="User not found")
     userStatisticInfo=userStatisticService.get_user_statistic_info(session=session, current_user=user_info)
+    # Clear the email field to avoid exposing sensitive information
+    userStatisticInfo.user.email="";
     
     return userStatisticInfo
 
