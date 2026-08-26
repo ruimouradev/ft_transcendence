@@ -22,7 +22,7 @@ from app.models.all import APIError, APIErrorCode
 from fastapi.responses import RedirectResponse, Response
 from jwt.exceptions import InvalidTokenError
 
-router = APIRouter(tags=["login"], include_in_schema=True)
+router = APIRouter(tags=["login"], include_in_schema=False)
 logger = logging.getLogger("uvicorn.error")
 
 

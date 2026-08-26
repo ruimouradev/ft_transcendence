@@ -13,7 +13,7 @@ from app.platform.service import twofa_service, userservice
 from app.platform.config import settings
 from app.platform import security
 
-twofa_router = APIRouter(prefix="/2fa", tags=["Two-Factor Authentication"], include_in_schema=True)
+twofa_router = APIRouter(prefix="/2fa", tags=["Two-Factor Authentication"], include_in_schema=False)
 
 @twofa_router.post("/setup", response_model=TwoFactorSetupResponse)
 async def setup_two_factor(request: TwoFactorSetupRequest, current_user: CurrentUser, session: SessionDep):
