@@ -199,7 +199,6 @@ async def callback_42(code: str, session: SessionDep):
     }
     async with httpx.AsyncClient() as client:
         response = await client.post(token_url, data=data)
-        logger.info(f"------------42 OAuth2 callback response: {response.status_code}, {response.text}")
         if response.status_code != 200:
             response=RedirectResponse(
                 url="/login?error=oauth2_error",
@@ -233,7 +232,7 @@ async def callback_42(code: str, session: SessionDep):
             await download_image(user_info.get("image", {}).get("versions", {}).get("small", ""), f"app/static/{user_info['id']}-small.jpg")
             user_create = UserCreate(
                 email=user_info.get("email"),
-                password=code,
+                password=security.generate_password(8),
                 is_active=True,
                 nick_name=f"{user_info.get('login')}",
                 avatar=f"/static/{user_info['id']}-small.jpg"

@@ -1,8 +1,7 @@
 import asyncio
 import logging
-import time
 
-from app.presence_manager import check_heartbeat_timeouts, presence_manager
+from app.presence_manager import check_heartbeat_timeouts
 from app.models.all import APIError, ErrorResponse
 from app.platform.service.userservice import get_robot_user_list
 from fastapi import FastAPI, Request
@@ -101,18 +100,6 @@ class SuppressHealthCheckFilter(logging.Filter):
         return "GET / HTTP/1.1" not in record.getMessage()
 
 logging.getLogger("uvicorn.access").addFilter(SuppressHealthCheckFilter())
-
-
-async def check_heartbeat_timeouts():
-    try:
-        while True:
-            await asyncio.sleep(10)
-            now = time.time()
-            for user_id, last_ping in list(presence_manager.last_seen.items()):
-                if presence_manager.get_status(user_id) == "ONLINE" and (now - last_ping) > 25:
-                    await presence_manager.disconnect(user_id, grace_period=10)
-    except asyncio.CancelledError:
-        raise
 
 @app.exception_handler(APIError)
 async def api_error_handler(request: Request, exc: APIError)-> ErrorResponse:

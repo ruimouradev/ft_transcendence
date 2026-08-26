@@ -25,7 +25,7 @@ def parse_cors(v: Any) -> list[str] | str:
 class Settings(BaseSettings):
     API_V1_STR: str = "/api/v1"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24 * 8
-    SECRET_KEY: str = secrets.token_urlsafe(32)
+    SECRET_KEY: str = "changethis"
     FRONTEND_HOST: str = "https://localhost:8443"
     DATABASE_URL: str = "need to set"
     DMODE: str = "dev"
@@ -47,9 +47,9 @@ class Settings(BaseSettings):
     FIRST_SUPERUSER_PASSWORD: str = "changethis"
     EMAILS_ENABLED: bool = True
     ALGORITHM: str = "HS256"
-    MAIL_USERNAME: str = "lisboa.42.transcendence@gmail.com"
-    MAIL_PASSWORD: str = "gjuemlbajsrdunyw"
-    MAIL_FROM: str = "lisboa.42.transcendence@gmail.com"
+    MAIL_USERNAME: str
+    MAIL_PASSWORD: str
+    MAIL_FROM: str
     MAIL_PORT: int = 587
     MAIL_SERVER: str = "smtp.gmail.com"
     O42_CLIENT_ID: str ="need to be seted"

@@ -3,9 +3,8 @@ from typing import Any
 import logging
 from datetime import datetime, timezone
 
-import jwt
-
 from app.presence_manager import presence_manager
+from app.platform import security
 from fastapi import APIRouter, Depends, HTTPException, status, BackgroundTasks, UploadFile, WebSocket, WebSocketDisconnect
 from fastapi.responses import RedirectResponse
 from sqlmodel import col, delete, func, select
@@ -86,12 +85,17 @@ def update_user_me(*, session: SessionDep, user_in: UserUpdateMe, current_user: 
     """
     Update own user.
     """
-
     if user_in.email:
         existing_user = userservice.get_user_by_email(session=session, email=user_in.email)
         if existing_user and existing_user.id != current_user.id:
             raise HTTPException(
                 status_code=409, detail="User with this email already exists"
+            )
+    if user_in.nick_name:
+        existing_user = userservice.get_user_by_nick_name(session=session, nick_name=user_in.nick_name)
+        if existing_user and existing_user.id != current_user.id:
+            raise HTTPException(
+                status_code=409, detail="User with this nick name already exists"
             )
     user_data = user_in.model_dump(exclude_unset=True)
     current_user.sqlmodel_update(user_data)
@@ -159,7 +163,7 @@ def register_user(session: SessionDep, user_in: UserRegister, background_tasks: 
     user_create.avatar = "/static/a00.jpeg"
     userservice.create_user(session=session, user_create=user_create)
     if settings.EMAILS_ENABLED and user_in.email:
-        token = create_verification_token(user_in.email, expire_minutes=0)
+        token = create_verification_token(user_in.email, expire_minutes=15)
         background_tasks.add_task(send_new_account_activation_email, user_in.email, user_in.nick_name, token)
         
     return Message(status_code=200, code="success", message="User created successfully")
@@ -170,8 +174,13 @@ def verify_email(session: SessionDep, token: str):
     Verify the user's email address using the provided token.
     If the token is valid, the user's account will be activated.
     """
-
-    email = verify_token(token)
+    try:
+        email = verify_token(token)
+    except APIError as e:
+        return RedirectResponse(
+                url=f"/login?error={e.msg}",
+                status_code=status.HTTP_307_TEMPORARY_REDIRECT
+            )
     user = userservice.get_user_by_email(session=session, email=email)
     if user is None:
         return RedirectResponse(
@@ -211,7 +220,7 @@ def regenerate_api_key(session: SessionDep, current_user: CurrentUser) -> APIKey
     """
     Regenerate API key for the current user.
     """
-    api_key = jwt.encode({"sub": str(current_user.id)}, settings.SECRET_KEY, algorithm="HS256")
+    api_key = security.generate_password(32)
     api_key_hash = get_password_hash(api_key)
     oauth_account = userservice.get_oauth_account_by_provider_and_user_id(session=session, provider=ProviderType.api_key, user_id=current_user.id)
 
@@ -322,16 +331,16 @@ async def upload_file(file: UploadFile, session: SessionDep, current_user: Curre
     return {"filename": avatar_filename, "file_size": len(content), "url": f"/static/{current_user.id.hex}/{avatar_filename}"}
 
 
-@router.get("/online", response_model=UsersPublic)
-def get_online_users(session: SessionDep, current_user: CurrentUser) -> Any:
-    """
-    Retrieve online users.
-    """
-    statement = select(User).where(User.is_active == True)
-    users = session.exec(statement).all()
+# @router.get("/online", response_model=UsersPublic)
+# def get_online_users(session: SessionDep, current_user: CurrentUser) -> Any:
+#     """
+#     Retrieve online users.
+#     """
+#     statement = select(User).where(User.is_active == True)
+#     users = session.exec(statement).all()
 
-    users_public = [UserPublic.model_validate(user) for user in users]
-    return UsersPublic(data=users_public, count=len(users_public))
+#     users_public = [UserPublic.model_validate(user) for user in users]
+#     return UsersPublic(data=users_public, count=len(users_public))
 
 
 user_presence_router = APIRouter()
