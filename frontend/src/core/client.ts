@@ -7,12 +7,12 @@ import axios from 'axios';
 export const api = axios.create({
   baseURL: '/api/v1',
   withCredentials: true,
-  headers: {
-    // Impede o browser de servir respostas antigas da cache dele
-    'Cache-Control': 'no-cache, no-store, must-revalidate',
-    'Pragma': 'no-cache',
-    'Expires': '0',
-  },
+  // headers: {
+  //   // Impede o browser de servir respostas antigas da cache dele
+  //   'Cache-Control': 'no-cache, no-store, must-revalidate',
+  //   'Pragma': 'no-cache',
+  //   'Expires': '0',
+  // },
 });
 
 // Acrescenta um parâmetro único a cada GET pela mesma razão: dois GETs
@@ -38,3 +38,21 @@ api.interceptors.response.use(
     return Promise.reject(error);
   },
 );
+
+
+export function getErrorMessage(error: unknown): string {
+    if (!axios.isAxiosError(error)) {
+        return 'An unknown error occurred';
+    }
+    if (error.response) {
+        const message = error.response.data?.message|| error.response.data?.detail;
+        if (message === 'Inactive user') {
+            return 'Inactive user. Please check your email for the activation link.';
+        }
+        return message || 'Unknown server error';
+    }
+    if (error.request) {
+        return 'No response from server';
+    }
+    return error.message;
+}

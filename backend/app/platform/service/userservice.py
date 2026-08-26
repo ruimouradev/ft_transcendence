@@ -39,6 +39,11 @@ def get_user_by_email(*, session: Session, email: str) -> User | None:
     session_user = session.exec(statement).first()
     return session_user
 
+def get_user_by_nick_name(*, session: Session, nick_name: str) -> User | None:
+    statement = select(User).where(User.nick_name == nick_name)
+    session_user = session.exec(statement).first()
+    return session_user
+
 def get_oauth_account_by_provider_and_user_id(*, session: Session, provider: ProviderType, user_id: str) -> OAuthAccount | None:
     statement = select(OAuthAccount).where(OAuthAccount.provider == provider, OAuthAccount.user_id == user_id)
     oauth_account = session.exec(statement).first()
@@ -60,7 +65,7 @@ def create_oauth_account(*, session: Session, oauth_account_create: OAuthAccount
     return db_obj
 
 def get_robot_user_list(*, session: Session) -> list[User]:
-    statement = select(User).where(User.is_active == False and User.email.like("iamrobot%"))
+    statement = select(User).where(User.is_active == False , User.email.like("iamrobot%")).order_by(User.email)
     robot_users = session.exec(statement).all()
     return robot_users
 

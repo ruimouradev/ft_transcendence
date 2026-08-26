@@ -2,30 +2,8 @@
 // A chave só se vê no momento em que nasce, o servidor não a guarda
 // em claro, por isso o aviso para a copiar é a sério.
 import { useEffect, useState } from "react";
-import {
-  Alert,
-  Box,
-  Button,
-  Card,
-  CardContent,
-  Chip,
-  CircularProgress,
-  Tooltip,
-  Divider,
-  IconButton,
-  InputAdornment,
-  Stack,
-  TextField,
-  Typography,
-} from "@mui/material";
-import {
-  CheckCircle,
-  ContentCopy,
-  Key,
-  LibraryBooks,
-  Refresh,
-  WarningAmber,
-} from "@mui/icons-material";
+import { Alert, Box, Button, Card, CardContent, Chip, CircularProgress, Tooltip, Divider, IconButton, InputAdornment, Stack, TextField, Typography, } from "@mui/material";
+import { CheckCircle, ContentCopy, Key, LibraryBooks, Refresh, WarningAmber, } from "@mui/icons-material";
 import { api } from "../core/client";
 
 interface ApiKeyStatus {
@@ -42,10 +20,7 @@ function CopyField({ label, value, copied, onCopy }: {
   onCopy: () => void;
 }) {
   return (
-    <TextField
-      label={label}
-      value={value}
-      fullWidth
+    <TextField label={label} value={value} fullWidth
       slotProps={{
         input: {
           readOnly: true,
@@ -102,10 +77,7 @@ export default function ApiKeyPage() {
       // tal como o ecrã avisa
       setNewKey(response.data);
 
-      setStatus({
-        has_api_key: true,
-        client_id: response.data.client_id,
-      });
+      setStatus({ has_api_key: true, client_id: response.data.client_id, });
     } catch {
       setError("Failed to generate API key.");
     } finally {
@@ -124,35 +96,19 @@ export default function ApiKeyPage() {
 
     setCopied(type);
 
-    setTimeout(() => {
-      setCopied(null);
-    }, 2000);
+    setTimeout(() => { setCopied(null); }, 2000);
   };
 
   if (loading) {
     return (
-      <Box
-        sx={{
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
-          minHeight: 300,
-        }}
-      >
+      <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: 300, }}>
         <CircularProgress />
       </Box>
     );
   }
 
   return (
-    <Box
-      sx={{
-        maxWidth: 760,
-        mx: "auto",
-        px: 2,
-        py: 4,
-      }}
-    >
+    <Box sx={{ maxWidth: 760, mx: "auto", px: 2, py: 4, }}    >
       <Stack spacing={3}>
         {/* o cabecalho da pagina */}
         <Box>
@@ -160,11 +116,7 @@ export default function ApiKeyPage() {
             API Key
           </Typography>
 
-          <Typography
-            variant="body1"
-            color="text.secondary"
-            sx={{ mt: 1 }}
-          >
+          <Typography variant="body1" color="text.secondary" sx={{ mt: 1 }}          >
             Manage your API credentials for accessing the UNO API.
           </Typography>
         </Box>
@@ -190,48 +142,29 @@ export default function ApiKeyPage() {
                     </Tooltip>
                   </Stack>
 
-                  <Typography
-                    variant="body2"
-                    color="text.secondary"
-                    sx={{ mt: 1 }}
-                  >
+                  <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}                  >
                     Your API key has been generated successfully.
                   </Typography>
                 </Box>
 
-                <Alert
-                  severity="warning"
-                  icon={<WarningAmber />}
-                >
+                <Alert severity="warning" icon={<WarningAmber />}>
                   <Typography variant="body2" sx={{ fontWeight: 600 }}>
                     Save your API key now.
                   </Typography>
 
                   <Typography variant="body2">
-                    For security reasons, this API key will only be shown
-                    once. You will not be able to view it again.
+                    For security reasons, this API key will only be shown once. You will not be able to view it again.
                   </Typography>
                 </Alert>
 
                 <Divider />
 
-                <CopyField
-                  label="Client ID"
-                  value={newKey.client_id}
-                  copied={copied === "client_id"}
-                  onCopy={() => copyToClipboard(newKey.client_id, "client_id")}
-                />
+                <CopyField label="Client ID" value={newKey.client_id} copied={copied === "client_id"} onCopy={() => copyToClipboard(newKey.client_id, "client_id")} />
 
-                <CopyField
-                  label="API Key"
-                  value={newKey.api_key}
-                  copied={copied === "api_key"}
-                  onCopy={() => copyToClipboard(newKey.api_key, "api_key")}
-                />
+                <CopyField label="API Key" value={newKey.api_key} copied={copied === "api_key"} onCopy={() => copyToClipboard(newKey.api_key, "api_key")} />
 
                 <Alert severity="info">
-                  Once you leave or refresh this page, the API key will no
-                  longer be displayed.
+                  Once you leave or refresh this page, the API key will no longer be displayed.
                 </Alert>
               </Stack>
             </CardContent>
@@ -241,15 +174,8 @@ export default function ApiKeyPage() {
           <Card>
             <CardContent>
               <Stack spacing={3}>
-                <Stack
-                  direction="row"
-                  sx={{ justifyContent: "space-between", alignItems: "center" }}
-                >
-                  <Stack
-                    direction="row"
-                    spacing={1.5}
-                    sx={{ alignItems: "center" }}
-                  >
+                <Stack direction="row" sx={{ justifyContent: "space-between", alignItems: "center" }}>
+                  <Stack direction="row" spacing={1.5} sx={{ alignItems: "center" }}>
                     <Key color="primary" />
 
                     <Typography variant="h6">
@@ -258,24 +184,14 @@ export default function ApiKeyPage() {
                   </Stack>
 
                   {status?.has_api_key ? (<>
-                    <Chip
-                      label="Active"
-                      color="success"
-                      icon={<CheckCircle />}
-                    />
-
+                    <Chip label="Active" color="success" icon={<CheckCircle />} />
                     <Tooltip title="View API documentation">
                       <IconButton href="/docs" target="_blank" rel="noopener noreferrer">
                         <LibraryBooks color="primary" />
                       </IconButton>
                     </Tooltip>
                   </>
-                  ) : (
-                    <Chip
-                      label="Not configured"
-                      color="default"
-                    />
-                  )}
+                  ) : (<Chip label="Not configured" color="default" />)}
                 </Stack>
 
                 <Divider />
@@ -286,30 +202,14 @@ export default function ApiKeyPage() {
                       You already have an active API key.
                     </Alert>
 
-                    {status.client_id && (
-                      <CopyField
-                        label="Client ID"
-                        value={status.client_id}
-                        copied={copied === "existing_client_id"}
-                        onCopy={() => copyToClipboard(status.client_id!, "existing_client_id")}
-                      />
-                    )}
+                    {status.client_id && (<CopyField label="Client ID" value={status.client_id} copied={copied === "existing_client_id"} onCopy={() => copyToClipboard(status.client_id!, "existing_client_id")} />)}
 
                     <Alert severity="warning">
-                      Your API key cannot be displayed again. If you lost
-                      it, generate a new API key.
+                      Your API key cannot be displayed again. If you lost it, generate a new API key.
                     </Alert>
 
-                    <Button
-                      variant="contained"
-                      color="warning"
-                      startIcon={<Refresh />}
-                      onClick={generateApiKey}
-                      disabled={generating}
-                    >
-                      {generating
-                        ? "Generating..."
-                        : "Generate New API Key"}
+                    <Button variant="contained" color="warning" startIcon={<Refresh />} onClick={generateApiKey} disabled={generating}>
+                      {generating ? "Generating..." : "Generate New API Key"}
                     </Button>
                   </>
                 ) : (
@@ -318,23 +218,12 @@ export default function ApiKeyPage() {
                       You don't currently have an API key.
                     </Alert>
 
-                    <Typography
-                      variant="body2"
-                      color="text.secondary"
-                    >
-                      Generate an API key to access the protected API
-                      endpoints.
+                    <Typography variant="body2" color="text.secondary">
+                      Generate an API key to access the protected API endpoints.
                     </Typography>
 
-                    <Button
-                      variant="contained"
-                      startIcon={<Key />}
-                      onClick={generateApiKey}
-                      disabled={generating}
-                    >
-                      {generating
-                        ? "Generating..."
-                        : "Generate API Key"}
+                    <Button variant="contained" startIcon={<Key />} onClick={generateApiKey} disabled={generating}>
+                      {generating ? "Generating..." : "Generate API Key"}
                     </Button>
                   </>
                 )}

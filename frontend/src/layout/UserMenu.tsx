@@ -42,16 +42,7 @@ export default function UserMenu() {
                     sign in
                 </Button>
                 {/* o amarelo do logo, para as duas pontas da navbar combinarem */}
-                <Button
-                    component={RouterLink}
-                    to="/signup"
-                    variant="contained"
-                    sx={{
-                        backgroundColor: '#eab308',
-                        color: '#0f172a',
-                        '&:hover': { backgroundColor: '#facc15' },
-                    }}
-                >
+                <Button component={RouterLink} to="/signup" variant="contained" sx={{ backgroundColor: '#eab308', color: '#0f172a', '&:hover': { backgroundColor: '#facc15' }, }}>
                     sign up
                 </Button>
             </Box>
@@ -60,19 +51,9 @@ export default function UserMenu() {
 
     return (
         <div>
-            <Button
-                id={buttonId}
-                aria-controls={open ? menuId : undefined}
-                aria-haspopup="true"
-                aria-expanded={open}
-                onClick={handleOpen}
-            >
+            <Button id={buttonId} aria-controls={open ? menuId : undefined} aria-haspopup="true" aria-expanded={open} onClick={handleOpen}>
                 <div className="flex items-center gap-4">
-                    <img
-                        src={user?.avatar || defaultAvatar}
-                        alt={user?.nick_name || 'avatar'}
-                        className="w-12 h-12 rounded-full"
-                    />
+                    <img src={user?.avatar || defaultAvatar} alt={user?.nick_name || 'avatar'} className="w-12 h-12 rounded-full" />
                     {/* em telemóvel fica só o avatar, o nome não cabe */}
                     <div className="hidden sm:block">
                         <div>{user?.nick_name}</div>
@@ -82,13 +63,7 @@ export default function UserMenu() {
                     </div>
                 </div>
             </Button>
-            <Menu
-                id={menuId}
-                anchorEl={anchorEl}
-                open={open}
-                onClose={handleClose}
-                slotProps={{ list: { 'aria-labelledby': buttonId } }}
-            >
+            <Menu id={menuId} anchorEl={anchorEl} open={open} onClose={handleClose} slotProps={{ list: { 'aria-labelledby': buttonId } }}>
                 <MenuItem component={RouterLink} to="/profile" onClick={handleClose}>Profile</MenuItem>
                 <MenuItem component={RouterLink} to="/password" onClick={handleClose}>Password</MenuItem>
                 <MenuItem component={RouterLink} to="/apikey" onClick={handleClose}>API Key</MenuItem>

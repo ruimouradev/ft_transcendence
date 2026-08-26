@@ -1,22 +1,5 @@
 import { useEffect, useState } from 'react';
-import {
-    ThemeProvider,
-    Avatar,
-    Badge,
-    Box,
-    Chip,
-    Container,
-    Grid,
-    IconButton,
-    InputAdornment,
-    Paper,
-    Stack,
-    Tab,
-    Tabs,
-    TextField,
-    Tooltip,
-    Typography,
-} from '@mui/material';
+import { ThemeProvider, Avatar, Badge, Box, Chip, Container, Grid, IconButton, InputAdornment, Paper, Stack, Tab, Tabs, TextField, Tooltip, Typography, } from '@mui/material';
 import SearchIcon from '@mui/icons-material/Search';
 import CheckIcon from '@mui/icons-material/Check';
 import CloseIcon from '@mui/icons-material/Close';
@@ -158,12 +141,7 @@ export default function FriendsPage() {
                             Manage your connections and view online status
                         </Typography>
                     </Box>
-                    <TextField
-                        placeholder="Search friends..."
-                        size="small"
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                        sx={{ width: { xs: '100%', sm: 300 } }}
+                    <TextField placeholder="Search friends..." size="small" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} sx={{ width: { xs: '100%', sm: 300 } }}
                         slotProps={{
                             input: {
                                 startAdornment: (
@@ -176,20 +154,13 @@ export default function FriendsPage() {
                     />
                 </Box>
 
-                <Tabs
-                    value={activeTab}
-                    onChange={(_event, value) => setActiveTab(value)}
-                    sx={{ mb: 3, '& .MuiTab-root': { fontWeight: 700 } }}
-                >
+                <Tabs value={activeTab} onChange={(_event, value) => setActiveTab(value)} sx={{ mb: 3, '& .MuiTab-root': { fontWeight: 700 } }}>
                     <Tab label={`Friends (${friends.length})`} value="all" />
-                    <Tab
-                        value="pending"
-                        label={
-                            <Badge badgeContent={requests.length} color="error" sx={{ '& .MuiBadge-badge': { right: -12 } }}>
-                                Pending
-                            </Badge>
-                        }
-                    />
+                    <Tab value="pending" label={
+                        <Badge badgeContent={requests.length} color="error" sx={{ '& .MuiBadge-badge': { right: -12 } }}>
+                            Pending
+                        </Badge>
+                    } />
                     <Tab label="Suggestions" value="suggested" />
                 </Tabs>
 
@@ -200,40 +171,17 @@ export default function FriendsPage() {
                             <Grid key={friend.id} size={{ xs: 12, sm: 6, md: 4 }}>
                                 <Paper sx={{ p: 2, display: 'flex', alignItems: 'center', gap: 2 }}>
                                     {/* o ponto de presença, aceso pelo websocket do servidor */}
-                                    <Badge
-                                        overlap="circular"
-                                        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
-                                        variant="dot"
-                                        sx={{
-                                            '& .MuiBadge-badge': {
-                                                backgroundColor: friend.online ? '#4caf50' : '#64748b',
-                                                width: 14, height: 14, borderRadius: '50%',
-                                                border: '2px solid #1e293b',
-                                            },
-                                        }}
-                                    >
-                                        <Avatar
-                                            src={freshAvatar(friend.avatar)}
-                                            alt={friend.nick_name}
-                                            sx={{ width: 56, height: 56, filter: friend.status === 'blocked' ? 'grayscale(1)' : 'none' }}
-                                        />
+                                    <Badge overlap="circular" anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }} variant="dot" sx={{ '& .MuiBadge-badge': { backgroundColor: friend.online ? '#4caf50' : '#64748b', width: 14, height: 14, borderRadius: '50%', border: '2px solid #1e293b', }, }}>
+                                        <Avatar src={freshAvatar(friend.avatar)} alt={friend.nick_name} sx={{ width: 56, height: 56, filter: friend.status === 'blocked' ? 'grayscale(1)' : 'none' }} />
                                     </Badge>
                                     <Box sx={{ flexGrow: 1, minWidth: 0 }}>
                                         <Tooltip title={friend.nick_name}>
                                             <Typography variant="h6" noWrap>{friend.nick_name}</Typography>
                                         </Tooltip>
-                                        <Chip
-                                            label={`${friend.title} - Lvl ${friend.level}`}
-                                            size="small"
-                                            variant="outlined"
-                                            sx={{ mt: 0.5 }}
-                                        />
+                                        <Chip label={`${friend.title} - Lvl ${friend.level}`} size="small" variant="outlined" sx={{ mt: 0.5 }} />
                                     </Box>
                                     <Tooltip title={friend.status === 'blocked' ? 'Unblock friend' : 'Block friend'}>
-                                        <IconButton
-                                            onClick={() => handleBlockFriend(friend)}
-                                            color={friend.status === 'blocked' ? 'primary' : 'default'}
-                                        >
+                                        <IconButton onClick={() => handleBlockFriend(friend)} color={friend.status === 'blocked' ? 'primary' : 'default'}>
                                             <BlockIcon />
                                         </IconButton>
                                     </Tooltip>
@@ -291,11 +239,7 @@ export default function FriendsPage() {
                                     </Box>
                                     <Tooltip title={item.status === 'pending' ? 'Request sent' : 'Send friend request'}>
                                         <span>
-                                            <IconButton
-                                                color="info"
-                                                disabled={item.status === 'pending'}
-                                                onClick={() => handleSendRequest(item)}
-                                            >
+                                            <IconButton color="info" disabled={item.status === 'pending'} onClick={() => handleSendRequest(item)}>
                                                 {item.status === 'pending' ? <HourglassEmptyIcon /> : <PersonAddIcon />}
                                             </IconButton>
                                         </span>
