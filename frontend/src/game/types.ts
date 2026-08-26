@@ -31,14 +31,21 @@ export type PublicPlayer = {
 export type PrivatePlayer = {
 	id: string,
 	hand: GameCard[],
-	playable: GameCard[],
+	playable: string[],
 	drawn: string | null
+}
+
+export type LastAction = {
+	player: string,
+    kind: 'join' | 'start' | 'play' | 'draw' | 'pass' 
+			| 'catch' | 'challenge' | 'timeout' | 'uno',
+    card: GameCard | null,
 }
 
 export type GameState = {
 	type : 'state',
 	seq : number,
-	phase : "lobby" | "playing" | "finished",
+	phase : 'lobby' | 'playing' | 'finished',
 	you : PrivatePlayer,
 	players : PublicPlayer[],
 	host_id : string | null,
@@ -49,14 +56,14 @@ export type GameState = {
 		max_players: number,
 		public: boolean
 	} | null,
-	top_card : null,
+	top_card : GameCard | null,
 	active_color : Color | null,
 	direction : 1 | -1,
 	turn : string | null,
 	draw_pile : number,
 	stack : number,
 	plus4_by : string | null,
-	last_action : null,
+	last_action : LastAction | null,
 	winner : string | null,
-	winner_score : string | null
+	winner_score : number | null
 }

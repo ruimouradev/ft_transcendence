@@ -36,7 +36,7 @@ type GameContextType = {
 	lastMessage: string | null,
 	gameState: GameState | null,
 
-	leaveRoom: () => void
+	closeRoomConnection: () => void
 	sendMessage: (message: object) => void
 	joinRoom: (roomID: string, message: object) => void
 }
@@ -59,6 +59,9 @@ function GameWebSocket({ children }: { children: React.ReactNode }) {
 	const [connected, setConnected] = useState<ConnectionState>('offline');
 
 	const socketRef = useRef<WebSocket | null>(null);
+	const pendingRoomRef = useRef<string | null>(null);
+
+	const { user } = useAuth();
 
 	function joinRoom(roomID: string, message: object)
 	{
@@ -81,19 +84,18 @@ function GameWebSocket({ children }: { children: React.ReactNode }) {
 			// Handle backend message
 			const message = JSON.parse(event.data);
 
-			const { type, code, msg } = message;
+			const { type } = message;
 
 			switch (type) {
 				case 'welcome':
-					const { token } = message;
-					setConnected('online');
+					// const { token } = message;
 					setRoomID(roomID);
+					setConnected('online');
 					sessionStorage.setItem('roomID', roomID);
-					sessionStorage.setItem('reconnectToken', token);
+					// sessionStorage.setItem('reconnectToken', token);
 					break ;
 				case 'error':
-					alert(`${type} ${msg}`);
-					socket.close();
+					handleErrorMessages(message);
 					break ;
 				case 'state':
 					setGameState(message);
@@ -121,14 +123,24 @@ function GameWebSocket({ children }: { children: React.ReactNode }) {
 			socketRef.current = null;
 			setConnected('offline');
 			setRoomID(null);
-			sessionStorage.removeItem('roomID');
-			sessionStorage.removeItem('reconnectToken');
+
+			if (pendingRoomRef.current && user) {
+				const room = pendingRoomRef.current;
+				pendingRoomRef.current = null;
+
+				console.log(room, {"type": "join", "name": user.nick_name});
+				joinRoom(room, {"type": "join", "name": user.nick_name})
+			}
+
+//			sessionStorage.removeItem('roomID');
+//			sessionStorage.removeItem('reconnectToken');
 		}
 	}
 
-	function leaveRoom()
+	function closeRoomConnection()
 	{
 		socketRef.current?.close();
+		sessionStorage.removeItem('roomID');
 	}
 
 	function sendMessage(message: object)
@@ -137,8 +149,50 @@ function GameWebSocket({ children }: { children: React.ReactNode }) {
 			socketRef.current.send(JSON.stringify(message));
 	}
 
+	function handleErrorMessages({type, code, msg, room}: {type: string, code: string, msg:string, room: string | null})
+	{
+		switch(code)
+		{
+			case ("ALREADY_IN_ROOM"):
+				if (room && user) {
+					pendingRoomRef.current = room;
+					socketRef.current?.close();
+				}
+				return ;
+			case ("KICKED"):
+			case ('ROOM_NOT_FOUND'):
+			case ("GAME_ALREADY_STARTED"):
+				closeRoomConnection();			
+				break ;
+		}
+		alert(`${type} ${msg}`);
+		// IGNORE ?? //
+				// NOT_YOUR_TURN = "NOT_YOUR_TURN"
+				// INVALID_CARD = "INVALID_CARD"
+				// INVALID_CHALLENGE = "INVALID_CHALLENGE"
+				// INVALID_UNO = "INVALID_UNO"
+				// INVALID_CATCH = "INVALID_CATCH"
+
+		// ALERT //
+
+			// CLOSE CONNECTION //
+				// GAME_ALREADY_STARTED = "GAME_ALREADY_STARTED"
+				// ROOM_NOT_FOUND = "ROOM_NOT_FOUND"
+				// KICKED = "KICKED"
+
+			// ROOM_FULL = "ROOM_FULL"
+			// AUTH_REQUIRED = "AUTH_REQUIRED"
+			// INVALID_MESSAGE = "INVALID_MESSAGE"
+			// GAME_NOT_STARTED = "GAME_NOT_STARTED"
+			// CARD_NOT_IN_HAND = "CARD_NOT_IN_HAND"
+			// COLOR_REQUIRED = "COLOR_REQUIRED"
+			// TARGET_REQUIRED = "TARGET_REQUIRED"
+
+		// HANDLE //
+			// ALREADY_IN_ROOM = "ALREADY_IN_ROOM"
+	}
 	return (
-		<GameContext.Provider value={{ roomID, connected, error, lastMessage, gameState, joinRoom, leaveRoom, sendMessage }}>
+		<GameContext.Provider value={{ roomID, connected, error, lastMessage, gameState, joinRoom, closeRoomConnection, sendMessage }}>
 			{ children }
 		</GameContext.Provider>
 	)

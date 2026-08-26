@@ -23,9 +23,9 @@ def init_db(session: Session)-> None:
             is_active=True
         )
         user = userservice.create_user(session=session, user_create=user_in)
-    bot_user_email = [{"email": "iamrobot1@localhost.com", "password": generate_password(), "nick_name": "BotUser", "is_superuser": False, "is_active": False},
-                      {"email": "iamrobot2@localhost.com", "password": generate_password(), "nick_name": "BotUser", "is_superuser": False, "is_active": False},
-                      {"email": "iamrobot3@localhost.com", "password": generate_password(), "nick_name": "BotUser", "is_superuser": False, "is_active": False}]
+    bot_user_email = [{"email": "iamrobot1@localhost.com", "password": generate_password(), "nick_name": "Bot1", "is_superuser": False, "is_active": False},
+                      {"email": "iamrobot2@localhost.com", "password": generate_password(), "nick_name": "Bot2", "is_superuser": False, "is_active": False},
+                      {"email": "iamrobot3@localhost.com", "password": generate_password(), "nick_name": "Bot3", "is_superuser": False, "is_active": False}]
     for bot_user_data in bot_user_email:
         bot_user = session.exec(select(User).where(User.email == bot_user_data["email"])).first()
         if bot_user is None:

@@ -125,19 +125,26 @@ def get_user_all_game_detail_records(session: SessionDep, current_user: CurrentU
     '''
     gets all the game detail records for the current user.
     '''
-    statement = select(Game.id.label("game_id"),GamePlayer.is_winner,GamePlayer.score,Game.finished_at
-        ).join(
-            GamePlayer, GamePlayer.game_id == Game.id
-        ).where(
-            GamePlayer.user_id == current_user.id
-        ).order_by(Game.created_at.desc())
-    game_records = session.exec(statement).all()
+
+    player_names = (
+        select(func.string_agg(User.nick_name, ", "))
+        .join(GamePlayer, GamePlayer.user_id == User.id)
+        .where(GamePlayer.game_id == Game.id, User.id != current_user.id)
+        .scalar_subquery()
+    )
+
+    statement = select(
+        Game.id.label("game_id"), GamePlayer.is_winner, GamePlayer.score, Game.finished_at, player_names.label("player_names")
+    ).join(GamePlayer, GamePlayer.game_id == Game.id).where(GamePlayer.user_id == current_user.id).order_by(Game.created_at.desc())
+    game_details = session.exec(statement).all()
+
     gameDetails = []
-    for record in game_records:
+    for record in game_details:
         gameDetails.append(UserGameDetail(
             game_id=record.game_id,
             is_winner=record.is_winner,
             score=record.score,
+            opponents=record.player_names,
             finished_at=record.finished_at
         ))
     return gameDetails
@@ -173,7 +180,7 @@ def get_global_leaderboard(session: SessionDep, current_user: CurrentUser):
                        ).join(UserStatistic, User.id == UserStatistic.user_id
                               ).where(User.is_superuser == False,User.is_active == True
                                       ).order_by(UserStatistic.total_score.desc()
-                                                 ).limit(42)
+                                                 ).limit(10)
     leaderboard_records = session.exec(statement).all()
     leaderboard = []
     rank = 1

@@ -1,6 +1,8 @@
-import { Box, Button, Card, CardContent , CardMedia, Container, IconButton,  List, ListItem, ThemeProvider, Typography } from '@mui/material';
+import { Box, Button, Card, CardContent , CardMedia, Container, Chip, IconButton,  List, ListItem, ThemeProvider, Typography } from '@mui/material';
 import { useState, Fragment } from 'react';
 
+import StarOutlinedIcon from '@mui/icons-material/StarOutlined';
+import WifiOffOutlinedIcon from '@mui/icons-material/WifiOffOutlined';
 import ExitToAppOutlinedIcon from '@mui/icons-material/ExitToAppOutlined';
 import DisabledByDefaultOutlinedIcon from '@mui/icons-material/DisabledByDefaultOutlined';
 
@@ -279,9 +281,7 @@ function RotatePlayers(): PublicPlayer[]
 
 function WaitRoom()
 {
-	const { gameState, sendMessage, leaveRoom } = getGameContext();
-
-	console.log(gameState);
+	const { roomID, gameState, sendMessage, closeRoomConnection } = getGameContext();
 
 	const host = gameState?.you.id !== gameState?.host_id;
 	const disable = gameState?.players.length !== gameState?.settings?.max_players;
@@ -292,8 +292,8 @@ function WaitRoom()
 			<Container sx={{ height: '65vh', width: '50%', display: 'flex', flexDirection: 'column', my: 2, p: 0.5,
 				position: 'relative', border: '1px solid', borderColor: 'divider', borderRadius: 2, bgcolor: 'background.paper' }}>
 				<Box sx={{height: '10%', width: '100%'}}>
-					<Typography sx={{  height: '100%', width: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>WAITING ROOM</Typography>
-					<IconButton size="large" sx={{ position: 'absolute', top: 0, right: 0, zIndex: 1 }} onClick={() => leaveRoom()}>
+					<Typography variant="h5" sx={{  height: '100%', width: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>ROOM ID: {roomID}</Typography>
+					<IconButton size="large" sx={{ position: 'absolute', top: 0, right: 0, zIndex: 1 }} onClick={() => closeRoomConnection()}>
 						<ExitToAppOutlinedIcon fontSize="inherit"/>
 					</IconButton>
 				</Box>
@@ -304,8 +304,13 @@ function WaitRoom()
 								<ListItem sx={{ height: '20%', width: '100%', p: 0.5 }}>
 									<Card sx={{ height: '100%', width: '100%', display: 'flex', position: 'relative' }}>
 										<CardMedia component="img" sx={{ width: '12%', height: 'auto', display: 'flex', alignItems: 'center' }} image={player.avatar}/>
-										<CardContent>
-											<Typography>{player.name}</Typography>
+										<CardContent sx={{display: 'flex', gap: 2}}>
+											<Typography variant="h6">{player.name}</Typography>
+											{player.connected 
+												? <></> 
+												: <Chip icon={<WifiOffOutlinedIcon />} label="Reconnecting" sx={{ backgroundColor: 'transparent',
+													color: 'text.secondary', border: '1px dashed', borderColor: 'text.secondary', opacity: 0.55,
+													fontSize: '0.95rem', py: 2.2, px: 0.5, '& .MuiChip-icon': { color: 'text.secondary' },}}/>}
 										</CardContent>
 										<CardContent>
 											{
@@ -314,7 +319,8 @@ function WaitRoom()
 												onClick={() => sendMessage({"type": "kick", "target": `${player.id}`})} >
 														<DisabledByDefaultOutlinedIcon fontSize="inherit"/>
 													</IconButton>
-												: <></>
+												: <Chip icon={<StarOutlinedIcon />} label="HOST" sx={{ position: 'absolute', right: 15, backgroundColor: 'lightgreen',
+													color: '#0f172a', fontWeight: 'bold', fontSize: '0.95rem', py: 2.2, px: 0.5, '& .MuiChip-icon': { color: '#0f172a' },}}/>
 											}
 										</CardContent>
 									</Card>

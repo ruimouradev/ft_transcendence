@@ -61,12 +61,13 @@ TokenDep = Annotated[str, Depends(reusable_oauth2)]
 
 def get_current_user(session: SessionDep, token: TokenDep) -> User:
     try:
-        payload = jwt.decode(
-            token, settings.SECRET_KEY, algorithms=[security.ALGORITHM]
-        )
+        payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[security.ALGORITHM])
         token_data = TokenPayload(**payload)
     except (InvalidTokenError, ValidationError):
         raise APIError(status_code=403, code=APIErrorCode.INVALID_TOKEN, msg="Could not validate credentials.")
+    if token_data.type != "access":
+        raise APIError(status_code=403, code=APIErrorCode.INVALID_TOKEN, msg="Invalid token type.")
+    
     user = session.get(User, token_data.sub)
     if not user:
         raise APIError(status_code=404, code=APIErrorCode.USER_NOT_FOUND, msg="User not found")
@@ -89,13 +90,9 @@ api_key_header = APIKeyHeader(
 )
 
 
-async def verify_api_key(
-    session: SessionDep,
-    api_key: str | None = Depends(api_key_header),
-    client_id: str = Header(..., alias="X-Client-ID"),
-) -> str:
+async def verify_api_key( session: SessionDep, api_key: str | None = Depends(api_key_header), client_id: str = Header(..., alias="X-Client-ID"),) -> str:
 
-    if not api_key:
+    if api_key is None:
         raise APIError(status_code=401, code=APIErrorCode.API_KEY_MISSING, msg="API key is missing")
 
     try:

@@ -352,7 +352,8 @@ export default function UnoDashboard() {
                                                                 {match.score}
                                                             </TableCell>
                                                             <TableCell>
-                                                                {match.opponents?.length ? match.opponents.join(', ') : '-'}
+                                                                {match.opponents}
+                                                                {/* {match.opponents?.length ? match.opponents.join(', ') : '-'} */}
                                                             </TableCell>
                                                             {/* a base guarda em UTC, o browser mostra na hora local */}
                                                             <TableCell align="right" sx={{ color: 'text.secondary', fontSize: '0.75rem' }}>
@@ -384,7 +385,7 @@ export default function UnoDashboard() {
                                     <Tab label="Friends" value="friends" />
                                 </Tabs>
                             }
-                            tag={board === 'global' ? 'Top 42' : undefined}
+                            tag={board === 'global' ? 'Top 10' : undefined}
                             rows={board === 'global' ? leaderboardGlobal : leaderboardFriends}
                             currentUserId={playerData.user.id}
                             currentUserAvatar={playerData.user.avatar}
