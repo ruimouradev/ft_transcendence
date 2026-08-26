@@ -22,7 +22,7 @@ async def setup_two_factor(request: TwoFactorSetupRequest, current_user: Current
     """
     verified, _ = userservice.verify_password(request.password,current_user.hashed_password)
     if verified is False:
-        raise APIError(status_code=401, code=APIErrorCode.UNAUTHORIZED, msg="Invalid password")
+        raise APIError(status_code=400, code=APIErrorCode.UNAUTHORIZED, msg="Invalid password")
     if request.recovery_code is None and current_user.use2fa:
         raise APIError(status_code=400, code=APIErrorCode.BAD_REQUEST, msg="Two-Factor Authentication is already enabled")
 
@@ -67,7 +67,7 @@ async def setup_two_factor(session: SessionDep, request: TwoFactorSetupRequest, 
     
     verified, _ = userservice.verify_password(request.password, current_user.hashed_password)
     if verified is False:
-        raise APIError(status_code=401, code=APIErrorCode.UNAUTHORIZED, msg="Invalid password")
+        raise APIError(status_code=400, code=APIErrorCode.BAD_REQUEST, msg="Invalid password")
     if request.recovery_code is None and current_user.use2fa:
         raise APIError(status_code=400, code=APIErrorCode.BAD_REQUEST, msg="Need recovery code to reset Two-Factor Authentication")
 

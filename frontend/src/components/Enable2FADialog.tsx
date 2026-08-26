@@ -82,6 +82,9 @@ export default function Enable2FADialog({
         if (!password) {
             setError('Please enter your current password.');
             return;
+        }else if (password.length < 8) {
+            setError('Password must be at least 8 characters long.');
+            return;
         }
         setLoading(true);
         setError(null);
