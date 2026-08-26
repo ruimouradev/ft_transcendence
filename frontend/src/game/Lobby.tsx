@@ -294,7 +294,7 @@ function JoinPrivate()
 
 		const message = {"type": "join", "name": user?.nick_name};
 		console.log(message);
-		joinRoom(code, message)
+		joinRoom(code.trim(), message)
 		setCode('');
 	}
 
@@ -354,11 +354,21 @@ function Lobby()
 
 	useEffect(() => {
 		async function getRooms() {
-			const response = await fetch('/api/rooms');
-			const rooms = await response.json();
-
-			setRooms(rooms);
+			try {
+				const response = await fetch('/api/rooms');
+	
+				if (!response.ok) {
+					throw new Error(`HTTP error: ${response.status}`);
+				}
+				
+				const rooms = await response.json();
+				setRooms(rooms);
+			}
+			catch (error) {
+				console.log('Request failed:', error);
+			}
 		}
+		getRooms();
 		const interval = setInterval(getRooms, 1500);
 		return () => clearInterval(interval);
 	}, []);

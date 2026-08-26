@@ -43,7 +43,8 @@ export default function PresenceKeeper() {
 
       // O cookie de sessão segue sozinho no handshake, o servidor
       // confirma que o id do caminho é mesmo o da sessão
-      const wsUrl = `wss://${window.location.hostname}:8443/ws/presence/${user.id}`;
+	  const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws';
+      const wsUrl = `${protocol}://${window.location.host}/ws/presence/${user.id}`;
       const ws = new WebSocket(wsUrl);
       socketRef.current = ws;
 
@@ -70,7 +71,8 @@ export default function PresenceKeeper() {
         // (1s, 2s, 4s, 8s, 16s) para não martelar um servidor em apuros
         if (attemptsRef.current < MAX_RECONNECT_ATTEMPTS) {
           attemptsRef.current += 1;
-          const delay = BASE_RECONNECT_DELAY * Math.pow(2, attemptsRef.current - 1);
+		  const steps = Math.min(attemptsRef.current, MAX_RECONNECT_ATTEMPTS);
+          const delay = BASE_RECONNECT_DELAY * Math.pow(2, steps - 1);
           reconnectRef.current = setTimeout(connect, delay);
         }
       };
