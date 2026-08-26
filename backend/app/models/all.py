@@ -15,45 +15,44 @@ class UserBase(SQLModel):
     email: EmailStr = Field(unique=True, index=True, max_length=255)
     is_active: bool = False
     is_superuser: bool = False
-    nick_name: str | None = Field(default=None, max_length=50)
+    nick_name: str = Field(default=None, max_length=20)
     avatar: str | None = Field(default="/static/a00.jpeg", max_length=255)
     card_back: str | None = Field(default="/static/cardback.jpeg", max_length=255)
     use2fa: bool = False
+    two_factor_secret: str | None = Field(default=None, max_length=255)
 
 
 # Properties to receive via API on creation
 class UserCreate(UserBase):
-    password: str = Field(min_length=8, max_length=128)
+    password: str = Field(min_length=8, max_length=32)
 
 
 class UserRegister(SQLModel):
     email: EmailStr = Field(max_length=255)
-    password: str = Field(min_length=8, max_length=128)
-    nick_name: str | None = Field(default=None, max_length=50)
+    password: str = Field(min_length=8, max_length=32)
+    nick_name: str = Field(min_length=3, max_length=20)
 
 # Properties to receive via API on update, all are optional
 class UserUpdate(UserBase):
-    email: EmailStr | None = Field(default=None, max_length=255)  # type: ignore[assignment]
-    password: str | None = Field(default=None, min_length=8, max_length=128)
+    email: EmailStr | None = Field(default=None, max_length=255)
+    password: str | None = Field(default=None, min_length=8, max_length=32)
 
 
 class UserUpdateMe(SQLModel):
-    nick_name: str | None = Field(default=None, max_length=50)
+    nick_name: str | None = Field(default=None,min_length=3, max_length=20)
     card_back: str | None = Field(default=None, max_length=255)
     email: EmailStr | None = Field(default=None, max_length=255)
 
 
 class UpdatePassword(SQLModel):
-    current_password: str = Field(min_length=8, max_length=128)
-    new_password: str = Field(min_length=8, max_length=128)
+    current_password: str = Field(min_length=8, max_length=32)
+    new_password: str = Field(min_length=8, max_length=32)
 
 
-# Database model, database table inferred from class name
 class User(UserBase, table=True):
     id: UUID = Field(default_factory=uuid4, primary_key=True)
     hashed_password: str | None = Field(default=None, max_length=255)
     created_at: datetime = Field( default_factory=get_datetime_utc, sa_type=DateTime(timezone=True))
-    # items: list["Item"] = Relationship(back_populates="owner", cascade_delete=True)
     sent_requests: list["Friendship"] = Relationship(
         sa_relationship_kwargs={
             "foreign_keys": "[Friendship.requester_id]"
@@ -68,7 +67,6 @@ class User(UserBase, table=True):
 
     oauth_accounts: list["OAuthAccount"] = Relationship(back_populates="user", cascade_delete=True)
 
-# Properties to return via API, id is always required
 class UserPublic(UserBase):
     id: UUID
     created_at: datetime | None = None
@@ -82,11 +80,11 @@ class UserOnLineStatus(SQLModel):
     user_id: UUID
     online: str
 
-# Generic message
 class Message(SQLModel):
+    status_code: int
+    code: str | None = None
     message: str
 
-# JSON payload containing access token
 class Token(SQLModel):
     access_token: str
     token_type: str = "bearer"
@@ -95,14 +93,14 @@ class TokenAndUser(Token):
     user: UserPublic
 
 
-# Contents of JWT token
 class TokenPayload(SQLModel):
     sub: str | None = None
+    type: str | None = None
 
 
 class NewPassword(SQLModel):
     token: str
-    new_password: str = Field(min_length=8, max_length=128)
+    new_password: str = Field(min_length=8, max_length=32)
 
 class ProviderType(str, Enum):
     t42 = "t42"
@@ -192,15 +190,10 @@ class GamePlayerDetail(SQLModel):
 class UserStatistic(SQLModel, table=True):
 
     user_id: UUID = Field(primary_key=True, foreign_key="user.id")
-
     total_games: int = 0
-
     wins: int = 0
-
     losses: int = 0
-
     total_score: int = 0
-
     updated_at: datetime = Field(default_factory=get_datetime_utc,sa_type=DateTime(timezone=True))
 
 class UserStatisticLevel(SQLModel):
@@ -236,6 +229,7 @@ class UserGameDetail(SQLModel):
     game_id: UUID
     is_winner: bool
     score: int
+    opponents: str
     finished_at: datetime | None = None
 
 class Friend(SQLModel):
@@ -306,3 +300,25 @@ class ErrorResponse(SQLModel):
     code: APIErrorCode
     message: str
     details: dict | None = None
+
+class TwoFactorSetupRequest(SQLModel):
+    password: str = Field(min_length=8, max_length=32)
+    recovery_code: str | None = None
+
+class TwoFactorSetupResponse(SQLModel):
+    otpauth_url: str
+    secret: str
+
+class TwoFactorVerifyRequest(SQLModel):
+    code: str = Field(min_length=6, max_length=6)
+
+class TwoFactorVerifyResponse(SQLModel):
+    recovery_codes: list[str] | None = None
+
+class RecoveryCode(SQLModel, table=True):
+    id: UUID = Field(default_factory=uuid4, primary_key=True)
+    user_id: UUID = Field(foreign_key="user.id", index=True)
+    code_hash: str
+    used: bool = Field(default=False)
+    created_at: datetime = Field(default_factory=get_datetime_utc, sa_type=DateTime(timezone=True))
+    used_at: datetime | None = Field(default=None, sa_type=DateTime(timezone=True))

@@ -3,9 +3,8 @@ from typing import Any
 import logging
 from datetime import datetime, timezone
 
-import jwt
-
 from app.presence_manager import presence_manager
+from app.platform import security
 from fastapi import APIRouter, Depends, HTTPException, status, BackgroundTasks, UploadFile, WebSocket, WebSocketDisconnect
 from fastapi.responses import RedirectResponse
 from sqlmodel import col, delete, func, select
@@ -19,6 +18,7 @@ from app.platform.deps import (
 from app.platform.config import settings
 from app.platform.security import get_password_hash, verify_password
 from app.models.all import (
+    APIError,
     APIKeyContext,
     APIKeyStatus,
     Message,
@@ -42,42 +42,42 @@ from app.platform.service.mailservice import (
 )
 from app.platform.deps import get_current_user
 
-router = APIRouter(prefix="/users", tags=["users"])
+router = APIRouter(prefix="/users", tags=["users"], include_in_schema=False)
 
-@router.get("/", dependencies=[Depends(get_current_active_superuser)], response_model=UsersPublic)
-def read_users(session: SessionDep, skip: int = 0, limit: int = 100) -> Any:
-    """
-    Retrieve users."""
+# @router.get("/", dependencies=[Depends(get_current_active_superuser)], response_model=UsersPublic)
+# def read_users(session: SessionDep, skip: int = 0, limit: int = 100) -> Any:
+#     """
+#     Retrieve users."""
 
-    count_statement = select(func.count()).select_from(User)
-    count = session.exec(count_statement).one()
+#     count_statement = select(func.count()).select_from(User)
+#     count = session.exec(count_statement).one()
 
-    statement = (
-        select(User).order_by(col(User.created_at).desc()).offset(skip).limit(limit)
-    )
-    users = session.exec(statement).all()
+#     statement = (
+#         select(User).order_by(col(User.created_at).desc()).offset(skip).limit(limit)
+#     )
+#     users = session.exec(statement).all()
 
-    users_public = [UserPublic.model_validate(user) for user in users]
-    return UsersPublic(data=users_public, count=count)
+#     users_public = [UserPublic.model_validate(user) for user in users]
+#     return UsersPublic(data=users_public, count=count)
 
 
-@router.post("/", dependencies=[Depends(get_current_active_superuser)], response_model=UserPublic)
-def create_user(*, session: SessionDep, user_in: UserCreate) -> Any:
-    """
-    Create new user.
-    """
-    user = userservice.get_user_by_email(session=session, email=user_in.email)
-    if user:
-        raise HTTPException(
-            status_code=400,
-            detail="The user with this email already exists in the system.",
-        )
+# @router.post("/", dependencies=[Depends(get_current_active_superuser)], response_model=UserPublic)
+# def create_user(*, session: SessionDep, user_in: UserCreate) -> Any:
+#     """
+#     Create new user.
+#     """
+#     user = userservice.get_user_by_email(session=session, email=user_in.email)
+#     if user:
+#         raise HTTPException(
+#             status_code=400,
+#             detail="The user with this email already exists in the system.",
+#         )
 
-    user = userservice.create_user(session=session, user_create=user_in)
-    if settings.EMAILS_ENABLED and user_in.email:
-        token = create_verification_token(user_in.email, expire_minutes=0)
-        background_tasks.add_task(send_new_account_activation_email, user_in.email, user_in.username, token)
-    return user
+#     user = userservice.create_user(session=session, user_create=user_in)
+#     if settings.EMAILS_ENABLED and user_in.email:
+#         token = create_verification_token(user_in.email, expire_minutes=0)
+#         background_tasks.add_task(send_new_account_activation_email, user_in.email, user_in.username, token)
+#     return user
 
 
 @router.patch("/me", response_model=UserPublic)
@@ -85,12 +85,17 @@ def update_user_me(*, session: SessionDep, user_in: UserUpdateMe, current_user: 
     """
     Update own user.
     """
-
     if user_in.email:
         existing_user = userservice.get_user_by_email(session=session, email=user_in.email)
         if existing_user and existing_user.id != current_user.id:
             raise HTTPException(
                 status_code=409, detail="User with this email already exists"
+            )
+    if user_in.nick_name:
+        existing_user = userservice.get_user_by_nick_name(session=session, nick_name=user_in.nick_name)
+        if existing_user and existing_user.id != current_user.id:
+            raise HTTPException(
+                status_code=409, detail="User with this nick name already exists"
             )
     user_data = user_in.model_dump(exclude_unset=True)
     current_user.sqlmodel_update(user_data)
@@ -116,7 +121,7 @@ def update_password_me( *, session: SessionDep, body: UpdatePassword, current_us
     current_user.hashed_password = hashed_password
     session.add(current_user)
     session.commit()
-    return Message(message="Password updated successfully")
+    return Message(status_code=200, code="success", message="Password updated successfully")
 
 
 @router.get("/me", response_model=UserPublic)
@@ -141,24 +146,27 @@ def read_user_me(current_user: CurrentUser) -> Any:
 #     return Message(message="User deleted successfully")
 
 
-@router.post("/signup", response_model=UserPublic)
-def register_user(session: SessionDep, user_in: UserRegister, background_tasks: BackgroundTasks) -> Any:
+@router.post("/signup", response_model=Message)
+def register_user(session: SessionDep, user_in: UserRegister, background_tasks: BackgroundTasks) -> Message:
     """
     Create new user without the need to be logged in.
     """
-    user = userservice.get_user_by_email(session=session, email=user_in.email)
-    if user:
-        raise HTTPException(
-            status_code=400,
-            detail="The user with this email already exists in the system",
-        )
+    same_nick_name_user = userservice.get_user_by_nick_name(session=session, nick_name=user_in.nick_name)
+    if same_nick_name_user:
+        raise APIError(status_code=400, code="NICKNAME_EXISTS", msg="This nick name is already taken. Please try a different one.")
+    
+    same_email_user = userservice.get_user_by_email(session=session, email=user_in.email)
+    if same_email_user:
+        raise APIError(status_code=400, code="USER_EXISTS", msg="This email is already registered. Please try a different one.")
+    
     user_create = UserCreate.model_validate(user_in)
     user_create.avatar = "/static/a00.jpeg"
-    user = userservice.create_user(session=session, user_create=user_create)
+    userservice.create_user(session=session, user_create=user_create)
     if settings.EMAILS_ENABLED and user_in.email:
-        token = create_verification_token(user_in.email, expire_minutes=0)
+        token = create_verification_token(user_in.email, expire_minutes=15)
         background_tasks.add_task(send_new_account_activation_email, user_in.email, user_in.nick_name, token)
-    return user
+        
+    return Message(status_code=200, code="success", message="User created successfully")
 
 @router.get("/verify-email")
 def verify_email(session: SessionDep, token: str):
@@ -166,10 +174,15 @@ def verify_email(session: SessionDep, token: str):
     Verify the user's email address using the provided token.
     If the token is valid, the user's account will be activated.
     """
-
-    email = verify_token(token)
+    try:
+        email = verify_token(token)
+    except APIError as e:
+        return RedirectResponse(
+                url=f"/login?error={e.msg}",
+                status_code=status.HTTP_307_TEMPORARY_REDIRECT
+            )
     user = userservice.get_user_by_email(session=session, email=email)
-    if not user:
+    if user is None:
         return RedirectResponse(
                 url="/login?error=Email verification failed. User not found.",
                 status_code=status.HTTP_307_TEMPORARY_REDIRECT
@@ -207,7 +220,7 @@ def regenerate_api_key(session: SessionDep, current_user: CurrentUser) -> APIKey
     """
     Regenerate API key for the current user.
     """
-    api_key = jwt.encode({"sub": str(current_user.id)}, settings.SECRET_KEY, algorithm="HS256")
+    api_key = security.generate_password(32)
     api_key_hash = get_password_hash(api_key)
     oauth_account = userservice.get_oauth_account_by_provider_and_user_id(session=session, provider=ProviderType.api_key, user_id=current_user.id)
 
@@ -318,16 +331,16 @@ async def upload_file(file: UploadFile, session: SessionDep, current_user: Curre
     return {"filename": avatar_filename, "file_size": len(content), "url": f"/static/{current_user.id.hex}/{avatar_filename}"}
 
 
-@router.get("/online", response_model=UsersPublic)
-def get_online_users(session: SessionDep, current_user: CurrentUser) -> Any:
-    """
-    Retrieve online users.
-    """
-    statement = select(User).where(User.is_active == True)
-    users = session.exec(statement).all()
+# @router.get("/online", response_model=UsersPublic)
+# def get_online_users(session: SessionDep, current_user: CurrentUser) -> Any:
+#     """
+#     Retrieve online users.
+#     """
+#     statement = select(User).where(User.is_active == True)
+#     users = session.exec(statement).all()
 
-    users_public = [UserPublic.model_validate(user) for user in users]
-    return UsersPublic(data=users_public, count=len(users_public))
+#     users_public = [UserPublic.model_validate(user) for user in users]
+#     return UsersPublic(data=users_public, count=len(users_public))
 
 
 user_presence_router = APIRouter()

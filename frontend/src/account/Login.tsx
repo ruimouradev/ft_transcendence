@@ -1,25 +1,12 @@
-import React, { useState } from 'react';
-import {
-    Box,
-    Button,
-    Container,
-    Divider,
-    IconButton,
-    InputAdornment,
-    Link,
-    Paper,
-    TextField,
-    Typography,
-    Alert,
-    Avatar,
-} from '@mui/material';
+import React, { useState, useEffect } from 'react';
+import { Box, Button, Container, Divider, IconButton, InputAdornment, Link, Paper, TextField, Typography, Alert, Avatar,} from '@mui/material';
 import { Visibility, VisibilityOff } from '@mui/icons-material';
 
 import icon42 from '../assets/i42.ico';
 import avatarUno from '../assets/avatar/a_default.svg';
 import axios from 'axios';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { api } from '../core/client';
+import { api, getErrorMessage } from '../core/client';
 import { useAuth } from '../core/AuthContext';
 
 // O ecrã de entrada. Duas portas: email e password contra o backend,
@@ -33,7 +20,7 @@ export default function Login() {
     const [showPassword, setShowPassword] = useState(false);
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
-    const { login } = useAuth();
+    const { user, login } = useAuth();
 
     const navigate = useNavigate();
     const [searchParams] = useSearchParams();
@@ -55,6 +42,27 @@ export default function Login() {
         if (error) setError('');
     };
 
+    useEffect(() => {
+        if (!loading && user) {
+            navigate('/dashboard', { replace: true });
+        }
+    }, [user, loading, navigate]);
+
+	useEffect(() => {
+		setError('');
+		const errorParam = searchParams.get('error');
+		// const infoParam = searchParams.get('info');
+		// if (infoParam) {
+		// 	setInfo(infoParam);
+		// }
+		if (errorParam === 'oauth2_error') {
+			setError('Login failed: OAuth2 error.');
+		} else {
+			setError(errorParam || '');
+		}
+        window.history.replaceState({}, document.title, window.location.pathname);
+	}, [searchParams]);
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!formData.email || !formData.password) {
@@ -72,31 +80,43 @@ export default function Login() {
             const response = await api.post('/login/access-token', params, {
                 headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
             });
-            if (response.data.token_type && response.data.access_token) {
-                login(response.data.user);
-                navigate('/dashboard', { replace: true });
+            if (response.data.code === 'success') {
+                const userResponse = await api.get('/users/me');
+                login(userResponse.data);
+				navigate('/dashboard', { replace: true });
+			}else if (response.data.code === '2fa_required') {
+                navigate('/login/2fa', { replace: true });
             }
         } catch (err) {
-            if (axios.isAxiosError(err)) {
-                if (err.response) {
-                    if (err.response.data.detail === 'Inactive user') {
-                        setError('Login failed: inactive user. Please check your email for the activation link.');
-                    } else {
-                        setError(`Login failed: ${err.response.data.detail || 'unknown error'}`);
-                    }
-                } else if (err.request) {
-                    setError('Login failed: no response from the server');
-                } else {
-                    setError(`Login failed: ${err.message}`);
-                }
-            } else {
-                setError('Login failed: an unknown error occurred');
-            }
+            setError(getErrorMessage(err));
+            // if (axios.isAxiosError(err)) {
+            //     if (err.response) {
+            //         if (err.response.data.detail === 'Inactive user') {
+            //             setError('Login failed: inactive user. Please check your email for the activation link.');
+            //         } else {
+            //             setError(`Login failed: ${err.response.data.detail || 'unknown error'}`);
+            //         }
+            //     } else if (err.request) {
+            //         setError('Login failed: no response from the server');
+            //     } else {
+            //         setError(`Login failed: ${err.message}`);
+            //     }
+            // } else {
+            //     setError('Login failed: an unknown error occurred');
+            // }
         } finally {
             setLoading(false);
         }
     };
 
+    const handlePasswordReset = (e) => {
+        e.preventDefault();
+        if (!formData.email) {
+            setError('Please enter your email to reset your password.');
+            return;
+        }
+        window.location.href = `/api/v1/password-recovery/${encodeURIComponent(formData.email)}`;
+    };
     // sem fundo próprio: o cartão assenta no fundo do site
     return (
         <Box sx={{ minHeight: '80vh', display: 'flex', alignItems: 'center', justifyContent: 'center', p: 2 }}>
@@ -188,13 +208,7 @@ export default function Login() {
                         {/* o OAuth é uma viagem de página inteira: vamos ao
                             backend, ele leva-nos ao intra e traz-nos de volta */}
                         <Box sx={{ display: 'flex', gap: 2 }}>
-                            <Button
-                                fullWidth
-                                variant="outlined"
-                                startIcon={<img src={icon42} alt="42" style={{ width: 20, height: 20 }} />}
-                                onClick={() => { window.location.href = 'api/v1/auth/42/login'; }}
-                                sx={{ textTransform: 'none', borderRadius: 2 }}
-                            >
+                            <Button fullWidth variant="outlined" startIcon={<img src={icon42} alt="42" style={{ width: 20, height: 20 }} />} onClick={() => { window.location.href = 'api/v1/auth/42/login'; }} sx={{ textTransform: 'none', borderRadius: 2 }}>
                                 Login 42
                             </Button>
                         </Box>
@@ -204,6 +218,14 @@ export default function Login() {
                                 Don't have an account?{' '}
                                 <Link href="#" onClick={(e) => { e.preventDefault(); navigate('/signup'); }} underline="hover" sx={{ fontWeight: 600 }}>
                                     Sign Up
+                                </Link>
+                            </Typography>
+                        </Box>
+                        <Box sx={{ mt: 1, textAlign: 'center' }}>
+                            <Typography variant="body2" color="text.secondary">
+                                Forgot your password?{' '}
+                                <Link href="#" onClick={handlePasswordReset} underline="hover" sx={{ fontWeight: 600 }}>
+                                    Reset Password
                                 </Link>
                             </Typography>
                         </Box>

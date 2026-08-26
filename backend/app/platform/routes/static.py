@@ -5,7 +5,7 @@ from app.platform.service import userStatisticService
 from app.platform.deps import CurrentUser, SessionDep
 from app.models.all import Game, GamePlayer, GamePlayerDetail, UserGameDetail, UserStatisticInfo, UserStatisticLeaderboardEntry
 
-router = APIRouter(prefix="/static", tags=["static"])
+router = APIRouter(prefix="/static", tags=["static"], include_in_schema=False)
 logger = logging.getLogger("uvicorn.error")
 
 @router.get("/maininfo", response_model=UserStatisticInfo)
