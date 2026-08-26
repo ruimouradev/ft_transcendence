@@ -1,17 +1,6 @@
 import React, { useState } from 'react';
 import axios from 'axios';
-import {
-    Container,
-    Card,
-    CardContent,
-    Typography,
-    TextField,
-    Button,
-    Alert,
-    Stack,
-    Box,
-    CircularProgress,
-} from '@mui/material';
+import { Container, Card, CardContent, Typography, TextField, Button, Alert, Stack, Box, CircularProgress, } from '@mui/material';
 import LockIcon from '@mui/icons-material/Lock';
 import { api } from '../core/client.ts';
 
@@ -32,44 +21,41 @@ export default function ChangePasswordCard() {
         setError(null);
         setSuccess(null);
 
-    if (newPassword !== confirmPassword) {
-      setError('New passwords do not match');
-      return;
-    }
-    if (newPassword.length < 8) {
-      setError('New password must be at least 8 characters long');
-      return;
-    }
-    if (currentPassword.length < 8) {
-      setError('Current password must be at least 8 characters long');
-      return;
-    }
-    if (currentPassword === newPassword) {
-      setError('New password must be different from the current password');
-      return;
-    }
+        if (newPassword !== confirmPassword) {
+            setError('New passwords do not match');
+            return;
+        }
+        if (newPassword.length < 8) {
+            setError('New password must be at least 8 characters long');
+            return;
+        }
+        if (currentPassword.length < 8) {
+            setError('Current password must be at least 8 characters long');
+            return;
+        }
+        if (currentPassword === newPassword) {
+            setError('New password must be different from the current password');
+            return;
+        }
 
-    setLoading(true);
+        setLoading(true);
 
-    api.patch('/users/me/password', {
-      current_password: currentPassword,
-      new_password: newPassword,
-    })
-      .then((response) => {
-        setSuccess(response.data.message || 'Password changed successfully!');
-        setCurrentPassword('');
-        setNewPassword('');
-        setConfirmPassword('');
-      })
-      .catch((err) => {
-          if (axios.isAxiosError(err)) {
-            setError(err.response?.data?.detail || 'Failed to change password.');
-          } else {
-            setError('An unexpected error occurred.');
-          }
-        }).finally(() => {
-            setLoading(false);
-        });
+        api.patch('/users/me/password', { current_password: currentPassword, new_password: newPassword, })
+            .then((response) => {
+                setSuccess(response.data.message || 'Password changed successfully!');
+                setCurrentPassword('');
+                setNewPassword('');
+                setConfirmPassword('');
+            })
+            .catch((err) => {
+                if (axios.isAxiosError(err)) {
+                    setError(err.response?.data?.detail || 'Failed to change password.');
+                } else {
+                    setError('An unexpected error occurred.');
+                }
+            }).finally(() => {
+                setLoading(false);
+            });
     };
 
     return (
@@ -82,19 +68,8 @@ export default function ChangePasswordCard() {
                             Change Password
                         </Typography>
                     </Box>
-
-                    {error && (
-                        <Alert severity="error" sx={{ mb: 2 }}>
-                            {error}
-                        </Alert>
-                    )}
-
-                    {success && (
-                        <Alert severity="success" sx={{ mb: 2 }}>
-                            {success}
-                        </Alert>
-                    )}
-
+                    {error && (<Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>)}
+                    {success && (<Alert severity="success" sx={{ mb: 2 }}>{success}</Alert>)}
                     <form onSubmit={handleSubmit}>
                         <Stack spacing={3}>
                             <TextField label="Current Password" type="password" variant="outlined" fullWidth required value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)} />

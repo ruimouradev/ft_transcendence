@@ -66,8 +66,9 @@ export default function Reset2FA({
 
     useEffect(() => { if (open) { resetWizard(); } }, [open]);
 
-    const handleClose = () => {
+    const handleClose = (event, reason) => {
         if (loading) { return; }
+        if (reason === 'backdropClick' || reason === 'escapeKeyDown') { return; }
         resetWizard();
         onClose();
     };
@@ -325,40 +326,21 @@ export default function Reset2FA({
                         </Button>
                     </>
                 )}
-
                 {activeStep === 1 && (
-                    <>
-                        <Button onClick={handleBack} disabled={loading} >
-                            Back
-                        </Button>
                         <Button variant="contained" onClick={handleSetup2FA} disabled={!password || !recoverCode || loading} startIcon={loading ? (<CircularProgress size={18} color="inherit" />) : undefined} >
                             {loading ? 'Setting up...' : 'Continue'}
                         </Button>
-                    </>
                 )}
-
                 {activeStep === 2 && (
-                    <>
-                        <Button onClick={handleBack} >
-                            Back
-                        </Button>
                         <Button variant="contained" onClick={handleAuthenticatorContinue} >
                             Continue
                         </Button>
-                    </>
                 )}
-
                 {activeStep === 3 && (
-                    <>
-                        <Button onClick={handleBack} disabled={loading} >
-                            Back
-                        </Button>
                         <Button variant="contained" onClick={handleVerifyCode} disabled={code.length !== 6 || loading} startIcon={loading ? (<CircularProgress size={18} color="inherit" />) : undefined} >
                             {loading ? 'Verifying...' : 'Verify'}
                         </Button>
-                    </>
                 )}
-
                 {activeStep === 4 && (
                     <Button variant="contained" onClick={handleFinish} disabled={!savedRecoveryCodes} startIcon={<CheckCircle />} >
                         Finish

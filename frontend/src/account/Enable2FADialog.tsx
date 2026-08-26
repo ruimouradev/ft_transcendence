@@ -70,8 +70,9 @@ export default function Enable2FADialog({
 
     useEffect(() => { if (open) { resetWizard(); } }, [open]);
 
-    const handleClose = () => {
+    const handleClose = (event, reason) => {
         if (loading) { return; }
+        if (reason === 'backdropClick' || reason === 'escapeKeyDown') { return; }
         resetWizard();
         onClose();
     };

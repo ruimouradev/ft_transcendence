@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../core/AuthContext';
 import { Box, Container, Paper, Button, Link, Typography, TextField } from '@mui/material';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { api, getErrorMessage } from '../core/client';
 import Reset2FA from './Reset2FA';
 
@@ -13,10 +13,6 @@ export default function Verify2fa() {
     const [loading, setLoading] = useState(false);
     const { login } = useAuth();
     const navigate = useNavigate();
-
-    useEffect(() => {
-
-    }, [navigate]);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -42,12 +38,6 @@ export default function Verify2fa() {
 
     const handleAuthenticatorReset = async () => {
         setUserRecoverCode(true);
-        // try {
-        //     await api.post(`/login/reset-2fa?recover_code=${recoverCode}`);
-        //     navigate('/login', { replace: true, state: { info: 'Authenticator reset. Please log in again.' } });
-        // } catch (error) {
-        //     setError(getErrorMessage(error));
-        // }
     };
 
     const handle2FAEnabled = () => {
@@ -56,9 +46,9 @@ export default function Verify2fa() {
     }
 
     return (
-        <Box sx={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', p: 2, }} >
+        <Box sx={{ minHeight: '80vh', display: 'flex', alignItems: 'center', justifyContent: 'center', p: 2, }} >
             <Container component="main" maxWidth="xs">
-                <Paper elevation={6} sx={{ p: 4, display: 'flex', flexDirection: 'column', alignItems: 'center', borderRadius: 3, backgroundColor: 'rgba(255, 255, 255, 0.12)', backdropFilter: 'blur(10px)' }} >
+                <Paper elevation={6} sx={{ p: 4, display: 'flex', flexDirection: 'column', alignItems: 'center', borderRadius: 3, }} >
                     <Typography variant="h6" gutterBottom>
                         Verify your authenticator
                     </Typography>
