@@ -19,11 +19,12 @@ from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 
 from app.game.contract import (
     AddBot, Catch, Challenge, Create, Draw, Error, ErrorCode,
-    GameSettings, Join, Pass, Play, PlayerAction, RemoveBot, SayUno,
+    GameSettings, Join, Kick, Pass, Play, PlayerAction, SayUno,
     Start, Welcome, parse_action,
 )
 from app.game.engine import Game, GameError
 from app.platform.config import settings
+from app.platform.deps import CurrentUser
 from app.platform.security import ALGORITHM
 from app.realtime import metrics
 
@@ -38,6 +39,7 @@ class Player:
     bot: bool = False
     user: str | None = None  # account id from the login cookie
     avatar: str = ""  # the account's picture, empty for guests and bots
+    bot_level: str | None = None  # difficulty of an AI seat, None on humans
 
 
 @dataclass
@@ -47,6 +49,11 @@ class Room:
     settings: GameSettings = field(default_factory=GameSettings)
     bots_made: int = 0  # grows forever so bot ids never repeat
     humans_made: int = 0  # same idea, seats freed in the lobby come back
+    # account that opened the room, so a reload does not cost the host
+    owner: str | None = None
+    # the room's own clock, held here so it is not collected mid game
+    timer: asyncio.Task | None = None
+    recorded: bool = False  # the finished game already went to the database
     # when a hand last dropped to one undeclared card, for the grace
     solo_at: float = 0.0
 
@@ -56,6 +63,8 @@ rooms: dict[str, Room] = {}
 TURN_TIMEOUT = 60  # seconds an idle turn is allowed to sit
 TIMER_TICK = 5  # how often each room looks at its clock
 UNO_GRACE = 0.5  # seconds a fresh one-card hand is safe from the catch
+SEAT_GRACE = 5  # seconds a lobby chair waits for its player to come back
+ROOM_GRACE = 5  # seconds an empty room waits before it is dropped
 
 
 def err(code: ErrorCode, msg: str, room: str | None = None) -> Error:
@@ -88,9 +97,11 @@ def snapshot_json(room: Room, player_id: str) -> str:
     snap.host_id = host.id if host else None
     bots = {p.id for p in room.players if p.bot}
     avatars = {p.id: p.avatar for p in room.players}
+    levels = {p.id: p.bot_level for p in room.players if p.bot}
     for seat in snap.players:
         seat.bot = seat.id in bots
         seat.avatar = avatars.get(seat.id, "")
+        seat.bot_level = levels.get(seat.id)
     return snap.model_dump_json()
 
 
@@ -108,10 +119,20 @@ async def broadcast(room: Room) -> None:
 
 
 def host_of(room: Room) -> Player | None:
-    # The crown never lands on a bot, and a ghost cannot hold it either
-    return next(
-        (p for p in room.players if not p.bot and p.connected), None
+    # Whoever opened the room hosts it while they hold a chair there.
+    # In the lobby that includes the few seconds a chair waits after a
+    # reload, so the buttons do not blink away and come back on the
+    # other screens. Once the game is running a chair is kept for good,
+    # so a vanished owner must not hold the room hostage: there the
+    # host follows whoever is actually connected. Never a bot
+    seated = [p for p in room.players if not p.bot]
+    waiting = room.game is not None and room.game.phase == "lobby"
+    owner = next(
+        (p for p in seated if room.owner and p.user == room.owner
+         and (p.connected or waiting)),
+        None,
     )
+    return owner or next((p for p in seated if p.connected), None)
 
 
 async def room_timer(room_id: str, room: Room) -> None:
@@ -144,6 +165,9 @@ async def room_timer(room_id: str, room: Room) -> None:
         game.timeout_skip(pid)
         metrics.moves.labels(kind="timeout").inc()
         await broadcast(room)
+        # the forced draw can end the game, and a game that ends here
+        # deserves the same row in the database as any other
+        await record_finished_game(room)
         mark = None
 
 
@@ -170,6 +194,76 @@ async def async_save_game_result(db_game: DBGame, game_players: list[GamePlayer]
     await asyncio.to_thread(_sync_save)
 
 
+async def record_finished_game(room: Room) -> None:
+    """Write a finished game to the database, once, from wherever it
+    ended. A game can also end on the turn clock, not only on a move,
+    so this lives apart from apply()."""
+    if room.game is None or room.game.phase != "finished":
+        return
+    if room.recorded:
+        return  # a game is written down once, whoever noticed it ended
+    room.recorded = True
+    metrics.games_finished.inc()
+    has_guests = any(not p.bot and p.user is None for p in room.players)
+    if not has_guests:
+        db_game = DBGame(status="finished")
+        game_players = []
+        bot_count = 0
+        
+        total_remain_points = sum(
+            sum(points(c) for c in h.cards) for h in room.game.hands
+        )
+        
+        for i, p in enumerate(room.players):
+            user_id = None
+            if p.bot:
+                bot_count += 1
+                if bot_count == 1:
+                    user_id = robots_user_manager.get_robot1_id()
+                elif bot_count == 2:
+                    user_id = robots_user_manager.get_robot2_id()
+                elif bot_count == 3:
+                    user_id = robots_user_manager.get_robot3_id()
+            elif p.user:
+                try:
+                    user_id = UUID(p.user)
+                except ValueError:
+                    pass
+            
+            if user_id is None:
+                continue
+                
+            hand = next((h for h in room.game.hands if h.id == p.id), None)
+            if not hand:
+                continue
+                
+            remain_points = sum(points(card) for card in hand.cards)
+            is_winner = (p.id == room.game.winner)
+            score = total_remain_points if is_winner else 0
+            
+            gp = GamePlayer(
+                game_id=db_game.id,
+                user_id=user_id,
+                is_winner=is_winner,
+                score=score,
+                seat=i,
+                remain_points=remain_points,
+                cards_left=len(hand.cards),
+                is_connected=p.connected
+            )
+            game_players.append(gp)
+            
+        if len(game_players) == len(room.players):
+            await async_save_game_result(db_game, game_players)
+        else:
+            # a seat without an account id sinks the whole record, so
+            # say it out loud instead of losing the game in silence
+            logging.warning(
+                "game not recorded: %d seats but only %d rows",
+                len(room.players), len(game_players))
+            metrics.rejected.labels(code="RECORD_FAILED").inc()
+
+
 async def apply(room: Room, player: Player, action: PlayerAction) -> Error | None:
     # The engine is the single source of truth for the rules, here we
     # only translate messages into calls
@@ -186,23 +280,37 @@ async def apply(room: Room, player: Player, action: PlayerAction) -> Error | Non
         room.bots_made += 1
         room.players.append(Player(id=f"b{room.bots_made}",
                                    name=f"Bot {room.bots_made}",
-                                   token="", ws=None, bot=True))
+                                   token="", ws=None, bot=True,
+                                   bot_level=action.level))
         reseat(room)
         return None
 
-    if isinstance(action, RemoveBot):
+    if isinstance(action, Kick):
         if player is not host_of(room):
-            return err(ErrorCode.INVALID_MESSAGE, "only the host removes bots")
+            return err(ErrorCode.INVALID_MESSAGE, "only the host kicks")
         if room.game.phase != "lobby":
             return err(ErrorCode.GAME_ALREADY_STARTED, "game already started")
         target = next(
-            (p for p in room.players if p.id == action.target and p.bot),
+            (p for p in room.players if p.id == action.target),
             None,
         )
         if target is None:
-            return err(ErrorCode.INVALID_MESSAGE, "no such bot")
+            return err(ErrorCode.INVALID_MESSAGE, "no such player")
+        if target is player:
+            return err(ErrorCode.INVALID_MESSAGE, "the host stays")
+        # free the chair first, then say goodbye; closing the socket
+        # wakes the target's own handler, which finds the seat gone.
+        # A bot has no socket, so for bots this is the whole trip
         room.players.remove(target)
         reseat(room)
+        if target.ws:
+            try:
+                await target.ws.send_text(err(
+                    ErrorCode.KICKED, "the host removed you from the room"
+                ).model_dump_json())
+                await target.ws.close()
+            except Exception:
+                pass  # already gone, the goodbye was best effort
         return None
 
     try:
@@ -220,6 +328,11 @@ async def apply(room: Room, player: Player, action: PlayerAction) -> Error | Non
                     return None
             elif len(room.players) < room.settings.max_players:
                 return err(ErrorCode.INVALID_MESSAGE, "the room is not full")
+            elif any(not p.bot and not p.connected for p in room.players):
+                # a chair still waiting for its player is not a chair
+                # anyone can deal to yet
+                return err(ErrorCode.INVALID_MESSAGE,
+                           "someone is reconnecting")
             room.game.start()
         elif isinstance(action, Play):
             room.game.play(player.id, action.card, action.color,
@@ -251,59 +364,7 @@ async def apply(room: Room, player: Player, action: PlayerAction) -> Error | Non
     except GameError as e:
         return err(e.code, e.msg)
 
-    if room.game.phase == "finished":
-        metrics.games_finished.inc()
-        has_guests = any(not p.bot and p.user is None for p in room.players)
-        if not has_guests:
-            db_game = DBGame(status="finished")
-            game_players = []
-            bot_count = 0
-            
-            total_remain_points = sum(
-                sum(points(c) for c in h.cards) for h in room.game.hands
-            )
-            
-            for i, p in enumerate(room.players):
-                user_id = None
-                if p.bot:
-                    bot_count += 1
-                    if bot_count == 1:
-                        user_id = robots_user_manager.get_robot1_id()
-                    elif bot_count == 2:
-                        user_id = robots_user_manager.get_robot2_id()
-                    elif bot_count == 3:
-                        user_id = robots_user_manager.get_robot3_id()
-                elif p.user:
-                    try:
-                        user_id = UUID(p.user)
-                    except ValueError:
-                        pass
-                
-                if user_id is None:
-                    continue
-                    
-                hand = next((h for h in room.game.hands if h.id == p.id), None)
-                if not hand:
-                    continue
-                    
-                remain_points = sum(points(card) for card in hand.cards)
-                is_winner = (p.id == room.game.winner)
-                score = total_remain_points if is_winner else 0
-                
-                gp = GamePlayer(
-                    game_id=db_game.id,
-                    user_id=user_id,
-                    is_winner=is_winner,
-                    score=score,
-                    seat=i,
-                    remain_points=remain_points,
-                    cards_left=len(hand.cards),
-                    is_connected=p.connected
-                )
-                game_players.append(gp)
-                
-            if len(game_players) == len(room.players):
-                await async_save_game_result(db_game, game_players)
+    await record_finished_game(room)
 
     # the AI loop plays for bot seats when it is their turn (Alexandre)
 
@@ -314,8 +375,9 @@ router = APIRouter()
 
 
 @router.get("/api/rooms")
-def list_rooms() -> list[dict[str, object]]:
-    # The join screen list: public rooms still waiting in their lobby
+def list_rooms(current_user: CurrentUser) -> list[dict[str, object]]:
+    # The join screen list: public rooms still waiting in their lobby.
+    # Playing needs an account, so reading the table does too
     out: list[dict[str, object]] = []
     for code, room in rooms.items():
         if not room.settings.public or room.game is None:
@@ -385,7 +447,9 @@ async def game(ws: WebSocket, room_id: str) -> None:
                 if isinstance(action, (Create, Join)) and user:
                     other_room_id = next(
                         (rid for rid, r in rooms.items()
-                         if rid != room_id and any(p.user == user and not p.bot for p in r.players)),
+                         if rid != room_id and any(p.user == user and not p.bot
+                                                   and p.connected
+                                                   for p in r.players)),
                         None
                     )
                     if other_room_id:
@@ -400,10 +464,10 @@ async def game(ws: WebSocket, room_id: str) -> None:
                         await reject(ws, ErrorCode.INVALID_MESSAGE,
                                      "room already exists")
                         continue
-                    room = Room(settings=action.settings)
+                    room = Room(settings=action.settings, owner=user)
                     rooms[room_id] = room
                     metrics.rooms_active.inc()
-                    asyncio.create_task(room_timer(room_id, room))
+                    room.timer = asyncio.create_task(room_timer(room_id, room))
                     player = await seat_player(ws, room, action.name, user)
                     continue
 
@@ -463,27 +527,42 @@ async def game(ws: WebSocket, room_id: str) -> None:
                 metrics.moves.labels(kind=action.type).inc()
                 await broadcast(room)
     except WebSocketDisconnect:
+        pass
+    finally:
+        # the goodbye runs whatever went wrong, otherwise a stray error
+        # would leave the seat marked as connected and the player
+        # locked out of their own room until the server restarts
         if player and room:
             player.connected = False
             metrics.players_connected.dec()
             if room.game is not None and room.game.phase == "lobby":
-                # Leaving the lobby really frees the seat, ghosts are
-                # only worth keeping once there is a hand to come back to
-                room.players.remove(player)
-                if any(not p.bot for p in room.players):
-                    reseat(room)
+                # The seat is held for a few seconds so a reload keeps
+                # the same chair, the same host and the same order on
+                # everyone's screen. A kicked player is already gone
+                if player in room.players:
+                    room.game.set_connected(player.id, False)
                     await broadcast(room)
-                else:
-                    # Give them 5 seconds to F5/reconnect before closing the room
-                    await asyncio.sleep(5)
-                    if room_id in rooms and not any(not p.bot for p in room.players):
+                    await asyncio.sleep(SEAT_GRACE)
+                    # only the socket that lost the chair may drop it, a
+                    # second reload inside the grace hands it to a newer one
+                    if (rooms.get(room_id) is room and not player.connected
+                            and player.ws is ws):
+                        room.players.remove(player)
+                        reseat(room)
+                        await broadcast(room)
+                if not any(not p.bot and p.connected for p in room.players):
+                    # nobody left to come back to, the room can go
+                    await asyncio.sleep(ROOM_GRACE)
+                    if (room_id in rooms
+                            and not any(not p.bot and p.connected
+                                        for p in room.players)):
                         rooms.pop(room_id, None)
                         metrics.rooms_active.dec()
             else:
                 room.game.set_connected(player.id, False)
                 await broadcast(room)
                 if all(not p.connected for p in room.players if not p.bot):
-                    await asyncio.sleep(5)
+                    await asyncio.sleep(ROOM_GRACE)
                     if room_id in rooms and all(not p.connected for p in room.players if not p.bot):
                         rooms.pop(room_id, None)
                         metrics.rooms_active.dec()
