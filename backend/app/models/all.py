@@ -34,7 +34,7 @@ class UserRegister(SQLModel):
 
 # Properties to receive via API on update, all are optional
 class UserUpdate(UserBase):
-    email: EmailStr | None = Field(default=None, max_length=255)  # type: ignore[assignment]
+    email: EmailStr | None = Field(default=None, max_length=255)
     password: str | None = Field(default=None, min_length=8, max_length=32)
 
 
@@ -95,6 +95,7 @@ class TokenAndUser(Token):
 
 class TokenPayload(SQLModel):
     sub: str | None = None
+    type: str | None = None
 
 
 class NewPassword(SQLModel):
@@ -307,7 +308,7 @@ class ErrorResponse(SQLModel):
 
 class TwoFactorSetupRequest(SQLModel):
     password: str = Field(min_length=8, max_length=32)
-
+    recovery_code: str | None = None
 
 class TwoFactorSetupResponse(SQLModel):
     otpauth_url: str
@@ -318,3 +319,11 @@ class TwoFactorVerifyRequest(SQLModel):
 
 class TwoFactorVerifyResponse(SQLModel):
     recovery_codes: list[str] | None = None
+
+class RecoveryCode(SQLModel, table=True):
+    id: UUID = Field(default_factory=uuid4, primary_key=True)
+    user_id: UUID = Field(foreign_key="user.id", index=True)
+    code_hash: str
+    used: bool = Field(default=False)
+    created_at: datetime = Field(default_factory=get_datetime_utc, sa_type=DateTime(timezone=True))
+    used_at: datetime | None = Field(default=None, sa_type=DateTime(timezone=True))

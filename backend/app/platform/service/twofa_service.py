@@ -1,3 +1,9 @@
+import secrets
+
+from app.platform import security
+from sqlmodel import delete, select
+
+from app.models.all import RecoveryCode, get_datetime_utc
 import pyotp
 
 
@@ -13,8 +19,6 @@ def get_otpauth_url(secret: str, username: str, issuer_name: str = "UNOpposed") 
     """
     totp = pyotp.TOTP(secret)
     return totp.provisioning_uri(name=username, issuer_name=issuer_name)
-
-    # return f"otpauth://totp/{issuer_name}:{username}?secret={secret}&issuer={issuer_name}"
 
 def verify_totp(secret: str, code: str) -> bool:
     """
@@ -35,8 +39,29 @@ def generate_recovery_codes(session, user, num_codes: int = 8) -> list[str]:
     """
     Generate a list of recovery codes for the user.
     """
-    recovery_codes = [pyotp.random_base32() for _ in range(num_codes)]
-    user.recovery_codes = recovery_codes
-    session.add(user)
+    recovery_codes = [secrets.token_hex(10).upper() for _ in range(num_codes)]
+    statement = delete(RecoveryCode).where(RecoveryCode.user_id == user.id)
+    session.exec(statement)
+
+    for code in recovery_codes:
+        recovery_code = RecoveryCode(user_id=user.id, code_hash=security.get_password_hash(code))
+        session.add(recovery_code)
     session.commit()
     return recovery_codes
+
+def check_recovery_code(session, user, recovery_code: str) -> bool:
+    """
+    Check if the provided recovery code is valid for the user.
+    """
+    statement = select(RecoveryCode).where(RecoveryCode.user_id == user.id, RecoveryCode.used == False)
+    recovery_codes = session.exec(statement).all()
+
+    for code in recovery_codes:
+        verified, _ = security.verify_password(recovery_code, code.code_hash)
+        if verified:
+            code.used = True
+            code.used_at = get_datetime_utc()
+            session.add(code)
+            session.commit()
+            return True
+    return False

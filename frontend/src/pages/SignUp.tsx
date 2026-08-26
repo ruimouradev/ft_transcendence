@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Box, Button, Checkbox, Container, CssBaseline, FormControl, FormControlLabel, Grid, IconButton, InputAdornment, Link, Paper, TextField, Typography, Alert, Avatar, } from '@mui/material';
+import { Box, Button, Checkbox, Container, CssBaseline, FormControl, FormControlLabel, FormHelperText, Grid, IconButton, InputAdornment, Link, Paper, TextField, Typography, Alert, Avatar, } from '@mui/material';
 import { Visibility, VisibilityOff, PersonAddOutlined as PersonAddIcon, } from '@mui/icons-material';
 
 import axios from 'axios';
@@ -7,6 +7,12 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../components/AuthContext';
 import { api, getErrorMessage } from '../client.ts';
 
+interface ValidationError {
+    loc: (string | number)[];
+    msg: string;
+    type: string;
+    input?: unknown;
+}
 export default function SignUp() {
     const [showPassword, setShowPassword] = useState(false);
     const [formData, setFormData] = useState({
@@ -21,12 +27,6 @@ export default function SignUp() {
     const { user } = useAuth();
     const navigate = useNavigate();
     const [loading, setLoading] = useState(false);
-    interface ValidationError {
-        loc: (string | number)[];
-        msg: string;
-        type: string;
-        input?: any;
-    }
 
     useEffect(() => {
         if (user) {
@@ -35,9 +35,13 @@ export default function SignUp() {
     }, [user, navigate]);
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>, checked?: boolean) => {
-        setError('');
-        setErrors({});
         const { name, value, type } = e.target;
+        setError('');
+        setErrors((prev) => {
+            const next = { ...prev };
+            delete next[name];
+            return next;
+        });
         setFormData((prev) => ({
             ...prev,
             [name]: type === 'checkbox' ? checked?? false : value,
@@ -72,9 +76,9 @@ export default function SignUp() {
         setLoading(true);
         try {
             const params = {
-                'email': formData.email,
-                'password': formData.password,
-                'nick_name': formData.nick_name
+                email: formData.email,
+                password: formData.password,
+                nick_name: formData.nick_name
             }
             await api.post('/users/signup', params);
             navigate('/login?info=Account created successfully,check your email for verification', { replace: true });
@@ -125,7 +129,7 @@ export default function SignUp() {
                 <Box component="form" onSubmit={handleSubmit} sx={{ mt: 1 }}>
                     <Grid container spacing={2}>
                         <Grid size={{ xs: 12 }}>
-                            <TextField name="nick_name" required fullWidth id="nick_name" label="Nick Name" error={!!errors.nick_name} helperText={errors.nick_name} value={formData.nick_name} onChange={handleChange} />
+                            <TextField name="nick_name" autoFocus required fullWidth id="nick_name" label="Nick Name" error={!!errors.nick_name} helperText={errors.nick_name} value={formData.nick_name} onChange={handleChange} />
                         </Grid>
                         <Grid size={{ xs: 12 }}>
                             <TextField required fullWidth id="email" label="Email Address" type="email" name="email" autoComplete="email" value={formData.email} onChange={handleChange} error={!!errors.email} helperText={errors.email} />
@@ -159,7 +163,7 @@ export default function SignUp() {
                                             I agree to the <Link href="#" color="primary">Terms of Service</Link> and <Link href="#" color="primary">Privacy Policy</Link>.
                                         </Typography>
                                     }/>
-                            {errors.agreeTerms && <Typography variant="caption" color="error">{errors.agreeTerms}</Typography>}
+                            {errors.agreeTerms && <FormHelperText>{errors.agreeTerms}</FormHelperText>}
                             </FormControl>
                         </Grid>
                     </Grid>

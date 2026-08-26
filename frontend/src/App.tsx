@@ -12,6 +12,7 @@ import { ProtectedRoute } from './components/ProtectedRoute'
 import ChangePasswordCard from './components/ChangePasswordCard'
 import UnoDashboard from './pages/UnoDashboard'
 import APIKeyPage from './pages/ApiKeyPage'
+import Verify2fa from './pages/Verify2fa'
 
 function App() {
     return (
@@ -21,6 +22,7 @@ function App() {
                 <Route path="dashboard" element={<Dashboard />} />
                 <Route path="login" element={<Login />} />
                 <Route path="signup" element={<SignUp />} />
+                <Route path="login/2fa" element={<Verify2fa />} />
 
                 <Route element={<ProtectedRoute />}>
                     <Route path="profile" element={<ProfilePage />} />

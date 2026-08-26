@@ -242,7 +242,7 @@ export default function ProfileCard() {
                             )}
                             <Tooltip title="Click to manage 2FA settings" arrow>
                                 <Button variant="outlined" size="small" onClick={handle2FAClick} sx={{ textTransform: 'none',borderWidth:0 }}>
-                                    {user.user2fa ? (
+                                    {user.use2fa ? (
                                         <Chip icon={<ActiveIcon />} label="2FA Enabled" color="primary" variant="soft" size="small" />
                                     ) : (
                                         <Chip icon={<InactiveIcon />} label="2FA Disabled" color="warning" variant="soft" size="small" />

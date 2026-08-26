@@ -151,15 +151,17 @@ def register_user(session: SessionDep, user_in: UserRegister, background_tasks: 
     if same_nick_name_user:
         raise APIError(status_code=400, code="NICKNAME_EXISTS", msg="This nick name is already taken. Please try a different one.")
     
-    user = userservice.get_user_by_email(session=session, email=user_in.email)
-    if user:
+    same_email_user = userservice.get_user_by_email(session=session, email=user_in.email)
+    if same_email_user:
         raise APIError(status_code=400, code="USER_EXISTS", msg="This email is already registered. Please try a different one.")
+    
     user_create = UserCreate.model_validate(user_in)
     user_create.avatar = "/static/a00.jpeg"
-    user = userservice.create_user(session=session, user_create=user_create)
+    userservice.create_user(session=session, user_create=user_create)
     if settings.EMAILS_ENABLED and user_in.email:
         token = create_verification_token(user_in.email, expire_minutes=0)
         background_tasks.add_task(send_new_account_activation_email, user_in.email, user_in.nick_name, token)
+        
     return Message(status_code=200, code="success", message="User created successfully")
 
 @router.get("/verify-email")
@@ -171,7 +173,7 @@ def verify_email(session: SessionDep, token: str):
 
     email = verify_token(token)
     user = userservice.get_user_by_email(session=session, email=email)
-    if not user:
+    if user is None:
         return RedirectResponse(
                 url="/login?error=Email verification failed. User not found.",
                 status_code=status.HTTP_307_TEMPORARY_REDIRECT

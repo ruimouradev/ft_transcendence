@@ -9,7 +9,7 @@ import {QRCodeSVG} from 'qrcode.react';
 import {api} from '../client';
 
 
-interface Enable2FADialogProps {
+interface Reset2FADialogProps {
     open: boolean;
     onClose: () => void;
     onSuccess: () => void;
@@ -24,17 +24,18 @@ interface Verify2FAResponse {
     recovery_codes: string[];
 }
 
-const steps = [ 'Confirm', 'Verify identity', 'Authenticator', 'Verify code', 'Recovery codes', ];
+const steps = [ 'Reset Confirm', 'Verify', 'Authenticator', 'Verify code', 'Recovery codes', ];
 
-export default function Enable2FADialog({
+export default function Reset2FA({
     open,
     onClose,
     onSuccess,
-}: Enable2FADialogProps) {
+}: Reset2FADialogProps) {
     const [activeStep, setActiveStep] = useState(0);
 
     const [password, setPassword] = useState('');
     const [showPassword, setShowPassword] = useState(false);
+    const [recoverCode, setRecoverCode] = useState('');
 
     const [code, setCode] = useState('');
 
@@ -86,7 +87,7 @@ export default function Enable2FADialog({
         setLoading(true);
         setError(null);
         try {
-            const response = await api.post<Setup2FAResponse>('/2fa/setup', { password, },);
+            const response = await api.post<Setup2FAResponse>('/2fa/reset', { password, recovery_code: recoverCode },);
             setSecret(response.data.secret);
             setOtpauthUrl(response.data.otpauth_url);
             setActiveStep(2);
@@ -114,7 +115,8 @@ export default function Enable2FADialog({
         setLoading(true);
         setError(null);
         try {
-            const response = await api.post<Verify2FAResponse>('/2fa/verify-setup', { code, },);
+            const response = await api.post<Verify2FAResponse>('/2fa/verify-setup', { code, },
+            );
             setRecoveryCodes(response.data.recovery_codes,);
             setActiveStep(4);
         } catch (error: any) {
@@ -168,7 +170,7 @@ export default function Enable2FADialog({
 
             <DialogTitle id="enable-2fa-dialog-title" sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', pb: 1, }}>
                 <Typography variant="h6" component="span" fontWeight={600}>
-                    Enable Two-Factor Authentication
+                    Reset Two-Factor Authentication
                 </Typography>
                 <IconButton onClick={handleClose} disabled={loading} aria-label="Close" >
                     <Close />
@@ -194,16 +196,16 @@ export default function Enable2FADialog({
                 {activeStep === 0 && (
                     <Box>
                         <Typography variant="h6" gutterBottom>
-                            Protect your account
+                            Reset Two-Factor Authentication
                         </Typography>
                         <Typography color="text.secondary" sx={{ mb: 3 }}>
-                            Two-factor authentication adds an additional layer of security to your account. You will need an authenticator app to complete the setup.
+                            Resetting two-factor authentication will remove the current authenticator from your account.
                         </Typography>
                         <Alert severity="info" sx={{ mb: 2 }}>
                             You can use apps such as Google Authenticator, Microsoft Authenticator, or Authy.
                         </Alert>
                         <Typography variant="body2" color="text.secondary">
-                            The setup will only be completed after you successfully verify your authenticator.
+                            The reset will only be completed after you successfully verify your authenticator.
                         </Typography>
                     </Box>
                 )}
@@ -214,7 +216,7 @@ export default function Enable2FADialog({
                             Verify your identity
                         </Typography>
                         <Typography color="text.secondary" sx={{ mb: 3 }}>
-                            For security reasons, please enter your current password before setting up two-factor authentication.
+                            For security reasons, please enter your current password .
                         </Typography>
                         <TextField fullWidth autoFocus required type={showPassword ? 'text' : 'password'} label="Current password" value={password}
                             onChange={(event) => setPassword(event.target.value)} autoComplete="current-password"
@@ -229,7 +231,11 @@ export default function Enable2FADialog({
                                     ),
                                 },
                             }}
-                        />
+                        />                        
+                        <Typography color="text.secondary" sx={{ mb: 3 , pt: 2,}}>
+                            Please enter your recovery code to reset two-factor authentication.
+                        </Typography>
+                        <TextField fullWidth required type='text' label="Recovery code" value={recoverCode} onChange={(event) => setRecoverCode(event.target.value)} />
                     </Box>
                 )}
                 {activeStep === 2 && (
@@ -324,7 +330,7 @@ export default function Enable2FADialog({
                         <Button onClick={handleBack} disabled={loading} >
                             Back
                         </Button>
-                        <Button variant="contained" onClick={handleSetup2FA} disabled={!password || loading} startIcon={loading ? (<CircularProgress size={18} color="inherit" />) : undefined} >
+                        <Button variant="contained" onClick={handleSetup2FA} disabled={!password || !recoverCode || loading} startIcon={loading ? (<CircularProgress size={18} color="inherit" />) : undefined} >
                             {loading ? 'Setting up...' : 'Continue'}
                         </Button>
                     </>
