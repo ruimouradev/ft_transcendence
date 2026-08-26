@@ -1,12 +1,9 @@
 import { useEffect, useState } from 'react';
-
 import { Alert, Box, Button, Checkbox, CircularProgress, Dialog, DialogActions, DialogContent, DialogTitle, Divider, FormControlLabel, IconButton, InputAdornment, Paper, Step, StepLabel, Stepper, TextField, Typography, } from '@mui/material';
-
 import { CheckCircle, Close, ContentCopy, Download, Visibility, VisibilityOff, } from '@mui/icons-material';
-
 import {QRCodeSVG} from 'qrcode.react';
-
 import {api} from '../client';
+import { useAuth } from './AuthContext';
 
 
 interface Reset2FADialogProps {
@@ -32,6 +29,7 @@ export default function Reset2FA({
     onSuccess,
 }: Reset2FADialogProps) {
     const [activeStep, setActiveStep] = useState(0);
+    const { user, login } = useAuth();
 
     const [password, setPassword] = useState('');
     const [showPassword, setShowPassword] = useState(false);
@@ -118,9 +116,9 @@ export default function Reset2FA({
         setLoading(true);
         setError(null);
         try {
-            const response = await api.post<Verify2FAResponse>('/2fa/verify-setup', { code, },
-            );
+            const response = await api.post<Verify2FAResponse>('/2fa/verify-setup', { code, },);
             setRecoveryCodes(response.data.recovery_codes,);
+            login({ ...user, use2fa: true, },);
             setActiveStep(4);
         } catch (error: any) {
             if (error.response?.status === 400) {

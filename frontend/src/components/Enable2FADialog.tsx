@@ -8,6 +8,8 @@ import {QRCodeSVG} from 'qrcode.react';
 
 import {api} from '../client';
 
+import { useAuth } from './AuthContext';
+
 
 interface Enable2FADialogProps {
     open: boolean;
@@ -32,6 +34,7 @@ export default function Enable2FADialog({
     onSuccess,
 }: Enable2FADialogProps) {
     const [activeStep, setActiveStep] = useState(0);
+    const { user, login } = useAuth();
 
     const [password, setPassword] = useState('');
     const [showPassword, setShowPassword] = useState(false);
@@ -119,6 +122,7 @@ export default function Enable2FADialog({
         try {
             const response = await api.post<Verify2FAResponse>('/2fa/verify-setup', { code, },);
             setRecoveryCodes(response.data.recovery_codes,);
+            login({ ...user, use2fa: true, },);
             setActiveStep(4);
         } catch (error: any) {
             if (error.response?.status === 400) {
