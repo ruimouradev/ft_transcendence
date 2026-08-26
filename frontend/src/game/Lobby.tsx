@@ -151,14 +151,24 @@ function SevenZero({sevenZero, setSevenZero, defaultTooltip, setOptionsTooltip}:
 }
 
 // Generates a 5 character Uppercase Hash.
-function createRoomID()
+function createRoomID({ rooms }: { rooms: Room[]})
 {
+	function checkRoom()
+	{
+		for (let i =0; i < rooms?.length; i++)
+		{
+			if (rooms[i].code === hash)
+				return (true);
+		}
+		return (false);
+	}
+
 	let hash = '';
 	do
 	{
 		hash = Math.random().toString(36).slice(2, 7).toUpperCase();
 	}
-	while (hash.length < 5); // Need to check here if the room already exists?
+	while (hash.length < 5 || checkRoom()); // Need to check here if the room already exists
 	return (hash);
 }
 
@@ -187,7 +197,7 @@ function Privacy({privacy, setPrivacy, defaultTooltip, setOptionsTooltip}:
 	)
 }
 
-function CreateRoom()
+function CreateRoom({ rooms }: { rooms: Room[]})
 {
 	const defaultTooltip = 'Hover on options for a brief explanation';
 	const [optionsTooltip, setOptionsTooltip] = useState<string>(defaultTooltip);
@@ -204,7 +214,7 @@ function CreateRoom()
 
 	function CreateRoom()
 	{
-		const room_id = createRoomID();
+		const room_id = createRoomID({rooms});
 		const message = { "type": "create",
 					"name": user?.nick_name,
 					"settings": { "hand_size": handCount,
@@ -212,11 +222,7 @@ function CreateRoom()
 									"seven_zero": sevenZero,
 									"max_players": playerCount,
 									"public": privacy }}
-
-		console.log(message);
-
 		joinRoom(room_id, message);
-//		joinRoom("TEST-PRIV", message);
 	}
 
 	return (
@@ -288,7 +294,7 @@ function JoinPrivate()
 
 		const message = {"type": "join", "name": user?.nick_name};
 		console.log(message);
-		joinRoom(code, message)
+		joinRoom(code.trim(), message)
 		setCode('');
 	}
 
@@ -335,7 +341,7 @@ function JoinCreateLobby({ rooms }: { rooms: Room[]})
 					<Tab sx={{ width: '50%'}} label="CREATE GAME" />
 				</Tabs>
 				<Box sx={{height: '90%', display: 'flex', flexDirection: 'column', justifyContent: 'center'}}>
-						{value === 0 ? <JoinRoom rooms={rooms}/> : <CreateRoom/>}
+						{value === 0 ? <JoinRoom rooms={rooms}/> : <CreateRoom rooms={rooms}/>}
 				</Box>
 			</Container>
 		</ThemeProvider>
@@ -348,11 +354,21 @@ function Lobby()
 
 	useEffect(() => {
 		async function getRooms() {
-			const response = await fetch('/api/rooms');
-			const rooms = await response.json();
-
-			setRooms(rooms);
+			try {
+				const response = await fetch('/api/rooms');
+	
+				if (!response.ok) {
+					throw new Error(`HTTP error: ${response.status}`);
+				}
+				
+				const rooms = await response.json();
+				setRooms(rooms);
+			}
+			catch (error) {
+				console.log('Request failed:', error);
+			}
 		}
+		getRooms();
 		const interval = setInterval(getRooms, 1500);
 		return () => clearInterval(interval);
 	}, []);
