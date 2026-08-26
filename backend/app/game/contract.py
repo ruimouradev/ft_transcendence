@@ -1,6 +1,6 @@
 """
 The message types the server and the client exchange. A player sends
-actions (create, join, add_bot, remove_bot, kick, start, play, draw, pass,
+actions (create, join, add_bot, kick, start, play, draw, pass,
 say_uno, catch, challenge), the server sends back the game state after each
 move, or an error when a move is refused.
 """
@@ -59,22 +59,14 @@ class Join(BaseModel):
 class AddBot(BaseModel):
     # Host only, in the lobby: seats an AI player on the next free chair
     type: Literal["add_bot"] = "add_bot"
-    # Difficulty the host picked for this bot. The AI reads it when
-    # choosing moves, the engine treats all seats alike
+    # Difficulty the host picked, read by the AI. The engine treats
+    # every seat alike
     level: Literal["easy", "medium", "hard"] = "medium"
-
-
-class RemoveBot(BaseModel):
-    # Host only, in the lobby: frees the chair of that bot. Kick does
-    # the same for any chair, one message for the whole list
-    type: Literal["remove_bot"] = "remove_bot"
-    target: str
 
 
 class Kick(BaseModel):
     # Host only, in the lobby: frees any other chair, bot or human.
-    # A human target hears KICKED before the socket closes. Not a ban,
-    # the same player may join again with the room code
+    # Not a ban, the same player may join again with the code
     type: Literal["kick"] = "kick"
     target: str
 
@@ -105,10 +97,8 @@ class Pass(BaseModel):
 
 
 class SayUno(BaseModel):
-    # The Uno call as its own message, so it can race the catch.
-    # Valid on turn holding two cards (calling before the play)
-    # or holding one undeclared card (calling late, before anyone
-    # catches player). The server settles ties by order of arrival.
+    # The Uno call as its own message, so it can race the catch, both
+    # before the play with two cards and after it with one undeclared
     type: Literal["say_uno"] = "say_uno"
 
 
@@ -121,15 +111,13 @@ class Catch(BaseModel):
 
 class Challenge(BaseModel):
     # For the +4 victim who thinks it was played while holding the
-    # active color.
-    # Right: the player who bluffed draws the 4.
-    # Wrong: you draw 6.
+    # active color. Right, the bluffer draws the 4, wrong, you draw 6
     type: Literal["challenge"] = "challenge"
 
 
 # the type field tells pydantic which model to build from the raw text
 PlayerAction = Annotated[
-    Create | Join | AddBot | RemoveBot | Kick | Start | Play | Draw
+    Create | Join | AddBot | Kick | Start | Play | Draw
     | Pass | SayUno | Catch | Challenge,
     Field(discriminator="type"),
 ]
