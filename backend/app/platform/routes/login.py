@@ -123,8 +123,9 @@ def recover_password(session: SessionDep, background_tasks: BackgroundTasks, ema
     user = userservice.get_user_by_email(session=session, email=email)
     if user:
         if settings.EMAILS_ENABLED and user.is_active:
-            token = create_verification_token(email, EmailVerificationType.PASSWORD_RESET, expire_minutes=15)
-            background_tasks.add_task(send_password_reset_email, email=email, username=user.nick_name, token=token)
+            expire_minutes = 10
+            token = create_verification_token(email, EmailVerificationType.PASSWORD_RESET, expire_minutes=expire_minutes)
+            background_tasks.add_task(send_password_reset_email, email=email, username=user.nick_name, token=token, expire_minutes=expire_minutes)
 
     return Message(status_code=200, code="success", message="Check your email and reset your password.")
 

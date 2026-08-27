@@ -7,7 +7,6 @@ from app.presence_manager import presence_manager
 from app.platform import security
 from fastapi import APIRouter, Depends, HTTPException, status, BackgroundTasks, UploadFile, WebSocket, WebSocketDisconnect
 from fastapi.responses import RedirectResponse
-from sqlmodel import col, delete, func, select
 from pathlib import Path
 
 from app.platform.deps import (
@@ -17,23 +16,7 @@ from app.platform.deps import (
 )
 from app.platform.config import settings
 from app.platform.security import get_password_hash, verify_password
-from app.models.all import (
-    APIError,
-    APIKeyContext,
-    APIKeyStatus,
-    EmailVerificationType,
-    Message,
-    OAuthAccountCreate,
-    ProviderType,
-    UpdatePassword,
-    User,
-    UserCreate,
-    UserPublic,
-    UserRegister,
-    UsersPublic,
-    UserUpdate,
-    UserUpdateMe,
-)
+from app.models.all import (APIError,APIKeyContext,APIKeyStatus,EmailVerificationType,Message,OAuthAccountCreate,ProviderType,UpdatePassword,User,UserCreate,UserPublic,UserRegister,UsersPublic,UserUpdate,UserUpdateMe,)
 
 from app.platform.service import userservice
 from app.platform.service.mailservice import (
@@ -163,9 +146,10 @@ def register_user(session: SessionDep, user_in: UserRegister, background_tasks: 
     user_create.avatar = "/static/a00.jpeg"
     userservice.create_user(session=session, user_create=user_create)
     if settings.EMAILS_ENABLED and user_in.email:
-        token = create_verification_token(user_in.email, EmailVerificationType.ACCOUNT_ACTIVATION, expire_minutes=15)
-        background_tasks.add_task(send_new_account_activation_email, user_in.email, user_in.nick_name, token)
-        
+        expire_minutes = 30
+        token = create_verification_token(user_in.email, EmailVerificationType.ACCOUNT_ACTIVATION, expire_minutes=expire_minutes)
+        background_tasks.add_task(send_new_account_activation_email, user_in.email, user_in.nick_name, token, expire_minutes=expire_minutes)
+
     return Message(status_code=200, code="success", message="User created successfully")
 
 @router.get("/verify-email")
@@ -178,7 +162,7 @@ def verify_email(session: SessionDep, token: str):
         email = verify_token(token)
     except APIError as e:
         return RedirectResponse(
-                url=f"/login?error={e.msg}",
+                url=f"/login?error={e.message}",
                 status_code=status.HTTP_307_TEMPORARY_REDIRECT
             )
     user = userservice.get_user_by_email(session=session, email=email)
@@ -329,19 +313,6 @@ async def upload_file(file: UploadFile, session: SessionDep, current_user: Curre
 
     userservice.update_user(session=session, db_user=current_user, user_in=UserUpdate(avatar=f"/static/{current_user.id.hex}/{avatar_filename}"))
     return {"filename": avatar_filename, "file_size": len(content), "url": f"/static/{current_user.id.hex}/{avatar_filename}"}
-
-
-# @router.get("/online", response_model=UsersPublic)
-# def get_online_users(session: SessionDep, current_user: CurrentUser) -> Any:
-#     """
-#     Retrieve online users.
-#     """
-#     statement = select(User).where(User.is_active == True)
-#     users = session.exec(statement).all()
-
-#     users_public = [UserPublic.model_validate(user) for user in users]
-#     return UsersPublic(data=users_public, count=len(users_public))
-
 
 user_presence_router = APIRouter()
 

@@ -101,7 +101,11 @@ export default function Login() {
             const response = await api.post('/request-password-reset', { email: formData.email });
             navigate(`/login?info=${encodeURIComponent(response.data.message)}`, { replace: true });
         } catch (err) {
-            setError(getErrorMessage(err));
+            if(err.response?.status === 429) {
+                setError('Requests are limited to 1 per minute. Please try again later.');
+            } else {
+                setError(getErrorMessage(err));
+            }
         }
     };
     

@@ -43,14 +43,14 @@ def verify_token(token: str) -> str:
     except jwt.PyJWTError:
         raise APIError(status_code=400, code=APIErrorCode.BAD_REQUEST, msg="Invalid verification link. Please check your email and try again.")
 
-async def send_new_account_activation_email(email: EmailStr, username: str, token: str):
+async def send_new_account_activation_email(email: EmailStr, username: str, token: str, expire_minutes: int = 15):
     """Send an account activation email to the user with a verification link."""
 
     verify_url = f"{settings.FRONTEND_HOST}/api/v1/users/verify-email?token={token}"
     template_data = {
         "username": username,
         "verify_url": verify_url,
-        "expire_minutes": 15
+        "expire_minutes": expire_minutes
     }
     message = MessageSchema(
         subject="[Account Activation] Please Activate Your Email",
@@ -61,13 +61,13 @@ async def send_new_account_activation_email(email: EmailStr, username: str, toke
     fm = FastMail(conf)
     await fm.send_message(message, template_name="email_verification.html")
 
-async def send_password_reset_email(email: EmailStr, username: str, token: str):
+async def send_password_reset_email(email: EmailStr, username: str, token: str, expire_minutes: int = 15):
     """Send a password reset email to the user with a reset link."""
     reset_url = f"{settings.FRONTEND_HOST}/reset-password?token={token}"
     template_data = {
         "username": username,
         "reset_url": reset_url,
-        "expire_minutes": 15,
+        "expire_minutes": expire_minutes,
     }
     message = MessageSchema(
         subject="[Password Reset] Reset Your Password",
