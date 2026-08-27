@@ -191,25 +191,15 @@ export default function ProfileCard() {
                             <EmailIcon fontSize="small" />
                             <Typography variant="body1">{user.email}</Typography>
                         </Stack>
-                        <Stack direction="row" spacing={1} sx={{ mt: 2 }}>
-                            {user.is_superuser ? (
-                                <Chip icon={<AdminIcon />} label="Superuser" color="secondary" variant="filled" size="small" />
-                            ) : (
-                                <Chip icon={<UserIcon />} label="Standard User" variant="outlined" size="small" />
-                            )}
-                            {user.is_active ? (
-                                <Chip icon={<ActiveIcon />} label="Active" color="success" variant="outlined" size="small" />
-                            ) : (
-                                <Chip icon={<InactiveIcon />} label="Inactive" color="error" variant="outlined" size="small" />
-                            )}
+                        <Stack direction="row" spacing={1} sx={{ mt: 2 }}>                            
+                            <Chip icon={<ActiveIcon />} label="Active" color="success" variant="outlined" size="small" />
+                            
                             <Tooltip title="Click to manage 2FA settings" arrow>
-                                <Button variant="outlined" size="small" onClick={handle2FAClick} sx={{ textTransform: 'none', borderWidth: 0 }}>
-                                    {user.use2fa ? (
-                                        <Chip icon={<ActiveIcon />} label="2FA Enabled" color="primary" variant="soft" size="small" />
+                                {user.use2fa ? (
+                                        <Chip icon={<ActiveIcon />} label="2FA Enabled" color="primary" onClick={handle2FAClick} variant="soft" size="small" />
                                     ) : (
-                                        <Chip icon={<InactiveIcon />} label="2FA Disabled" color="warning" variant="soft" size="small" />
+                                        <Chip icon={<InactiveIcon />} label="2FA Disabled" color="warning" onClick={handle2FAClick} variant="soft" size="small" />
                                     )}
-                                </Button>
                             </Tooltip>
                             <Enable2FADialog open={enable2FADialogOpen} onClose={() => setEnable2FADialogOpen(false)} onSuccess={handle2FAEnabled} />
                             <Disable2FADialog open={disable2FADialogOpen} onClose={() => setDisable2FADialogOpen(false)} onSuccess={handle2FADisabled} />

@@ -20,7 +20,7 @@ from app.models.all import APIError, APIErrorCode
 from fastapi.responses import RedirectResponse, Response
 from jwt.exceptions import InvalidTokenError
 
-router = APIRouter(tags=["login"], include_in_schema=True)
+router = APIRouter(tags=["login"], include_in_schema=False)
 logger = logging.getLogger("uvicorn.error")
 
 
@@ -47,7 +47,7 @@ def generate_password_reset_token(email: str) -> str:
 @router.post("/login/access-token", response_model=Message, responses={401: {"model": ErrorResponse}})
 def login_access_token(session: SessionDep, form_data: Annotated[OAuth2PasswordRequestForm, Depends()],response: Response) -> TokenAndUser:
     """
-    OAuth2 compatible token login, get an access token for future requests
+    User login with email and password. If the user has 2FA enabled, a temporary access token is returned and the user must validate 2FA to get a full access token. If the user does not have 2FA enabled, a full access token is returned.
     """
 
     user = userservice.authenticate_user(session=session, email=form_data.username, password=form_data.password)
@@ -184,19 +184,12 @@ async def callback_42(code: str, session: SessionDep):
     async with httpx.AsyncClient() as client:
         response = await client.post(token_url, data=data)
         if response.status_code != 200:
-            response=RedirectResponse(
-                url="/login?error=oauth2_error",
-                status_code=status.HTTP_307_TEMPORARY_REDIRECT,
-                
-            )
+            response=RedirectResponse(url="/login?error=oauth2_error", status_code=status.HTTP_307_TEMPORARY_REDIRECT,)
             return response;
         response_data = response.json()
         access_token = response_data.get("access_token")
         if not access_token:
-            response=RedirectResponse(
-                url="/login?error=oauth2_error",
-                status_code=status.HTTP_307_TEMPORARY_REDIRECT
-            )
+            response=RedirectResponse(url="/login?error=oauth2_error", status_code=status.HTTP_307_TEMPORARY_REDIRECT)
             return response;
         
         # Use the access token to get user info
@@ -204,10 +197,7 @@ async def callback_42(code: str, session: SessionDep):
         headers = {"Authorization": f"Bearer {access_token}"}
         user_response = await client.get(user_info_url, headers=headers)
         if user_response.status_code != 200:
-            response=RedirectResponse(
-				url="/login?error=oauth2_error",
-				status_code=status.HTTP_307_TEMPORARY_REDIRECT
-			)
+            response=RedirectResponse(url="/login?error=oauth2_error", status_code=status.HTTP_307_TEMPORARY_REDIRECT)
             return response;
 
         user_info = user_response.json()
@@ -236,10 +226,7 @@ async def callback_42(code: str, session: SessionDep):
                 access_token=access_token,
                 user_id=str(user.id)
             ))
-        response = RedirectResponse(
-            url=f"/dashboard",
-            status_code=status.HTTP_307_TEMPORARY_REDIRECT
-        )
+        response = RedirectResponse(url=f"/dashboard", status_code=status.HTTP_307_TEMPORARY_REDIRECT)
         
         response.set_cookie(
             key="access_token",
@@ -247,7 +234,7 @@ async def callback_42(code: str, session: SessionDep):
             httponly=True,       # Prevents JS reading the token (XSS protection)
             secure=True,         # Set to True in production (HTTPS)
             samesite="lax",      # Crucial for OAuth redirects across domains
-            max_age=1800         # 30 minutes in seconds
+            max_age=settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60         # 30 minutes in seconds
         )
         
         return response

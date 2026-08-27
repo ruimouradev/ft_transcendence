@@ -19,7 +19,6 @@ class UserBase(SQLModel):
     avatar: str | None = Field(default="/static/a00.jpeg", max_length=255)
     card_back: str | None = Field(default="/static/cardback.jpeg", max_length=255)
     use2fa: bool = False
-    two_factor_secret: str | None = Field(default=None, max_length=255)
 
 
 # Properties to receive via API on creation
@@ -32,10 +31,11 @@ class UserRegister(SQLModel):
     password: str = Field(min_length=8, max_length=32)
     nick_name: str = Field(min_length=3, max_length=20)
 
-# Properties to receive via API on update, all are optional
+# This class can not be used for a request body;
 class UserUpdate(UserBase):
     email: EmailStr | None = Field(default=None, max_length=255)
     password: str | None = Field(default=None, min_length=8, max_length=32)
+    two_factor_secret: str | None = Field(default=None, max_length=512)
 
 
 class UserUpdateMe(SQLModel):
@@ -52,6 +52,8 @@ class UpdatePassword(SQLModel):
 class User(UserBase, table=True):
     id: UUID = Field(default_factory=uuid4, primary_key=True)
     hashed_password: str | None = Field(default=None, max_length=255)
+    two_factor_secret: str | None = Field(default=None, max_length=512)
+
     created_at: datetime = Field( default_factory=get_datetime_utc, sa_type=DateTime(timezone=True))
     sent_requests: list["Friendship"] = Relationship(
         sa_relationship_kwargs={
@@ -70,11 +72,6 @@ class User(UserBase, table=True):
 class UserPublic(UserBase):
     id: UUID
     created_at: datetime | None = None
-
-
-class UsersPublic(SQLModel):
-    data: list[UserPublic]
-    count: int
 
 class UserOnLineStatus(SQLModel):
     user_id: UUID
@@ -151,7 +148,7 @@ class Friendship(SQLModel, table=True):
     status: FriendshipStatus
 
     created_at: datetime = Field(default_factory=get_datetime_utc,sa_type=DateTime(timezone=True))
-    accepted_at: datetime | None = Field(default_factory=get_datetime_utc,sa_type=DateTime(timezone=True))
+    accepted_at: datetime | None = Field(default_factory=None,sa_type=DateTime(timezone=True))
 
 class Game(SQLModel, table=True):
 
@@ -161,7 +158,7 @@ class Game(SQLModel, table=True):
 
     created_at: datetime = Field(default_factory=get_datetime_utc,sa_type=DateTime(timezone=True))
 
-    finished_at: datetime | None = Field(default_factory=get_datetime_utc,sa_type=DateTime(timezone=True))
+    finished_at: datetime | None = Field(default_factory=None,sa_type=DateTime(timezone=True))
 
 
 class GamePlayer(SQLModel, table=True):
