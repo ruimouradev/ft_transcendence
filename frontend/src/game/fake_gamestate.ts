@@ -31,14 +31,14 @@ type PublicPlayer = {
 type PrivatePlayer = {
 	id: string,
 	hand: GameCard[],
-	playable: GameCard[],
+	playable: string[],
 	drawn: string | null
 }
 
 type GameState = {
 	type : 'state',
 	seq : number,
-	phase : "lobby" | "playing" | "finished",
+	phase : 'lobby' | 'playing' | 'finished',
 	you : PrivatePlayer,
 	players : PublicPlayer[],
 	host_id : string | null,
@@ -49,50 +49,71 @@ type GameState = {
 		max_players: number,
 		public: boolean
 	} | null,
-	top_card : null,
+	top_card : GameCard | null,
 	active_color : Color | null,
 	direction : 1 | -1,
 	turn : string | null,
 	draw_pile : number,
 	stack : number,
 	plus4_by : string | null,
-	last_action : null,
+	last_action : LastAction | null,
 	winner : string | null,
-	winner_score : string | null
+	winner_score : number | null
 }
 
-const you: PrivatePlayer = {
-
+type LastAction = {
+	player: string,
+    kind: 'join' | 'start' | 'play' | 'draw' | 'pass' 
+			| 'catch' | 'challenge' | 'timeout' | 'uno',
+    card: GameCard | null,
 }
 
-const players: PublicPlayer[] = {
+export const hand: GameCard[] = [
+{id: 'c107', color: 'blue', value: '3'},
+{id: 'c106', color: 'yellow', value: '7'},
+{id: 'c101', color: 'red', value: '9'},	
+{id: 'c102', color: 'red', value: 'reverse'},
+{id: 'c101', color: 'red', value: '9'},
+{id: 'c107', color: 'blue', value: '3'},
+{id: 'c106', color: 'yellow', value: '7'},
+{id: 'c105', color: 'green', value: '3'},
+{id: 'c101', color: 'red', value: '9'}]
 
-
+export const you: PrivatePlayer = {
+	id: 'p1',
+	hand: hand,
+	playable: ["c107", "c104"],
+	drawn: null,
 }
 
+export const players: PublicPlayer[] = [
+{id: 'p1', name: 'Viniciussss', cards: 16, connected: true, uno: false, bot: false, avatar: '/static/a7eae121b02841b1837cd57b060a7869/avatar.png', points: 0},
+{id: 'p2', name: 'Maria João', cards: 7, connected: true, uno: false, bot: false, avatar: '/static/a7eae121b02841b1837cd57b060a7869/avatar.png', points: 0},
+{id: 'p3', name: 'Joana', cards: 7, connected: true, uno: false, bot: false, avatar: '/static/a7eae121b02841b1837cd57b060a7869/avatar.png', points: 0},
+{id: 'p4', name: 'Ana', cards: 10, connected: true, uno: false, bot: false, avatar: '/static/a7eae121b02841b1837cd57b060a7869/avatar.png', points: 0}]
 
-export const gameState: GameState = {
+export const fakeState: GameState = {
 	type : 'state',
-	seq : 20,
+	seq : 42,
 	phase : 'playing',
 	you : you,
 	players : players,
-	host_id : 'p0',
+	host_id : 'p1',
 	settings : {
 		hand_size: 7, 
 		stacking: false, 
 		seven_zero: false,
 		max_players: 4,
 		public: true
-	}
-	top_card : null,
-	active_color : Color | null,
-	direction : 1 | -1,
-	turn : string | null,
-	draw_pile : number,
-	stack : number,
-	plus4_by : string | null,
-	last_action : null,
-	winner : string | null,
-	winner_score : string | null
+	},
+	top_card: {color: "blue", id: "c79", value: "1"},
+	active_color : 'blue',
+	direction : 1,
+	turn : 'p1',
+	draw_pile : 79,
+	stack : 0,
+	plus4_by : null,
+	last_action : {player: 'p1', kind: 'start', card: null},
+	winner : null,
+	winner_score : null
 }
