@@ -19,7 +19,7 @@ from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 
 from app.game.contract import (
     AddBot, Catch, Challenge, Create, Draw, Error, ErrorCode,
-    GameSettings, Join, Kick, Pass, Play, PlayerAction, SayUno,
+    GameSettings, Join, Kick, Leave, Pass, Play, PlayerAction, SayUno,
     Start, Welcome, parse_action,
 )
 from app.game.engine import Game, GameError
@@ -311,6 +311,21 @@ async def apply(room: Room, player: Player, action: PlayerAction) -> Error | Non
                 await target.ws.close()
             except Exception:
                 pass  # already gone, the goodbye was best effort
+        return None
+
+    if isinstance(action, Leave):
+        if room.game.phase == "playing":
+            return err(ErrorCode.GAME_ALREADY_STARTED, "the game is running")
+        # the grace is there for a reload, this is a goodbye
+        room.players.remove(player)
+        # after a finished game the seats are only rebuilt by the next
+        # start, so the winner stays on everyone's screen
+        if room.game.phase == "lobby":
+            reseat(room)
+        try:
+            await player.ws.close()
+        except Exception:
+            pass  # already gone, the chair is free either way
         return None
 
     try:
