@@ -69,15 +69,15 @@ type LastAction = {
 }
 
 export const hand: GameCard[] = [
-{id: 'c107', color: 'blue', value: '3'},
-{id: 'c106', color: 'yellow', value: '7'},
+{id: 'c99', color: 'yellow', value: '3'},
+{id: 'c106', color: 'green', value: '7'},
 {id: 'c101', color: 'red', value: '9'},	
-{id: 'c102', color: 'red', value: 'reverse'},
-{id: 'c101', color: 'red', value: '9'},
-{id: 'c107', color: 'blue', value: '3'},
-{id: 'c106', color: 'yellow', value: '7'},
+{id: 'c104', color: 'red', value: 'reverse'},
+{id: 'c111', color: 'wild', value: 'wild'},
+{id: 'c108', color: 'blue', value: '3'},
+{id: 'c116', color: 'yellow', value: '7'},
 {id: 'c105', color: 'green', value: '3'},
-{id: 'c101', color: 'red', value: '9'}]
+{id: 'c100', color: 'red', value: '0'}]
 
 export const you: PrivatePlayer = {
 	id: 'p1',
