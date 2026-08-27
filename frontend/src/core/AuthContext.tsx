@@ -9,8 +9,6 @@ export interface User {
   nick_name: string;
   avatar: string;
   card_back: string | null;
-  is_superuser: boolean;
-  is_active: boolean;
 }
 
 interface AuthContextType {

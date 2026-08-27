@@ -14,7 +14,7 @@ from app.platform import security
 from app.platform.config import settings
 
 from app.platform.service.mailservice import create_verification_token, send_password_reset_email, verify_token
-from app.models.all import EmailVerificationType, ErrorResponse, Message, OAuthAccountCreate, ProviderType, TokenAndUser, TokenPayload, UserCreate, UserUpdate, User
+from app.models.all import EmailVerificationType, ErrorResponse, Message, OAuthAccountCreate, ProviderType, TokenPayload, UserCreate, UserUpdate, User
 from app.models.all import APIError, APIErrorCode
 
 from fastapi.responses import RedirectResponse, Response
@@ -45,7 +45,7 @@ def generate_password_reset_token(email: str) -> str:
 
 
 @router.post("/login/access-token", response_model=Message, responses={401: {"model": ErrorResponse}})
-def login_access_token(session: SessionDep, form_data: Annotated[OAuth2PasswordRequestForm, Depends()],response: Response) -> TokenAndUser:
+def login_access_token(session: SessionDep, form_data: Annotated[OAuth2PasswordRequestForm, Depends()],response: Response) -> Message:
     """
     User login with email and password. If the user has 2FA enabled, a temporary access token is returned and the user must validate 2FA to get a full access token. If the user does not have 2FA enabled, a full access token is returned.
     """
