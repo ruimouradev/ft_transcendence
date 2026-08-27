@@ -12,6 +12,7 @@ import Privacy from './legal/Privacy'
 import Terms from './legal/Terms'
 import Play from './game/Play'
 import Lobby from './game/Lobby'
+import Error from './layout/Error'
 import { ProtectedRoute } from './core/ProtectedRoute'
 import Verify2fa from './account/Verify2fa'
 import ResetPassword from './account/ResetPassword'
@@ -32,6 +33,7 @@ function App() {
                 <Route path="login/2fa" element={<Verify2fa />} />
                 <Route path="reset-password" element={<ResetPassword />} />
 
+				<Route path='*' element={<Error />}/>
                 <Route element={<ProtectedRoute />}>
 					<Route path='/lobby' element={<Lobby />}/>
                     <Route path="profile" element={<ProfilePage />} />

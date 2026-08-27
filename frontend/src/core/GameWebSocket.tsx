@@ -2,6 +2,8 @@ import { createContext, useContext, useEffect, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 import { useAuth } from './AuthContext';
 
+import { fakeState } from '../game/fake_gamestate';
+
 // A presença: nasce no login e morre no logout, um websocket que vive
 // a sessão inteira e diz ao servidor "continuo aqui" a cada batida.
 // É isto que acende o ponto verde dos amigos. Não confundir com o
@@ -98,16 +100,14 @@ function GameWebSocket({ children }: { children: React.ReactNode }) {
 					handleErrorMessages(message);
 					break ;
 				case 'state':
+				//	setGameState(fakeState); // FAKE TEST STATE !!!! REMOVE DEL
 					setGameState(message);
 					break ;
 				default:
 					alert('undefined error');
 			}
 
-
-
-
-
+			// DEL !
 			console.log("game engine: ", message);
 			setLastMessage(message);
 		}
@@ -123,7 +123,7 @@ function GameWebSocket({ children }: { children: React.ReactNode }) {
 			socketRef.current = null;
 			setConnected('offline');
 			setRoomID(null);
-
+ 
 			if (pendingRoomRef.current && user) {
 				const room = pendingRoomRef.current;
 				pendingRoomRef.current = null;
@@ -146,7 +146,10 @@ function GameWebSocket({ children }: { children: React.ReactNode }) {
 	function sendMessage(message: object)
 	{
 		if (socketRef.current?.readyState  === WebSocket.OPEN)
+		{
+			console.log(message);
 			socketRef.current.send(JSON.stringify(message));
+		}
 	}
 
 	function handleErrorMessages({type, code, msg, room}: {type: string, code: string, msg:string, room: string | null})
@@ -160,36 +163,43 @@ function GameWebSocket({ children }: { children: React.ReactNode }) {
 				}
 				return ;
 			case ("KICKED"):
+			case ('ROOM_FULL'):
+			case ("AUTH_REQUIRED"):
 			case ('ROOM_NOT_FOUND'):
 			case ("GAME_ALREADY_STARTED"):
+			// AUTH_REQUIRED = "AUTH_REQUIRED"
 				closeRoomConnection();			
 				break ;
+			// case("GAME_NOT_STARTED"):
+			// 	return ;
 		}
 		alert(`${type} ${msg}`);
-		// IGNORE ?? //
-				// NOT_YOUR_TURN = "NOT_YOUR_TURN"
-				// INVALID_CARD = "INVALID_CARD"
-				// INVALID_CHALLENGE = "INVALID_CHALLENGE"
-				// INVALID_UNO = "INVALID_UNO"
-				// INVALID_CATCH = "INVALID_CATCH"
 
-		// ALERT //
-
-			// CLOSE CONNECTION //
-				// GAME_ALREADY_STARTED = "GAME_ALREADY_STARTED"
-				// ROOM_NOT_FOUND = "ROOM_NOT_FOUND"
-				// KICKED = "KICKED"
-
-			// ROOM_FULL = "ROOM_FULL"
-			// AUTH_REQUIRED = "AUTH_REQUIRED"
+		/* ALERT
+		{
 			// INVALID_MESSAGE = "INVALID_MESSAGE"
 			// GAME_NOT_STARTED = "GAME_NOT_STARTED"
 			// CARD_NOT_IN_HAND = "CARD_NOT_IN_HAND"
 			// COLOR_REQUIRED = "COLOR_REQUIRED"
 			// TARGET_REQUIRED = "TARGET_REQUIRED"
 
+			// IGNORE ?? //
+				// NOT_YOUR_TURN = "NOT_YOUR_TURN"
+				// INVALID_CARD = "INVALID_CARD"
+				// INVALID_CHALLENGE = "INVALID_CHALLENGE"
+				// INVALID_UNO = "INVALID_UNO"
+				// INVALID_CATCH = "INVALID_CATCH"
+
+			// CLOSE CONNECTION  //
+				// KICKED = "KICKED"
+				// ROOM_FULL = "ROOM_FULL"
+				// AUTH_REQUIRED = "AUTH_REQUIRED"
+				// ROOM_NOT_FOUND = "ROOM_NOT_FOUND"
+				// GAME_ALREADY_STARTED = "GAME_ALREADY_STARTED"
+		} 
 		// HANDLE //
 			// ALREADY_IN_ROOM = "ALREADY_IN_ROOM"
+		*/
 	}
 	return (
 		<GameContext.Provider value={{ roomID, connected, error, lastMessage, gameState, joinRoom, closeRoomConnection, sendMessage }}>

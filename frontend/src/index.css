@@ -4,38 +4,175 @@
    tailwind e do CssBaseline do MUI, por isso este ficheiro e curto. */
 @import "tailwindcss";
 
+.rainbow-button {
+	animation: rainbow-button 15s linear infinite;
+}
+
+@keyframes rainbow-button {
+		100%,0%{
+			background-color: rgb(188, 0, 0);
+		}
+		8%{
+			background-color: rgb(198, 100, 1);
+		}
+		16%{
+			background-color: rgb(188, 188, 0);
+		}
+		25%{
+			background-color: rgb(93, 187, 0);
+		}
+		33%{
+			background-color: rgb(0, 184, 0);
+		}
+		41%{
+			background-color: rgb(0, 180, 90);
+		}
+		50%{
+			background-color: rgb(0, 189, 189);
+		}
+		58%{
+			background-color: rgb(0, 101, 203);
+		}
+		66%{
+			background-color: rgb(0, 0, 190);
+		}
+		75%{
+			background-color: rgb(92, 0, 184);
+		}
+		83%{
+			background-color: rgb(184, 0, 184);
+		}
+		91%{
+			background-color: rgb(186, 0, 93);
+		}
+}
+
 .board-south {
     grid-column: 3 / 9;
     grid-row: 10 / 13;
-	background-color: #550066;
 }
 
 .board-north {
     grid-column: 3 / 9;
     grid-row: 1 / 4;
-	background-color: #550066;
 }
 
 .board-east {
     grid-column: 9 / 11;
     grid-row: 2 / 10;
-	background-color: #550066;
 }
 
 .board-west {
     grid-column: 1 / 3;
     grid-row: 2 / 10;
-	background-color: #550066;
+}
+
+.avatar-south {
+	transform: translateY(10%);
 }
 
 .avatar-north {
-	transform: translateY(90px);
+	transform: translateY(50%);
 }
 
 .avatar-west {
-	transform: translateX(70px);
+	transform: translateX(25%);
 }
 
 .avatar-east {
-	transform: translateX(-70px);
+	transform: translateX(-25%);
+}
+
+
+.card {
+	--card-scale: 1;
+	min-width: 20px;
+	width: calc(5vw * var(--card-scale));
+	aspect-ratio: 5 / 7;
+	flex-shrink: 0;
+	user-select: none;
+    -webkit-user-drag: none;
+	object-fit: cover;
+	border-radius: 5px;
+	border: 2px solid white;
+	box-sizing: border-box;
+	box-shadow: 4.0px 8.0px 8.0px black;
+}
+
+.card_small {
+	--card-scale: 0.8;
+}
+
+@media (min-width: 550px){
+	.card {
+		width: calc(5vw * var(--card-scale));
+		border: 2px solid white;
+	}
+}
+
+@media (min-width: 700px) {
+	.card {
+		width: calc(5vw * var(--card-scale));
+		border: 3px solid white;
+	}
+}
+
+@media (min-width: 900px) {
+	.card {
+		width: calc(5vw * var(--card-scale));
+		border: 4px solid white;
+	}
+}
+
+.card-north {
+	transform: rotate(0deg) translateY(-30%);
+}
+
+.card-east {
+	transform: rotate(90deg) translateY(-60%);
+	margin: 0px 0px -30%;
+}
+
+.card-west {
+	transform: rotate(270deg) translateY(-60%);
+	margin: 0px 0px -30%;
+}
+
+.card-south {
+	transition: transform 0.15s ease;
+}
+
+.box-card {
+	z-index: 1;
+	display: inline-flex;
+	width: 5vw;
+    aspect-ratio: 5 / 7;
+    flex-shrink: 0;
+	transform: translateY(10px);
+}
+
+.box-card .card {
+    width: 100%;
+    height: 100%;
+}
+
+.box-card:hover .card-south {
+    transform: translateY(-30%);
+}
+
+.z-index:hover {
+	z-index: 100;
+}
+
+.deck_card {
+	transform: translateX(0px) translateY(-60px);
+}
+
+.arrow {
+	user-select: none;
+    -webkit-user-drag: none;
+	width: 80%;
+	height: 80%;
+	object-fit: contain;
+	transform: translateY(-50px);
 }
