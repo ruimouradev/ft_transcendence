@@ -12,7 +12,7 @@ from pathlib import Path
 from app.platform.deps import (CurrentUser, SessionDep,)
 from app.platform.config import settings
 from app.platform.security import get_password_hash, verify_password
-from app.models.all import (APIError,APIKeyContext,APIKeyStatus,EmailVerificationType,Message,OAuthAccountCreate,ProviderType,UpdatePassword,User,UserCreate,UserPublic,UserRegister,UserUpdate,UserUpdateMe,)
+from app.models.all import (APIError, APIErrorCode,APIKeyContext,APIKeyStatus,EmailVerificationType,Message,OAuthAccountCreate,ProviderType,UpdatePassword,User,UserCreate,UserPublic,UserRegister,UserUpdate,UserUpdateMe,)
 
 from app.platform.service import userservice
 from app.platform.service.mailservice import (
@@ -96,6 +96,22 @@ def register_user(session: SessionDep, user_in: UserRegister, background_tasks: 
         background_tasks.add_task(send_new_account_activation_email, user_in.email, user_in.nick_name, token, expire_minutes=expire_minutes)
 
     return Message(status_code=200, code="success", message="User created successfully")
+
+@router.post("/resend-activation-email", response_model=Message)
+def resend_activation_email(session: SessionDep, user_in: UserRegister, background_tasks: BackgroundTasks):
+    """
+    Resend the activation email to the user.
+    """
+    user = userservice.get_user_by_email(session=session, email=user_in.email)
+    if user:
+        verifyed, _ = verify_password(user_in.password, user.hashed_password)
+        if verifyed and user.nick_name == user_in.nick_name:
+            expire_minutes = 30
+            token = create_verification_token(user_in.email, EmailVerificationType.ACCOUNT_ACTIVATION, expire_minutes=expire_minutes)
+            background_tasks.add_task(send_new_account_activation_email, user_in.email, user.nick_name, token, expire_minutes=expire_minutes)
+            return Message(status_code=200, code="success", message="Activation email has already been sent. Please check your inbox.")
+
+    raise APIError(status_code=400, code=APIErrorCode.BAD_REQUEST, msg="Requested information is not correct.")
 
 @router.get("/verify-email")
 def verify_email(session: SessionDep, token: str):
