@@ -26,62 +26,45 @@ function getCardName({card}: {card: GameCard})
 	return (cardPath);
 }
 
-function DrawCard()
+function DrawCard(sendMessage: (message: object) => void)
 {
-	console.log("deck clicked")
+	const message = {"type": "draw"};
+	sendMessage(message);
+
+	// DEL
+	console.log(message)
 }
 
-function PlayCard({card, popUp, setPopUp}:
+function PlayCard({card, popUp, setPopUp, gameState, sendMessage}:
 	{card: GameCard,
 	popUp: string,
-	setPopUp: React.Dispatch<React.SetStateAction<PopUpTypes>>})
+	setPopUp: React.Dispatch<React.SetStateAction<PopUpTypes>>,
+	gameState: GameState | null,
+	sendMessage: (message: object) => void})
 {
-
-	if (popUp !== 'disabled')
+	if (popUp !== 'disabled'
+		|| gameState?.you.id !== gameState?.turn
+		|| !gameState?.you.playable?.includes(card.id))
 		return null;
 
-
-	// CANT HAVE THIS HERE, INVALID HOOK CALL !!!!
-	// PASS GAMESTATE AS PROP !!!!!
-	// const {gameState} = getGameContext();
-
-	// // Not my turn? Return ;
-	// if (gameState?.turn !== gameState?.you.id)
-	// 	return ;
-
-
-
 	let play_message = {type: 'play', card: `${card.id}`};
-	// Send message if not wildcard !
-
-
-
 
 	if (card.color === 'wild')
 	{
-		setPopUp('wildcard');
-		Object.assign(play_message, {color: `${popUp}`});
+		Object.assign(play_message, {color: 'blue'});
+//		setPopUp('wildcard');
+//		Object.assign(play_message, {color: `${popUp}`});
 	}
-
-	console.log(play_message)
-
-
-
-	// Is wildcard?
-	// Trigger color
-	// Save color in a state
-	// Send message()
-
-	// Is valid play?
-	// No? return()
-
-
+	sendMessage(play_message);
 }
 
 function DeckArea()
 {
 	const { user } = useAuth();
-	const { gameState } = getGameContext();
+	const { gameState, sendMessage } = getGameContext();
+
+	const uno_click = {"type": "say_uno"};
+	const challenge_click = {"type": "challenge"};
 
 	const images = import.meta.glob(
 		'../assets/cards/*.png',
@@ -116,16 +99,16 @@ function DeckArea()
 	return (
 		<Box sx={{ height: '100%', width: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center', position: 'relative' }}>
 			<Box sx={{ width: '50%', height: '50%', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 1, }}>
-				<img className="card deck_card" src={cardBacks[user?.card_back ?? ''] ?? defaultCardBack} alt="" draggable={false} onClick={DrawCard}/>
+				<img className="card deck_card" src={cardBacks[user?.card_back ?? ''] ?? defaultCardBack} alt="" draggable={false} onClick={() => DrawCard(sendMessage)}/>
 				<img className="card deck_card" src={images[getCardName({card})]} alt="" draggable={false}/>
 			</Box>
-			<Box sx={{ bottom: 0, position: 'absolute', width: '50%', height: '25%', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+			<Box sx={{ bottom: 0, position: 'absolute', width: '30%', height: '20%', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
 				<img className="arrow" src={direction} alt="" draggable={false}/>
 			</Box>
 			<Box sx={{ width: '25%', height: '100%', right: 0, position: 'absolute', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
 				<Paper elevation={10} sx={{ width: '60%',  aspectRatio: '1 / 1', bgcolor: color, borderRadius: 1 }}></Paper>
-				<Button className="rainbow-button" variant="contained" sx={{ width: '60%',  aspectRatio: '1 / 1', minWidth: 0, fontSize: 'clamp(0.5rem, 2vw, 1rem)' }}>UNO!</Button>
-				<Button className="rainbow-button" variant="contained" sx={{ width: '60%',  aspectRatio: '1 / 1', minWidth: 0, fontSize: 'clamp(0.5rem, 2vw, 1rem)' }}>DARE</Button>
+				<Button className="rainbow-button" variant="contained" onClick={() => sendMessage(uno_click)} sx={{ width: '60%',  aspectRatio: '1 / 1', minWidth: 0, fontSize: 'clamp(0.5rem, 2vw, 1rem)' }}>UNO!</Button>
+				<Button className="rainbow-button" variant="contained" onClick={() => sendMessage(challenge_click)}sx={{ width: '60%',  aspectRatio: '1 / 1', minWidth: 0, fontSize: 'clamp(0.5rem, 2vw, 1rem)' }}>DARE</Button>
 			</Box>
 		</Box>
 	)
@@ -151,7 +134,8 @@ function WildCard({setPopUp}: {setPopUp: React.Dispatch<React.SetStateAction<Pop
 	)
 }
 
-function PopUp({popUp, setPopUp}: {popUp: PopUpTypes, setPopUp: React.Dispatch<React.SetStateAction<PopUpTypes>>})
+function PopUp({popUp, setPopUp}: {popUp: PopUpTypes, setPopUp: 
+	React.Dispatch<React.SetStateAction<PopUpTypes>>})
 {
 	if (popUp === 'disabled')
 		return null;
@@ -167,6 +151,8 @@ function DrawHands({deck, amount, card_class, popUp, setPopUp}:
 	popUp: PopUpTypes,
 	setPopUp: React.Dispatch<React.SetStateAction<PopUpTypes>>})
 {
+
+	const { gameState, sendMessage } = getGameContext();
 
 	if (deck === undefined)
 		return (
@@ -191,7 +177,8 @@ function DrawHands({deck, amount, card_class, popUp, setPopUp}:
 					<ListItem className="z-index" key={card.id} sx={{ gridArea: '1 / 1', width: 'auto', p: 0, zIndex: index,
 						transform: horizontal ? `translateX(${offset}%)` : `translateY(${offset}%)` }}>
 						<Box className="box-card">
-							<img className={`card ${card_class}`} src={images[getCardName({card})]} alt="" draggable={false} onClick={() => PlayCard({card, popUp, setPopUp})}/>
+							<img className={`card ${card_class}`} src={images[getCardName({card})]} alt=""
+								draggable={false} onClick={() => PlayCard({card, popUp, setPopUp, gameState, sendMessage})}/>
 						</Box>
 					</ListItem>
 				)})}
@@ -228,9 +215,6 @@ function PlayerOneHand({popUp, setPopUp}: {popUp: PopUpTypes, setPopUp: React.Di
 	const { gameState } = getGameContext();
 	const player = gameState?.you !== undefined ? gameState?.you : {id: 0, hand: [], platable: [], drawn: null};
 
-// className={`board-${player_pos[i]}`}
-// card_class={`card-${player_pos[i]}`}
-
 	return (
 		<Box className="board-south" sx={{ position: 'relative' }}>
 			<Box className="avatar-south" sx={{ position: 'absolute', inset: 0, display: 'flex', justifyContent: 'center' }}>
@@ -253,8 +237,9 @@ function PlayerOneHand({popUp, setPopUp}: {popUp: PopUpTypes, setPopUp: React.Di
 function PlayersUI({players, popUp, setPopUp}:
 	{players: PublicPlayer[], popUp: PopUpTypes, setPopUp: React.Dispatch<React.SetStateAction<PopUpTypes>>})
 {
-	const { gameState } = getGameContext();
+	const { gameState, sendMessage } = getGameContext();
 
+	const challenge_click = {"type": "dare"};
 	let player_pos: string[];	
 
 	if (players.length == 2) {
@@ -277,8 +262,8 @@ function PlayersUI({players, popUp, setPopUp}:
 				<Box key={player.id} className={`board-${player_pos[i]}`} sx={{ position: 'relative' }}>
 					<Box className={`avatar-${player_pos[i]}`} sx={{ position: 'absolute', inset: 0,
 						display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-						<Card elevation={0} sx={{ height: 100, width: 400, backgroundColor: 'rgba(255, 255, 255, 0)',
-							display: 'flex', justifyContent: 'center', border: 0,
+						<Card elevation={0} onClick={() => sendMessage({"type": "catch", "target": player.id})} sx={{ height: 100, width: 400,
+							backgroundColor: 'rgba(255, 255, 255, 0)', display: 'flex', justifyContent: 'center', border: 0,
 							zIndex: 5, filter: player.id === gameState?.turn ? 'none' : 'grayscale(100%)' }}>
 							<CardMedia component="img" sx={{ border: 3, height: 64, width: 64,
 								borderRadius: '50%',  }} image={player.avatar} draggable={false}/>
