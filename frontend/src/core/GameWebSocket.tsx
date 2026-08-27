@@ -100,8 +100,8 @@ function GameWebSocket({ children }: { children: React.ReactNode }) {
 					handleErrorMessages(message);
 					break ;
 				case 'state':
-					setGameState(fakeState); // FAKE TEST STATE !!!! REMOVE DEL
-				//	setGameState(message);
+				//	setGameState(fakeState); // FAKE TEST STATE !!!! REMOVE DEL
+					setGameState(message);
 					break ;
 				default:
 					alert('undefined error');
@@ -146,7 +146,10 @@ function GameWebSocket({ children }: { children: React.ReactNode }) {
 	function sendMessage(message: object)
 	{
 		if (socketRef.current?.readyState  === WebSocket.OPEN)
+		{
+			console.log(message);
 			socketRef.current.send(JSON.stringify(message));
+		}
 	}
 
 	function handleErrorMessages({type, code, msg, room}: {type: string, code: string, msg:string, room: string | null})
@@ -161,17 +164,19 @@ function GameWebSocket({ children }: { children: React.ReactNode }) {
 				return ;
 			case ("KICKED"):
 			case ('ROOM_FULL'):
+			case ("AUTH_REQUIRED"):
 			case ('ROOM_NOT_FOUND'):
 			case ("GAME_ALREADY_STARTED"):
 			// AUTH_REQUIRED = "AUTH_REQUIRED"
 				closeRoomConnection();			
 				break ;
+			// case("GAME_NOT_STARTED"):
+			// 	return ;
 		}
 		alert(`${type} ${msg}`);
 
-		// ALERT //
-		// {
-			// AUTH_REQUIRED = "AUTH_REQUIRED"
+		/* ALERT
+		{
 			// INVALID_MESSAGE = "INVALID_MESSAGE"
 			// GAME_NOT_STARTED = "GAME_NOT_STARTED"
 			// CARD_NOT_IN_HAND = "CARD_NOT_IN_HAND"
@@ -188,12 +193,13 @@ function GameWebSocket({ children }: { children: React.ReactNode }) {
 			// CLOSE CONNECTION  //
 				// KICKED = "KICKED"
 				// ROOM_FULL = "ROOM_FULL"
+				// AUTH_REQUIRED = "AUTH_REQUIRED"
 				// ROOM_NOT_FOUND = "ROOM_NOT_FOUND"
 				// GAME_ALREADY_STARTED = "GAME_ALREADY_STARTED"
-		// }
-
+		} 
 		// HANDLE //
 			// ALREADY_IN_ROOM = "ALREADY_IN_ROOM"
+		*/
 	}
 	return (
 		<GameContext.Provider value={{ roomID, connected, error, lastMessage, gameState, joinRoom, closeRoomConnection, sendMessage }}>

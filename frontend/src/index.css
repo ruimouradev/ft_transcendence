@@ -106,20 +106,21 @@
 @media (min-width: 550px){
 	.card {
 		width: calc(5vw * var(--card-scale));
-		border: 3px solid white;
+		border: 2px solid white;
 	}
 }
 
 @media (min-width: 700px) {
 	.card {
 		width: calc(5vw * var(--card-scale));
-		border: 4px solid white;
+		border: 3px solid white;
 	}
 }
 
 @media (min-width: 900px) {
 	.card {
 		width: calc(5vw * var(--card-scale));
+		border: 4px solid white;
 	}
 }
 
