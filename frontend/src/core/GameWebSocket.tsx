@@ -167,6 +167,7 @@ function GameWebSocket({ children }: { children: React.ReactNode }) {
 			case ("AUTH_REQUIRED"):
 			case ('ROOM_NOT_FOUND'):
 			case ("GAME_ALREADY_STARTED"):
+			// AUTH_REQUIRED = "AUTH_REQUIRED"
 				closeRoomConnection();			
 				break ;
 			// case("GAME_NOT_STARTED"):

@@ -215,6 +215,9 @@ function PlayerOneHand({popUp, setPopUp}: {popUp: PopUpTypes, setPopUp: React.Di
 	const { gameState } = getGameContext();
 	const player = gameState?.you !== undefined ? gameState?.you : {id: 0, hand: [], platable: [], drawn: null};
 
+// className={`board-${player_pos[i]}`}
+// card_class={`card-${player_pos[i]}`}
+
 	return (
 		<Box className="board-south" sx={{ position: 'relative' }}>
 			<Box className="avatar-south" sx={{ position: 'absolute', inset: 0, display: 'flex', justifyContent: 'center' }}>
@@ -239,7 +242,6 @@ function PlayersUI({players, popUp, setPopUp}:
 {
 	const { gameState, sendMessage } = getGameContext();
 
-	const challenge_click = {"type": "dare"};
 	let player_pos: string[];	
 
 	if (players.length == 2) {
