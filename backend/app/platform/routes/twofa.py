@@ -7,7 +7,7 @@ from fastapi.responses import Response
 from jwt.exceptions import InvalidTokenError
 from pydantic import ValidationError
 
-from app.models.all import APIError, APIErrorCode, TokenPayload, TwoFactorSetupRequest, TwoFactorSetupResponse, TwoFactorVerifyResponse, TwoFactorVerifyRequest, UserUpdate
+from app.models.all import APIError, APIErrorCode, Message, TokenPayload, TwoFADisableRequest, TwoFactorSetupRequest, TwoFactorSetupResponse, TwoFactorVerifyResponse, TwoFactorVerifyRequest, UserUpdate
 from app.platform.deps import CurrentUser, SessionDep, TokenDep
 from app.platform.service import twofa_service, userservice
 from app.platform.config import settings
@@ -93,5 +93,24 @@ async def setup_two_factor(session: SessionDep, request: TwoFactorSetupRequest, 
         samesite="lax",
         max_age=settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60
     )
-
+    
     return TwoFactorSetupResponse(otpauth_url=otpauth_url, secret=secret)
+
+@twofa_router.post("/disable", response_model=Message)
+async def disable_two_factor(request: TwoFADisableRequest, current_user: CurrentUser, session: SessionDep):
+    """
+    Disable Two-Factor Authentication for the current user. This endpoint requires the user's current password and a valid 2FA code to disable 2FA.
+    """
+    verified, _ = userservice.verify_password(request.password, current_user.hashed_password)
+    if verified is False:
+        raise APIError(status_code=400, code=APIErrorCode.BAD_REQUEST, msg="Invalid password")
+
+    if current_user.use2fa is False:
+        raise APIError(status_code=400, code=APIErrorCode.BAD_REQUEST, msg="Two-Factor Authentication is not enabled")
+
+    if not twofa_service.verify_totp(secret=current_user.two_factor_secret, code=request.code):
+        raise APIError(status_code=400, code=APIErrorCode.BAD_REQUEST, msg="Invalid verification code")
+
+    userservice.update_user(session=session, db_user=current_user, user_in=UserUpdate(use2fa=False, two_factor_secret=None))
+
+    return Message(code="success", status_code="200", message="Two-Factor Authentication has been disabled successfully.")

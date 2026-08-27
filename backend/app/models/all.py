@@ -316,6 +316,10 @@ class TwoFactorSetupResponse(SQLModel):
 class TwoFactorVerifyRequest(SQLModel):
     code: str = Field(min_length=6, max_length=6)
 
+class TwoFADisableRequest(SQLModel):
+    code: str = Field(min_length=6, max_length=6)
+    password: str = Field(min_length=8, max_length=32)
+
 class TwoFactorVerifyResponse(SQLModel):
     recovery_codes: list[str] | None = None
 

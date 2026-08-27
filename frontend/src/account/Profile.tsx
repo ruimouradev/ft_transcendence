@@ -9,6 +9,7 @@ import NotificationSnackbar from '../ui/NotificationSnackbar';
 import CardBackSelector from './CardBackSelector';
 import { cardBacks, defaultCardBack } from '../ui/cardBacks';
 import Enable2FADialog from './Enable2FADialog';
+import Disable2FADialog from './Disable2FADialog';
 
 type NotificationState = {
     open: boolean;
@@ -38,6 +39,7 @@ export default function ProfileCard() {
     const [nickName, setNickName] = useState('');
     const fileInputRef = useRef<HTMLInputElement | null>(null);
     const [enable2FADialogOpen, setEnable2FADialogOpen] = useState(false);
+    const [disable2FADialogOpen, setDisable2FADialogOpen] = useState(false);
 
     const handleAvatarClick = () => {
         fileInputRef.current?.click();
@@ -120,12 +122,22 @@ export default function ProfileCard() {
     };
 
     const handle2FAClick = () => {
-        setEnable2FADialogOpen(true);
+        if (user?.use2fa) {
+            setDisable2FADialogOpen(true);
+        }else{
+            setEnable2FADialogOpen(true);
+        }
     };
+
+    const handle2FADisabled = () => {
+        if (!user) return;
+        login({ ...user, use2fa: false });
+        setNotification({ open: true, message: '2FA disabled successfully.', severity: 'success', });
+    }
 
     const handle2FAEnabled = () => {
         if (!user) return;
-        login({ ...user, user2fa: true });
+        login({ ...user, use2fa: true });
         setNotification({ open: true, message: '2FA enabled successfully.', severity: 'success', });
     }
 
@@ -200,6 +212,7 @@ export default function ProfileCard() {
                                 </Button>
                             </Tooltip>
                             <Enable2FADialog open={enable2FADialogOpen} onClose={() => setEnable2FADialogOpen(false)} onSuccess={handle2FAEnabled} />
+                            <Disable2FADialog open={disable2FADialogOpen} onClose={() => setDisable2FADialogOpen(false)} onSuccess={handle2FADisabled} />
                         </Stack>
                     </Stack>
                 </CardContent>

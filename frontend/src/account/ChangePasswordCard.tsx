@@ -1,16 +1,19 @@
 import React, { useState } from 'react';
-import axios from 'axios';
+import { useNavigate } from 'react-router-dom';
 import { Container, Card, CardContent, Typography, TextField, Button, Alert, Stack, Box, CircularProgress, } from '@mui/material';
 import LockIcon from '@mui/icons-material/Lock';
-import { api } from '../core/client.ts';
+import { api, getErrorMessage } from '../core/client.ts';
+import { useAuth } from '../core/AuthContext';
 
 // Trocar a password: valida à frente o que se consegue validar sem
 // servidor, e o resto (a password atual estar certa) é o backend a
 // dizer. As regras daqui devem bater certo com as do backend.
 export default function ChangePasswordCard() {
+    const navigate = useNavigate();
     const [currentPassword, setCurrentPassword] = useState('');
     const [newPassword, setNewPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
+    const { logout, login, user } = useAuth();
 
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -46,13 +49,11 @@ export default function ChangePasswordCard() {
                 setCurrentPassword('');
                 setNewPassword('');
                 setConfirmPassword('');
+                logout();
+                navigate('/login?info=Password changed successfully. Please log in again.');
             })
             .catch((err) => {
-                if (axios.isAxiosError(err)) {
-                    setError(err.response?.data?.detail || 'Failed to change password.');
-                } else {
-                    setError('An unexpected error occurred.');
-                }
+                setError(getErrorMessage(err));
             }).finally(() => {
                 setLoading(false);
             });
