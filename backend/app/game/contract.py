@@ -1,7 +1,7 @@
 """
 The message types the server and the client exchange. A player sends
-actions (create, join, add_bot, kick, start, play, draw, pass,
-say_uno, catch, challenge), the server sends back the game state after each
+actions (create, join, add_bot, kick, leave, start, play, draw,
+pass, say_uno, catch, challenge), the server sends back the game state after each
 move, or an error when a move is refused.
 """
 
@@ -71,6 +71,12 @@ class Kick(BaseModel):
     target: str
 
 
+class Leave(BaseModel):
+    # Frees your own chair, where kick frees someone else's. The chair
+    # goes at once instead of waiting out the reconnect grace
+    type: Literal["leave"] = "leave"
+
+
 class Start(BaseModel):
     type: Literal["start"] = "start"
 
@@ -117,7 +123,7 @@ class Challenge(BaseModel):
 
 # the type field tells pydantic which model to build from the raw text
 PlayerAction = Annotated[
-    Create | Join | AddBot | Kick | Start | Play | Draw
+    Create | Join | AddBot | Kick | Leave | Start | Play | Draw
     | Pass | SayUno | Catch | Challenge,
     Field(discriminator="type"),
 ]
