@@ -264,6 +264,10 @@ class APIKeyStatus(SQLModel):
     has_api_key: bool
     client_id: str | None = None
 
+class EmailVerificationType(str, Enum):
+    ACCOUNT_ACTIVATION = "account_activation"
+    PASSWORD_RESET = "password_reset"
+
 class APIErrorCode(str, Enum):
     #common operation errors
     INVALID_OPERATION = "INVALID_OPERATION"

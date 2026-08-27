@@ -1,4 +1,4 @@
-from app.models.all import APIError, APIErrorCode
+from app.models.all import APIError, APIErrorCode, EmailVerificationType
 from fastapi_mail import FastMail, MessageSchema, ConnectionConfig, MessageType
 from pydantic import EmailStr, BaseModel 
 from typing import List 
@@ -25,20 +25,17 @@ conf = ConnectionConfig(
     TEMPLATE_FOLDER=Path(BASE_DIR,"templates")
 )
 
-def create_verification_token(email: str, expire_minutes: int = 15) -> str:
+def create_verification_token(email: str, verifyType: EmailVerificationType, expire_minutes: int = 15) -> str:
     """create JWT Token for email verification with 15 minutes expiration"""
     expire = datetime.now(timezone.utc) + timedelta(minutes=expire_minutes)
-    if expire_minutes <= 0:
-        payload = {"sub": email, "type": "email_verification"}
-    else:
-        payload = {"sub": email, "exp": expire, "type": "email_verification"}
+    payload = {"sub": email, "exp": expire, "type": verifyType.value}
     return jwt.encode(payload, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
 
 def verify_token(token: str) -> str:
     """ verify JWT Token for email verification and return the email if valid, otherwise raise APIError """
     try:
         payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
-        if payload.get("type") != "email_verification":
+        if payload.get("type") not in [EmailVerificationType.ACCOUNT_ACTIVATION.value, EmailVerificationType.PASSWORD_RESET.value]:
             raise APIError(status_code=400, code=APIErrorCode.BAD_REQUEST, msg="Invalid Token Type")
         return payload.get("sub")
     except jwt.ExpiredSignatureError:
@@ -64,13 +61,13 @@ async def send_new_account_activation_email(email: EmailStr, username: str, toke
     fm = FastMail(conf)
     await fm.send_message(message, template_name="email_verification.html")
 
-async def send_password_reset_email(email: EmailStr, username: str, new_password: str):
+async def send_password_reset_email(email: EmailStr, username: str, token: str):
     """Send a password reset email to the user with a reset link."""
-
+    reset_url = f"{settings.FRONTEND_HOST}/reset-password?token={token}"
     template_data = {
-        "app_name": settings.PROJECT_NAME,
         "username": username,
-        "new_password": new_password,
+        "reset_url": reset_url,
+        "expire_minutes": 15,
     }
     message = MessageSchema(
         subject="[Password Reset] Reset Your Password",

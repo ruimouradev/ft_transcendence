@@ -21,6 +21,7 @@ from app.models.all import (
     APIError,
     APIKeyContext,
     APIKeyStatus,
+    EmailVerificationType,
     Message,
     OAuthAccountCreate,
     ProviderType,
@@ -117,12 +118,11 @@ def update_password_me( *, session: SessionDep, body: UpdatePassword, current_us
         raise HTTPException(
             status_code=400, detail="New password cannot be the same as the current one"
         )
-    hashed_password = get_password_hash(body.new_password)
+    hashed_password = security.get_password_hash(body.new_password)
     current_user.hashed_password = hashed_password
     session.add(current_user)
     session.commit()
     return Message(status_code=200, code="success", message="Password updated successfully")
-
 
 @router.get("/me", response_model=UserPublic)
 def read_user_me(current_user: CurrentUser) -> Any:
@@ -163,7 +163,7 @@ def register_user(session: SessionDep, user_in: UserRegister, background_tasks: 
     user_create.avatar = "/static/a00.jpeg"
     userservice.create_user(session=session, user_create=user_create)
     if settings.EMAILS_ENABLED and user_in.email:
-        token = create_verification_token(user_in.email, expire_minutes=15)
+        token = create_verification_token(user_in.email, EmailVerificationType.ACCOUNT_ACTIVATION, expire_minutes=15)
         background_tasks.add_task(send_new_account_activation_email, user_in.email, user_in.nick_name, token)
         
     return Message(status_code=200, code="success", message="User created successfully")

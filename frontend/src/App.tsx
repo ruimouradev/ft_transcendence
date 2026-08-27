@@ -14,6 +14,7 @@ import Play from './game/Play'
 import Lobby from './game/Lobby'
 import { ProtectedRoute } from './core/ProtectedRoute'
 import Verify2fa from './account/Verify2fa'
+import ResetPassword from './account/ResetPassword'
 
 // O mapa do site. O Shell é a moldura (navbar, fundo, footer) e as
 // páginas desenham-se dentro dele, no Outlet. O que está sob
@@ -29,6 +30,7 @@ function App() {
                 <Route path="privacy" element={<Privacy />} />
                 <Route path="terms" element={<Terms />} />
                 <Route path="login/2fa" element={<Verify2fa />} />
+                <Route path="reset-password" element={<ResetPassword />} />
 
                 <Route element={<ProtectedRoute />}>
 					<Route path='/lobby' element={<Lobby />}/>

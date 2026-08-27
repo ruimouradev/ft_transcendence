@@ -115,6 +115,40 @@ export default function SignUp() {
         }
     };
 
+    const handleResendActivationEmail = async (e: React.MouseEvent) => {
+        
+        if (!e.currentTarget.checkValidity()) {
+            e.currentTarget.reportValidity();
+            return;
+        }
+
+        if (formData.nick_name.length < 3 || formData.nick_name.length > 20) {
+            setErrors({ nick_name: 'Nick name must be between 3 and 20 characters long.' });
+            return;
+        }
+
+        if (formData.password !== formData.confirmPassword) {
+            setErrors({ password: 'Passwords do not match', confirmPassword: 'Passwords do not match' });
+            return;
+        } else if (formData.password.length < 8) {
+            setErrors({ password: 'Password must be at least 8 characters long.' });
+            return;
+        }
+
+        if (!formData.agreeTerms) {
+            setErrors({ agreeTerms: 'You must agree to the terms and conditions.' });
+            return;
+        }
+        setError('');
+        setLoading(true);
+        try {
+            const response = await api.post('/users/resend-activation-email', { email: formData.email });
+            navigate(`/login?info=${encodeURIComponent(response.data.message)}`, { replace: true });
+        } catch (err) {
+            setError(getErrorMessage(err));
+        }
+    };
+
     return (
         <Container component="main" maxWidth="xs" sx={{ height: '100vh', display: 'flex', alignItems: 'center' }}>
             <CssBaseline />
@@ -179,6 +213,14 @@ export default function SignUp() {
                                 </Link>
                             </Typography>
                         </Box>
+                         {/* <Box sx={{ mt: 1, textAlign: 'center', width: '100%' }}>
+                            <Typography variant="body2" color="text.secondary">
+                                Resend activation email {' '}
+                                <Link href="#" onClick={handleResendActivationEmail} variant="body2" color="primary">
+                                    Resend
+                                </Link>
+                            </Typography>
+                        </Box> */}
                     </Grid>
                 </Box>
             </Paper>

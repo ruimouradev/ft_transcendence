@@ -1,5 +1,3 @@
-import token
-
 import jwt
 import httpx
 import logging
@@ -7,22 +5,22 @@ import logging
 from datetime import timedelta, datetime, timezone
 from typing import Annotated, Any
 
-from fastapi import APIRouter, Depends, HTTPException, status, BackgroundTasks
+from fastapi import APIRouter, Depends, status, BackgroundTasks, Body
 from fastapi.security import OAuth2PasswordRequestForm
     
 from app.platform.service import userservice, twofa_service
-from app.platform.deps import CurrentUser, SessionDep, TokenDep, get_current_active_superuser
+from app.platform.deps import SessionDep, TokenDep
 from app.platform import security
 from app.platform.config import settings
 
-from app.platform.service.mailservice import send_password_reset_email
-from app.models.all import ErrorResponse, Message, OAuthAccountCreate, ProviderType, TokenAndUser, TokenPayload, UserCreate, UserPublic, UserUpdate, User
+from app.platform.service.mailservice import create_verification_token, send_password_reset_email, verify_token
+from app.models.all import EmailVerificationType, ErrorResponse, Message, OAuthAccountCreate, ProviderType, TokenAndUser, TokenPayload, UserCreate, UserUpdate, User
 from app.models.all import APIError, APIErrorCode
 
 from fastapi.responses import RedirectResponse, Response
 from jwt.exceptions import InvalidTokenError
 
-router = APIRouter(tags=["login"], include_in_schema=False)
+router = APIRouter(tags=["login"], include_in_schema=True)
 logger = logging.getLogger("uvicorn.error")
 
 
@@ -117,45 +115,30 @@ def validate_2fa(session: SessionDep, token: TokenDep, code: str, response: Resp
 
     return Message(status_code=200, code="success", message="Two-factor authentication validated successfully")
 
-@router.get("/password-recovery/{email}")
-def recover_password(email: str, session: SessionDep, background_tasks: BackgroundTasks):
+@router.post("/request-password-reset", response_model=Message, responses={401: {"model": ErrorResponse}})
+def recover_password(session: SessionDep, background_tasks: BackgroundTasks, email: str= Body(..., embed=True)):
     """
-    Password Recovery
+    Password reset request. If the user exists and is active, send a password reset email with a temporary password.
     """
     user = userservice.get_user_by_email(session=session, email=email)
     if user:
         if settings.EMAILS_ENABLED and user.is_active:
-            new_password = security.generate_password(8)
-            userservice.update_user(session=session, db_user=user, user_in=UserUpdate(password=new_password))
-            background_tasks.add_task(send_password_reset_email, email=email, username=user.nick_name, new_password=new_password)
-    return RedirectResponse(
-        url="/login?info=password reset email sent, please check your email",
-        status_code=status.HTTP_307_TEMPORARY_REDIRECT
-    )
+            token = create_verification_token(email, EmailVerificationType.PASSWORD_RESET, expire_minutes=15)
+            background_tasks.add_task(send_password_reset_email, email=email, username=user.nick_name, token=token)
 
+    return Message(status_code=200, code="success", message="Check your email and reset your password.")
 
-# @router.post("/reset-password/")
-# def reset_password(session: SessionDep, body: NewPassword) -> Message:
-#     """
-#     Reset password
-#     """
-#     email = verify_password_reset_token(token=body.token)
-#     if not email:
-#         raise HTTPException(status_code=400, detail="Invalid token")
-#     user = userservice.get_user_by_email(session=session, email=email)
-#     if not user:
-#         # Don't reveal that the user doesn't exist - use same error as invalid token
-#         raise HTTPException(status_code=400, detail="Invalid token")
-#     elif not user.is_active:
-#         raise HTTPException(status_code=400, detail="Inactive user")
-#     user_in_update = UserUpdate(password=body.new_password)
-#     userservice.update_user(
-#         session=session,
-#         db_user=user,
-#         user_in=user_in_update,
-#     )
-#     return Message(message="Password updated successfully")
+@router.post("/set-password", response_model=Message, responses={401: {"model": ErrorResponse}})
+def reset_password_me(*, session: SessionDep, password: str = Body(..., embed=True), token: str = Body(..., embed=True)) -> Any:
+    """
+    Use a verification token to set a new password.
+    """
+    email = verify_token(token)
+    current_user = userservice.get_user_by_email(session=session, email=email)
+    userservice.update_user(session=session, db_user=current_user, user_in=UserUpdate(password=password))
+    return Message(status_code=200, code="success", message="Password reset successfully")
 
+# authRouter is used for routes OAuth2 login
 authRouter = APIRouter(tags=["auth"], include_in_schema=False)
 
 @authRouter.post("/auth/logout")
