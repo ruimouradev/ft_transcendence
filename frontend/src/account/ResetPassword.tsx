@@ -1,23 +1,21 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
 import { Container, Card, CardContent, Typography, TextField, Button, Alert, Stack, Box, CircularProgress, } from '@mui/material';
 import LockIcon from '@mui/icons-material/Lock';
 import { api, getErrorMessage } from '../core/client.ts';
-import { useAuth } from '../core/AuthContext';
 
 // Trocar a password: valida à frente o que se consegue validar sem
 // servidor, e o resto (a password atual estar certa) é o backend a
 // dizer. As regras daqui devem bater certo com as do backend.
-export default function ChangePasswordCard() {
-    const navigate = useNavigate();
-    const [currentPassword, setCurrentPassword] = useState('');
+export default function ResetPassword() {
     const [newPassword, setNewPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
-    const { logout, login, user } = useAuth();
 
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [success, setSuccess] = useState<string | null>(null);
+    const navigate = useNavigate();
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -32,25 +30,12 @@ export default function ChangePasswordCard() {
             setError('New password must be at least 8 characters long');
             return;
         }
-        if (currentPassword.length < 8) {
-            setError('Current password must be at least 8 characters long');
-            return;
-        }
-        if (currentPassword === newPassword) {
-            setError('New password must be different from the current password');
-            return;
-        }
 
         setLoading(true);
 
-        api.patch('/users/me/password', { current_password: currentPassword, new_password: newPassword, })
+        api.post('/set-password', { password: newPassword, token: new URLSearchParams(window.location.search).get('token'), })
             .then((response) => {
-                setSuccess(response.data.message || 'Password changed successfully!');
-                setCurrentPassword('');
-                setNewPassword('');
-                setConfirmPassword('');
-                logout();
-                navigate('/login?info=Password changed successfully. Please log in again.');
+                navigate('/login?info=Password reset successfully');
             })
             .catch((err) => {
                 setError(getErrorMessage(err));
@@ -66,15 +51,13 @@ export default function ChangePasswordCard() {
                     <Box display="flex" sx={{ alignItems: "center" }} gap={1.5} mb={2}>
                         <LockIcon color="primary" fontSize="large" />
                         <Typography variant="h5" component="h1" fontWeight="bold">
-                            Change Password
+                            Reset Password
                         </Typography>
                     </Box>
                     {error && (<Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>)}
                     {success && (<Alert severity="success" sx={{ mb: 2 }}>{success}</Alert>)}
                     <form onSubmit={handleSubmit}>
                         <Stack spacing={3}>
-                            <TextField label="Current Password" type="password" variant="outlined" fullWidth required value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)} />
-
                             <TextField label="New Password" type="password" variant="outlined" fullWidth required value={newPassword} onChange={(e) => setNewPassword(e.target.value)} helperText="Must be at least 8 characters and less than 33 characters" />
 
                             <TextField label="Confirm New Password" type="password" variant="outlined" fullWidth required value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} />

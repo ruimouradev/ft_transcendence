@@ -1,6 +1,7 @@
 include ./.env
 
 all: vinit
+	docker compose -f ./docker-compose.yml build
 	docker compose -f ./docker-compose.yml up -d
 
 build:
@@ -12,6 +13,7 @@ vinit:
 	@mkdir -p ${DBDATAPATH}
 
 dev: vinit
+	docker compose -f ./docker-compose.yml build
 	docker compose -f ./docker-compose.yml up db backend frontend adminer nginx
 
 down:

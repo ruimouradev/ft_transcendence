@@ -83,37 +83,82 @@ export default function SignUp() {
             await api.post('/users/signup', params);
             navigate('/login?info=Account created successfully,check your email for verification', { replace: true });
         } catch (error) {
-            if (axios.isAxiosError(error)) {
-                if (error.response?.status === 422) {
-                    const validationErrors = error.response.data?.detail as ValidationError[];
-                    const fieldErrors: Record<string, string> = {};
-                    for (const error of validationErrors) {
-                        const fieldName = error.loc.at(-1);
-                        if (typeof fieldName === 'string') {
-                            fieldErrors[fieldName] = error.msg;
-                        }
-                    }
-                    setErrors(fieldErrors);
-                }else{
-                    if (error.response?.status === 400) {
-                        if (error.response.data?.code === 'USER_EXISTS') {
-                            setErrors({ email: error.response.data?.msg || 'This email is already registered. Please try a different one.' });
-                        } else if (error.response.data?.code === 'NICKNAME_EXISTS') {
-                            setErrors({ nick_name: error.response.data?.msg || 'This nick name is already taken. Please try a different one.' });
-                        } else {
-                            setError(getErrorMessage(error));
-                        }
-                    }else{
-                        setError(getErrorMessage(error));
-                    }
-                }
-            }else {
-                setError("An unexpected error occurred. Please try again later.");
-            }
+            returnErrorMessageHandler(error);
         } finally {
             setLoading(false);
         }
     };
+
+    const handleResendActivationEmail = async (e: React.MouseEvent) => {
+        e.preventDefault();
+        setError('');
+        setErrors((prev) => {
+            const next = {};
+            return next;
+        });
+        if (formData.nick_name.length < 3 || formData.nick_name.length > 20) {
+            setErrors({ nick_name: 'Nick name must be between 3 and 20 characters long.' });
+            return;
+        }
+
+        if (!formData.email) {
+            setErrors({ email: 'Please enter your email to resend the activation email.' });
+            return;
+        }
+
+        if (formData.password !== formData.confirmPassword) {
+            setErrors({ password: 'Passwords do not match', confirmPassword: 'Passwords do not match' });
+            return;
+        } else if (formData.password.length < 8) {
+            setErrors({ password: 'Password must be at least 8 characters long.' });
+            return;
+        }
+
+        if (!formData.agreeTerms) {
+            setErrors({ agreeTerms: 'You must agree to the terms and conditions.' });
+            return;
+        }
+        setError('');
+        setLoading(true);
+        try {
+            const response = await api.post('/users/resend-activation-email', { nick_name: formData.nick_name, email: formData.email, password: formData.password });
+            navigate(`/login?info=${encodeURIComponent(response.data.message)}`, { replace: true });
+        } catch (error) {   
+            returnErrorMessageHandler(error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+const returnErrorMessageHandler = (error: unknown) => {
+    if (axios.isAxiosError(error)) {
+        if (error.response?.status === 422) {
+            const validationErrors = error.response.data?.detail as ValidationError[];
+            const fieldErrors: Record<string, string> = {};
+            for (const error of validationErrors) {
+                const fieldName = error.loc.at(-1);
+                if (typeof fieldName === 'string') {
+                    fieldErrors[fieldName] = error.msg;
+                }
+            }
+            setErrors(fieldErrors);
+        }else{
+            if (error.response?.status === 400) {
+                if (error.response.data?.code === 'USER_EXISTS') {
+                    setErrors({ email: error.response.data?.msg || 'This email is already registered. Please try a different one.' });
+                } else if (error.response.data?.code === 'NICKNAME_EXISTS') {
+                    setErrors({ nick_name: error.response.data?.msg || 'This nick name is already taken. Please try a different one.' });
+                } else {
+                    setError(getErrorMessage(error));
+                }
+            }else{
+                setError(getErrorMessage(error));
+            }
+        }
+    }else {
+        setError("An unexpected error occurred. Please try again later.");
+    }
+};
 
     return (
         <Container component="main" maxWidth="xs" sx={{ height: '100vh', display: 'flex', alignItems: 'center' }}>
@@ -160,7 +205,7 @@ export default function SignUp() {
                                     }
                                     label={
                                         <Typography variant="body2" color="text.secondary">
-                                            I agree to the <Link href="#" color="primary">Terms of Service</Link> and <Link href="#" color="primary">Privacy Policy</Link>.
+                                            I agree to the <Link href="#" onClick={(e) => { e.preventDefault(); navigate('/terms'); }} color="primary">Terms of Service</Link> and <Link href="/privacy" onClick={(e) => { e.preventDefault(); navigate('/privacy'); }} color="primary">Privacy Policy</Link>.
                                         </Typography>
                                     }/>
                             {errors.agreeTerms && <FormHelperText>{errors.agreeTerms}</FormHelperText>}
@@ -176,6 +221,14 @@ export default function SignUp() {
                                 Already have an account? {' '}
                                 <Link href="#" onClick={(e) => { e.preventDefault(); navigate('/login'); }} variant="body2" color="primary">
                                     Sign in
+                                </Link>
+                            </Typography>
+                        </Box>
+                        <Box sx={{ mt: 1, textAlign: 'center', width: '100%' }}>
+                            <Typography variant="body2" color="text.secondary">
+                                Resend activation email {' '}
+                                <Link href="#" onClick={handleResendActivationEmail} variant="body2" color="primary">
+                                    Resend
                                 </Link>
                             </Typography>
                         </Box>

@@ -91,14 +91,24 @@ export default function Login() {
         }
     };
 
-    const handlePasswordReset = (e) => {
+    const handlePasswordReset = async (e) => {
         e.preventDefault();
         if (!formData.email) {
             setError('Please enter your email to reset your password.');
             return;
         }
-        window.location.href = `/api/v1/password-recovery/${encodeURIComponent(formData.email)}`;
+        try {
+            const response = await api.post('/request-password-reset', { email: formData.email });
+            navigate(`/login?info=${encodeURIComponent(response.data.message)}`, { replace: true });
+        } catch (err) {
+            if(err.response?.status === 429) {
+                setError('Requests are limited to 1 per minute. Please try again later.');
+            } else {
+                setError(getErrorMessage(err));
+            }
+        }
     };
+    
     // sem fundo próprio: o cartão assenta no fundo do site
     return (
         <Box sx={{ minHeight: '80vh', display: 'flex', alignItems: 'center', justifyContent: 'center', p: 2 }}>

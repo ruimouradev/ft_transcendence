@@ -3,7 +3,7 @@ from uuid import UUID, uuid4
 from datetime import datetime, timezone
 
 from sqlmodel import SQLModel, Field, Relationship
-from pydantic import EmailStr
+from pydantic import EmailStr, BaseModel
 from sqlalchemy import DateTime
 from enum import Enum
 
@@ -19,7 +19,6 @@ class UserBase(SQLModel):
     avatar: str | None = Field(default="/static/a00.jpeg", max_length=255)
     card_back: str | None = Field(default="/static/cardback.jpeg", max_length=255)
     use2fa: bool = False
-    two_factor_secret: str | None = Field(default=None, max_length=255)
 
 
 # Properties to receive via API on creation
@@ -27,24 +26,25 @@ class UserCreate(UserBase):
     password: str = Field(min_length=8, max_length=32)
 
 
-class UserRegister(SQLModel):
+class UserRegister(BaseModel):
     email: EmailStr = Field(max_length=255)
     password: str = Field(min_length=8, max_length=32)
     nick_name: str = Field(min_length=3, max_length=20)
 
-# Properties to receive via API on update, all are optional
+# This class can not be used for a request body;
 class UserUpdate(UserBase):
     email: EmailStr | None = Field(default=None, max_length=255)
     password: str | None = Field(default=None, min_length=8, max_length=32)
+    two_factor_secret: str | None = Field(default=None, max_length=512)
 
 
-class UserUpdateMe(SQLModel):
+class UserUpdateMe(BaseModel):
     nick_name: str | None = Field(default=None,min_length=3, max_length=20)
     card_back: str | None = Field(default=None, max_length=255)
     email: EmailStr | None = Field(default=None, max_length=255)
 
 
-class UpdatePassword(SQLModel):
+class UpdatePassword(BaseModel):
     current_password: str = Field(min_length=8, max_length=32)
     new_password: str = Field(min_length=8, max_length=32)
 
@@ -52,6 +52,8 @@ class UpdatePassword(SQLModel):
 class User(UserBase, table=True):
     id: UUID = Field(default_factory=uuid4, primary_key=True)
     hashed_password: str | None = Field(default=None, max_length=255)
+    two_factor_secret: str | None = Field(default=None, max_length=512)
+
     created_at: datetime = Field( default_factory=get_datetime_utc, sa_type=DateTime(timezone=True))
     sent_requests: list["Friendship"] = Relationship(
         sa_relationship_kwargs={
@@ -71,34 +73,20 @@ class UserPublic(UserBase):
     id: UUID
     created_at: datetime | None = None
 
-
-class UsersPublic(SQLModel):
-    data: list[UserPublic]
-    count: int
-
 class UserOnLineStatus(SQLModel):
     user_id: UUID
     online: str
 
-class Message(SQLModel):
+class Message(BaseModel):
     status_code: int
     code: str | None = None
     message: str
 
-class Token(SQLModel):
-    access_token: str
-    token_type: str = "bearer"
-
-class TokenAndUser(Token):
-    user: UserPublic
-
-
-class TokenPayload(SQLModel):
+class TokenPayload(BaseModel):
     sub: str | None = None
     type: str | None = None
 
-
-class NewPassword(SQLModel):
+class NewPassword(BaseModel):
     token: str
     new_password: str = Field(min_length=8, max_length=32)
 
@@ -151,7 +139,7 @@ class Friendship(SQLModel, table=True):
     status: FriendshipStatus
 
     created_at: datetime = Field(default_factory=get_datetime_utc,sa_type=DateTime(timezone=True))
-    accepted_at: datetime | None = Field(default_factory=get_datetime_utc,sa_type=DateTime(timezone=True))
+    accepted_at: datetime | None = Field(default_factory=None,sa_type=DateTime(timezone=True))
 
 class Game(SQLModel, table=True):
 
@@ -161,7 +149,7 @@ class Game(SQLModel, table=True):
 
     created_at: datetime = Field(default_factory=get_datetime_utc,sa_type=DateTime(timezone=True))
 
-    finished_at: datetime | None = Field(default_factory=get_datetime_utc,sa_type=DateTime(timezone=True))
+    finished_at: datetime | None = Field(default_factory=None,sa_type=DateTime(timezone=True))
 
 
 class GamePlayer(SQLModel, table=True):
@@ -169,14 +157,13 @@ class GamePlayer(SQLModel, table=True):
     game_id: UUID = Field(foreign_key="game.id", primary_key=True)
     user_id: UUID = Field(foreign_key="user.id", primary_key=True)
     is_winner: bool = False
-    score: int = 0
-    
+    score: int = 0    
     seat: int
     remain_points: int = 0
     cards_left: int = 0
     is_connected: bool = True
 
-class GamePlayerDetail(SQLModel):
+class GamePlayerDetail(BaseModel):
     id: UUID
     nick_name: str
     avatar: str | None = None
@@ -196,24 +183,24 @@ class UserStatistic(SQLModel, table=True):
     total_score: int = 0
     updated_at: datetime = Field(default_factory=get_datetime_utc,sa_type=DateTime(timezone=True))
 
-class UserStatisticLevel(SQLModel):
+class UserStatisticLevel(BaseModel):
     current_level: int = 0
     total_xp: int = 0
     xp_in_current_level: int = 0
     xp_required_for_next_level: int = 0
     progress_percentage: float = 0
     total_xp_for_next_level: int = 0
-    title: str = "Novice"
+    title: str = "Rookie"
 
-class UserStatisticInfo(SQLModel):
+class UserStatisticInfo(BaseModel):
     user: UserPublic
     total_games: int = 0
     wins: int = 0
     losses: int = 0
     total_score: int = 0
-    level_info: UserStatisticLevel = UserStatisticLevel()
+    level_info: UserStatisticLevel = Field(default_factory=UserStatisticLevel)
 
-class UserStatisticLeaderboardEntry(SQLModel):
+class UserStatisticLeaderboardEntry(BaseModel):
     rank: int
     user_id: UUID
     nick_name: str
@@ -225,14 +212,14 @@ class UserStatisticLeaderboardEntry(SQLModel):
     total_losses: int
     win_rate: float
 
-class UserGameDetail(SQLModel):
+class UserGameDetail(BaseModel):
     game_id: UUID
     is_winner: bool
     score: int
     opponents: str
     finished_at: datetime | None = None
 
-class Friend(SQLModel):
+class Friend(BaseModel):
     id: UUID
     nick_name: str
     handle: str
@@ -244,25 +231,29 @@ class Friend(SQLModel):
     bio: str | None = None
     online: bool | None = None
 
-class Friends(SQLModel):
+class Friends(BaseModel):
     friends: list[Friend]
     count: int = 0
 
-class Suggestions(SQLModel):
+class Suggestions(BaseModel):
     suggestions: list[Friend]
     count: int = 0
 
-class Requests(SQLModel):
+class Requests(BaseModel):
     requests: list[Friend]
     count: int = 0
 
-class APIKeyContext(SQLModel):
+class APIKeyContext(BaseModel):
     client_id: UUID
     api_key: str
 
-class APIKeyStatus(SQLModel):
+class APIKeyStatus(BaseModel):
     has_api_key: bool
     client_id: str | None = None
+
+class EmailVerificationType(str, Enum):
+    ACCOUNT_ACTIVATION = "account_activation"
+    PASSWORD_RESET = "password_reset"
 
 class APIErrorCode(str, Enum):
     #common operation errors
@@ -291,28 +282,34 @@ class APIErrorCode(str, Enum):
 
 class APIError(Exception):
     def __init__(self, *, status_code: int, code: APIErrorCode, msg: str, details: dict | None = None):
+        super().__init__(msg)
+
         self.status_code = status_code
         self.code = code
         self.message = msg
         self.details = details
 
-class ErrorResponse(SQLModel):
+class ErrorResponse(BaseModel):
     code: APIErrorCode
     message: str
     details: dict | None = None
 
-class TwoFactorSetupRequest(SQLModel):
+class TwoFactorSetupRequest(BaseModel):
     password: str = Field(min_length=8, max_length=32)
     recovery_code: str | None = None
 
-class TwoFactorSetupResponse(SQLModel):
+class TwoFactorSetupResponse(BaseModel):
     otpauth_url: str
     secret: str
 
-class TwoFactorVerifyRequest(SQLModel):
+class TwoFactorVerifyRequest(BaseModel):
     code: str = Field(min_length=6, max_length=6)
 
-class TwoFactorVerifyResponse(SQLModel):
+class TwoFADisableRequest(BaseModel):
+    code: str = Field(min_length=6, max_length=6)
+    password: str = Field(min_length=8, max_length=32)
+
+class TwoFactorVerifyResponse(BaseModel):
     recovery_codes: list[str] | None = None
 
 class RecoveryCode(SQLModel, table=True):
