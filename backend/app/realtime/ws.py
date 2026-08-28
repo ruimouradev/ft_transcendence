@@ -27,6 +27,7 @@ from app.platform.config import settings
 from app.platform.deps import CurrentUser
 from app.platform.security import ALGORITHM
 from app.realtime import metrics
+from app.game.ai import decide_bot_action
 
 
 @dataclass
@@ -270,6 +271,67 @@ async def record_finished_game(room: Room) -> None:
             metrics.rejected.labels(code="RECORD_FAILED").inc()
 
 
+async def ai_timer(room_id: str, room: Room) -> None:
+    """Background task that plays for bot seats when it is their turn."""
+    last_seq = -1
+    while rooms.get(room_id) is room:
+        await asyncio.sleep(0.5)
+        if room.game is None or room.game.phase != "playing":
+            continue
+
+        current_seq = room.game.seq
+        if current_seq == last_seq:
+            continue
+
+        current_pid = room.game.hands[room.game.turn].id
+        bot_player = next((p for p in room.players if p.id == current_pid and p.bot), None)
+        if not bot_player:
+            continue
+
+        # Mark that we are processing this sequence so we don't double-trigger
+        last_seq = current_seq
+
+        # Human-like delay
+        await asyncio.sleep(1.5)
+
+        # Ensure turn didn't change during sleep (e.g. via timeout)
+        if room.game.phase != "playing" or room.game.seq != current_seq:
+            continue
+
+        # Construct GameState snapshot for the bot
+        bot_state = room.game.snapshot_for(bot_player.id)
+        bot_state.settings = room.settings
+        for seat in bot_state.players:
+            seat.bot = next((p.bot for p in room.players if p.id == seat.id), False)
+            seat.bot_level = next((p.bot_level for p in room.players if p.id == seat.id), None)
+
+        bot_action = decide_bot_action(bot_state, bot_player.id)
+        if not bot_action:
+            continue
+
+        # Apply action directly
+        try:
+            if isinstance(bot_action, Play):
+                room.game.play(bot_player.id, bot_action.card, bot_action.color, bot_action.uno, bot_action.target)
+                hand = next((h for h in room.game.hands if h.id == bot_player.id), None)
+                if hand and len(hand.cards) == 1 and not hand.said_uno:
+                    room.solo_at = time.monotonic()
+            elif isinstance(bot_action, Catch):
+                room.game.catch(bot_player.id, bot_action.target)
+            elif isinstance(bot_action, Challenge):
+                room.game.challenge(bot_player.id)
+            elif isinstance(bot_action, Draw):
+                room.game.draw(bot_player.id)
+            elif isinstance(bot_action, SayUno):
+                room.game.say_uno(bot_player.id)
+                
+            metrics.moves.labels(kind=bot_action.type).inc()
+            await broadcast(room)
+            await record_finished_game(room)
+        except GameError as e:
+            logging.error(f"AI attempted illegal move: {e.msg}")
+
+
 async def apply(room: Room, player: Player, action: PlayerAction) -> Error | None:
     # The engine is the single source of truth for the rules, here we
     # only translate messages into calls
@@ -385,8 +447,6 @@ async def apply(room: Room, player: Player, action: PlayerAction) -> Error | Non
 
     await record_finished_game(room)
 
-    # the AI loop plays for bot seats when it is their turn (Alexandre)
-
     return None
 
 
@@ -487,6 +547,7 @@ async def game(ws: WebSocket, room_id: str) -> None:
                     rooms[room_id] = room
                     metrics.rooms_active.inc()
                     room.timer = asyncio.create_task(room_timer(room_id, room))
+                    asyncio.create_task(ai_timer(room_id, room))
                     player = await seat_player(ws, room, action.name, user)
                     continue
 
