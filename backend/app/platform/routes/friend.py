@@ -6,7 +6,7 @@ from fastapi import APIRouter
 from app.platform.deps import CurrentUser, SessionDep
 from app.models.all import APIError, APIErrorCode, Friends, Suggestions, Requests, FriendshipStatus, Friendship
 
-router = APIRouter(prefix="/friends", tags=["friends"] ,include_in_schema=True)
+router = APIRouter(prefix="/friends", tags=["friends"] ,include_in_schema=False)
 logger = logging.getLogger("uvicorn.error")
 
 @router.get("/suggested", response_model=Suggestions)

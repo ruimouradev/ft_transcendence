@@ -22,7 +22,7 @@ export default function Verify2fa() {
         }
         setLoading(true);
         try {
-            const response = await api.get(`/login/verify-2fa?code=${code}`);
+            const response = await api.post(`/login/verify-2fa`,{ code });
             if (response.data.code === 'success') {
                 const userResponse = await api.get('/users/me');
                 login(userResponse.data);
