@@ -19,7 +19,7 @@ from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 
 from app.game.contract import (
     AddBot, Catch, Challenge, Create, Draw, Error, ErrorCode,
-    GameSettings, Join, Kick, Leave, Pass, Play, PlayerAction, SayUno,
+    GameSettings, Join, Kick, Leave, Play, PlayerAction, SayUno,
     Start, Welcome, parse_action,
 )
 from app.game.engine import Game, GameError
@@ -176,6 +176,12 @@ def reseat(room: Room) -> None:
     # The seq belongs to the room: it survives every rebuild, so
     # clients can trust it from the first lobby state to a rematch
     prev = room.game.seq if room.game else 0
+    # bots are named by their place, the order the record uses
+    seated_bots = 0
+    for p in room.players:
+        if p.bot:
+            seated_bots += 1
+            p.name = f"Bot{seated_bots}"
     room.game = Game([(p.id, p.name) for p in room.players],
                      settings=room.settings)
     room.game.seq = prev + 1
@@ -278,8 +284,8 @@ async def apply(room: Room, player: Player, action: PlayerAction) -> Error | Non
         if len(room.players) >= room.settings.max_players:
             return err(ErrorCode.ROOM_FULL, "no free seat for a bot")
         room.bots_made += 1
-        room.players.append(Player(id=f"b{room.bots_made}",
-                                   name=f"Bot {room.bots_made}",
+        # the id never repeats, the name comes from reseat
+        room.players.append(Player(id=f"b{room.bots_made}", name="",
                                    token="", ws=None, bot=True,
                                    bot_level=action.level))
         reseat(room)
@@ -363,8 +369,6 @@ async def apply(room: Room, player: Player, action: PlayerAction) -> Error | Non
             room.game.say_uno(player.id)
         elif isinstance(action, Draw):
             room.game.draw(player.id)
-        elif isinstance(action, Pass):
-            room.game.do_pass(player.id)
         elif isinstance(action, Catch):
             if time.monotonic() - room.solo_at < UNO_GRACE:
                 return err(ErrorCode.INVALID_CATCH,
