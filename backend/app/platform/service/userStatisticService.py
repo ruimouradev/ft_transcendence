@@ -208,7 +208,12 @@ def get_global_leaderboard(session: SessionDep, current_user: CurrentUser):
             level_data = calculate_level_data(int(user_statistic.total_score))
             win_rate = (user_statistic.wins / user_statistic.total_games * 100) if user_statistic.total_games > 0 else 0.0
             # Calculate the rank of the current user
-            rank_statement = select(func.count()).select_from(UserStatistic).where(UserStatistic.total_score > user_statistic.total_score)
+            rank_statement = select(func.count()).select_from(UserStatistic).join(User, User.id == UserStatistic.user_id).where(
+                User.is_superuser.is_(False),
+                User.is_active.is_(True),
+                UserStatistic.total_score > user_statistic.total_score,
+            )
+            
             rank = session.exec(rank_statement).one() + 1
             leaderboard.append(UserStatisticLeaderboardEntry(
                 rank=rank,

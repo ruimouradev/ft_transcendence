@@ -1,5 +1,6 @@
 from sqlmodel import Session, select, and_, or_
 from datetime import datetime, timezone
+from uuid import UUID
 
 from app.models.all import APIError, APIErrorCode, Friend, Friendship, FriendshipStatus, User, UserStatistic
 from app.platform.deps import CurrentUser, SessionDep
@@ -72,11 +73,11 @@ def get_pending_friends(session: Session, current_user: CurrentUser, skip: int =
     return friends
 
 
-def add_friend(friend_id: str, session: Session, current_user: CurrentUser)-> Friendship:
+def add_friend(friend_id: UUID, session: Session, current_user: CurrentUser)-> Friendship:
     '''
     Add a friend by sending a friend request to another user.
     '''
-    if friend_id == str(current_user.id):
+    if friend_id == current_user.id:
         raise APIError(status_code=400, code=APIErrorCode.INVALID_OPERATION, msg="Cannot add yourself as a friend.")
     friendship = session.exec(
         select(Friendship).where((Friendship.addressee_id == friend_id) , (Friendship.requester_id == current_user.id))

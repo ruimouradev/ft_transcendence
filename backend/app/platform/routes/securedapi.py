@@ -17,10 +17,9 @@ async def get_online_players():
 @router.get("/userinfo/{user_id}", response_model=UserStatisticInfo, summary="An secured API endpoint, get specific user information", description=''' ## Retrieve information about a specific user by their user ID. Requires a valid API key and client ID.''')
 async def get_user_info(session: SessionDep, user_id: str):
     try:
-        UUID(user_id, version=4)
+        UUID(user_id)
     except ValueError:
         raise APIError(status_code=400, code=APIErrorCode.BAD_REQUEST, msg="Invalid user ID format. Must be a valid UUID.")
-        # raise HTTPException(status_code=400, detail="Invalid user ID format. Must be a valid UUID.")
 
     user_info=userservice.get_user_by_id(session=session, user_id=user_id)
     if not user_info:
@@ -35,7 +34,7 @@ async def get_user_info(session: SessionDep, user_id: str):
 @router.get("/{user_id}/friendlistwithrank", response_model=list[UserStatisticLeaderboardEntry], summary="An secured API endpoint, get specific user friend list with rank", description=''' ## Retrieve the friend list of a specific user along with their ranks. Requires a valid API key and client ID.''')
 async def get_friend_list_with_rank(session: SessionDep, user_id: str):
     try:
-        UUID(user_id, version=4)
+        UUID(user_id)
     except ValueError:
         raise APIError(status_code=400, code=APIErrorCode.BAD_REQUEST, msg="Invalid user ID format. Must be a valid UUID.")
 
@@ -57,7 +56,7 @@ async def get_global_rank(session: SessionDep):
 @router.get("/gamehistory/{user_id}", response_model=list[UserGameDetail], summary="An secured API endpoint, get specific user game history", description=''' ## Retrieve the game history of a specific user. Requires a valid API key and client ID.''')
 async def get_game_history(session: SessionDep, user_id: str):
     try:
-        UUID(user_id, version=4)
+        UUID(user_id)
     except ValueError:
         raise APIError(status_code=400, code=APIErrorCode.BAD_REQUEST, msg="Invalid user ID format. Must be a valid UUID.")
 
