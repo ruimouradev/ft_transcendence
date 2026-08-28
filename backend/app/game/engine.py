@@ -195,7 +195,22 @@ class Game:
         # the flag only counts when the play leaves a single card
         hand.said_uno = hand.said_uno or (uno and len(hand.cards) == 1)
         self.drawn = None
-        self.last = LastAction(player=player_id, kind="play", card=card)
+        # who the card lands on and how many cards move now, so the
+        # frontend animates without redoing the rules
+        effect = effect_of(card)
+        victim = self.hands[(self.turn + self.direction)
+                            % len(self.hands)].id
+        lands_on = None
+        moved = None
+        if swap_with is not None:
+            lands_on = target
+        elif card.value in ("+2", "+4") or effect.skip or (
+                effect.reverse and len(self.hands) == 2):
+            lands_on = victim
+        if card.value == "+2" and not self.settings.stacking:
+            moved = 2
+        self.last = LastAction(player=player_id, kind="play", card=card,
+                               target=lands_on, count=moved)
         self.seq += 1
         if card.value == "+4":
             # nothing is drawn and a win is not granted until the victim
@@ -218,15 +233,15 @@ class Game:
             hand.said_uno = swap_with.said_uno = False
         elif self.settings.seven_zero and card.value == "0":
             self._rotate()
-        self._apply_effect(effect_of(card))
+        self._apply_effect(effect)
 
     def draw(self, player_id: str) -> None:
         """Draw for the current player.
 
         Facing a +4 this is how it is accepted: the player draws the 4
         and is skipped. Facing a +2 pile the whole pile is drawn the
-        same way. Otherwise one card is drawn; if it is playable the
-        turn stays with the player, who may then play it or pass.
+        same way. Otherwise one card is drawn; a playable draw must
+        be played, an unplayable one passes the turn on its own.
 
         Args:
             player_id: Who is drawing. Must be the player on turn.
@@ -242,49 +257,32 @@ class Game:
             self.plus4 = None
             # the +4 still tops the discard, the effect table says how
             # many cards
-            self._deal(hand, effect_of(self.discard[-1]).draw)
-            self.last = LastAction(player=player_id, kind="draw")
+            owed = effect_of(self.discard[-1]).draw
+            self._deal(hand, owed)
+            self.last = LastAction(player=player_id, kind="draw",
+                                   count=owed)
             self.seq += 1
             self._finish_or_step(plus4.by)
             return
         if self.stack:
             owed, self.stack = self.stack, 0
             self._deal(hand, owed)
-            self.last = LastAction(player=player_id, kind="draw")
+            self.last = LastAction(player=player_id, kind="draw",
+                                   count=owed)
             self.seq += 1
             self._step(1)
             return
         if self.drawn:
             raise GameError(ErrorCode.INVALID_MESSAGE, "one draw per turn")
         self._deal(hand, 1)
-        self.last = LastAction(player=player_id, kind="draw")
+        self.last = LastAction(player=player_id, kind="draw", count=1)
         self.seq += 1
         drawn = hand.cards[-1]
         if is_playable(drawn, self.active_color, self.discard[-1]):
-            self.drawn = drawn  # may now play it or pass
+            self.drawn = drawn  # a drawn playable card must be played
         else:
             self.drawn = None
             self._step(1)
-
-    def do_pass(self, player_id: str) -> None:
-        """Pass the turn after drawing a card the player chose not to play.
-
-        Args:
-            player_id: Who is passing. Must be the player on turn.
-
-        Raises:
-            GameError: If it is not the player's turn, or they have not
-                just drawn a playable card.
-        """
-        self._require_turn(player_id)
-        if not self.drawn:
-            raise GameError(
-                ErrorCode.INVALID_MESSAGE, "you can only pass after drawing"
-            )
-        self.drawn = None
-        self.last = LastAction(player=player_id, kind="pass")
-        self.seq += 1
-        self._step(1)
 
     def challenge(self, player_id: str) -> None:
         """Answer a +4 by accusing its player of holding the active color.
@@ -306,15 +304,19 @@ class Game:
             raise GameError(ErrorCode.INVALID_CHALLENGE, "no +4 to challenge")
         plus4 = self.plus4
         self.plus4 = None
-        self.last = LastAction(player=player_id, kind="challenge")
-        self.seq += 1
         penalty = effect_of(self.discard[-1]).draw
         if plus4.legal:
+            self.last = LastAction(player=player_id, kind="challenge",
+                                   count=penalty + 2)
+            self.seq += 1
             self._deal(self.hands[self.turn], penalty + 2)
             self._finish_or_step(plus4.by)
         else:
             # the bluff is exposed, the penalty changes hands and the
             # challenger's own turn still stands
+            self.last = LastAction(player=player_id, kind="challenge",
+                                   target=plus4.by, count=penalty)
+            self.seq += 1
             self._deal(self._hand(plus4.by), penalty)
 
     def say_uno(self, player_id: str) -> None:
@@ -373,7 +375,8 @@ class Game:
                 "target said uno or is not at one card",
             )
         self._deal(target, 2)
-        self.last = LastAction(player=player_id, kind="catch")
+        self.last = LastAction(player=player_id, kind="catch",
+                               target=target_id, count=2)
         self.seq += 1
 
     def snapshot_for(self, player_id: str) -> GameState:
@@ -481,13 +484,15 @@ class Game:
             if self.plus4:
                 # the cards land on the sleeper, never on the next player
                 plus4, self.plus4 = self.plus4, None
-                self._deal(self.hands[self.turn],
-                           effect_of(self.discard[-1]).draw)
+                eaten = effect_of(self.discard[-1]).draw
+                self._deal(self.hands[self.turn], eaten)
+                self.last.count = eaten
                 self._finish_or_step(plus4.by)
                 return
             if self.stack:
                 owed, self.stack = self.stack, 0
                 self._deal(self.hands[self.turn], owed)
+                self.last.count = owed
             self._step(1)
 
     def _rotate(self) -> None:
