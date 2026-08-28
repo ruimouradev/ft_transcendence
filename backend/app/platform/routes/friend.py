@@ -1,10 +1,10 @@
 import logging
+from uuid import UUID
 
 from app.platform.service import friendservice
 from fastapi import APIRouter
 from app.platform.deps import CurrentUser, SessionDep
-from app.models.all import Friends, Suggestions, Requests, FriendshipStatus, Friendship
-
+from app.models.all import APIError, APIErrorCode, Friends, Suggestions, Requests, FriendshipStatus, Friendship
 
 router = APIRouter(prefix="/friends", tags=["friends"] ,include_in_schema=False)
 logger = logging.getLogger("uvicorn.error")
@@ -46,8 +46,12 @@ async def add_friend(friend_id: str, session: SessionDep, current_user: CurrentU
     '''
     Send a friend request to another user.
     '''
+    try:
+        uuid_friend_id = UUID(friend_id)
+    except ValueError:
+        raise APIError(status_code=400, code=APIErrorCode.BAD_REQUEST, msg="Invalid friend ID format. Must be a valid UUID.")
 
-    friendship = friendservice.add_friend(friend_id=friend_id, session=session, current_user=current_user)
+    friendship = friendservice.add_friend(friend_id=uuid_friend_id, session=session, current_user=current_user)
 
     return friendship
 

@@ -96,7 +96,7 @@ async def verify_api_key( session: SessionDep, api_key: str | None = Depends(api
         raise APIError(status_code=401, code=APIErrorCode.API_KEY_MISSING, msg="API key is missing")
 
     try:
-        UUID(client_id, version=4)
+        UUID(client_id)
     except ValueError:
         raise APIError(status_code=400, code=APIErrorCode.BAD_REQUEST, msg="Invalid client ID format. Must be a valid UUID.")
     oauth_account = userservice.get_oauth_account_by_provider_and_user_id(session=session, provider=ProviderType.api_key, user_id=client_id)
