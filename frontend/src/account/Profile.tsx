@@ -9,6 +9,7 @@ import NotificationSnackbar from '../ui/NotificationSnackbar';
 import CardBackSelector from './CardBackSelector';
 import { cardBacks, defaultCardBack } from '../ui/cardBacks';
 import Enable2FADialog from './Enable2FADialog';
+import Disable2FADialog from './Disable2FADialog';
 
 type NotificationState = {
     open: boolean;
@@ -38,6 +39,7 @@ export default function ProfileCard() {
     const [nickName, setNickName] = useState('');
     const fileInputRef = useRef<HTMLInputElement | null>(null);
     const [enable2FADialogOpen, setEnable2FADialogOpen] = useState(false);
+    const [disable2FADialogOpen, setDisable2FADialogOpen] = useState(false);
 
     const handleAvatarClick = () => {
         fileInputRef.current?.click();
@@ -73,7 +75,7 @@ export default function ProfileCard() {
                 navigate('/login');
             } else {
                 login({ ...user, avatar: oldAvatarUrl });
-                setNotification({ open: true, message: 'Failed to upload avatar. Please try again.', severity: 'error', });
+                setNotification({ open: true, message: error.response?.data?.detail || 'Failed to upload avatar. Please try again.', severity: 'error', });
             }
         } finally {
             setUploading(false);
@@ -120,12 +122,22 @@ export default function ProfileCard() {
     };
 
     const handle2FAClick = () => {
-        setEnable2FADialogOpen(true);
+        if (user?.use2fa) {
+            setDisable2FADialogOpen(true);
+        }else{
+            setEnable2FADialogOpen(true);
+        }
     };
+
+    const handle2FADisabled = () => {
+        if (!user) return;
+        login({ ...user, use2fa: false });
+        setNotification({ open: true, message: '2FA disabled successfully.', severity: 'success', });
+    }
 
     const handle2FAEnabled = () => {
         if (!user) return;
-        login({ ...user, user2fa: true });
+        login({ ...user, use2fa: true });
         setNotification({ open: true, message: '2FA enabled successfully.', severity: 'success', });
     }
 
@@ -133,26 +145,13 @@ export default function ProfileCard() {
 
     return (
         <Container maxWidth="sm" sx={{ mt: 6, mb: 6 }}>
-            <NotificationSnackbar
-                open={notification.open}
-                message={notification.message}
-                severity={notification.severity}
-                onClose={handleSnackbarClose}
-            />
+            <NotificationSnackbar open={notification.open} message={notification.message} severity={notification.severity} onClose={handleSnackbarClose} />
 
             <Card elevation={3} sx={{ borderRadius: 3, overflow: 'hidden' }}>
 
                 <Tooltip title="Click to change card back" arrow>
                     <Box sx={{ position: 'relative', top: 0, display: 'flex', justifyContent: 'left' }}>
-                        <CardBackSelector
-                            cardBacks={cardBackUrls}
-                            value={cardBacks[user.card_back ?? ''] ?? defaultCardBack}
-                            onChange={handleCardBackChange}
-                            cardWidth={600}
-                            cardHeight={120}
-                            optionWidth={65}
-                            columns={5}
-                        />
+                        <CardBackSelector cardBacks={cardBackUrls} value={cardBacks[user.card_back ?? ''] ?? defaultCardBack} onChange={handleCardBackChange} cardWidth={600} cardHeight={120} optionWidth={65} columns={5} />
                     </Box>
                 </Tooltip>
 
@@ -160,49 +159,17 @@ export default function ProfileCard() {
 
                     <Box sx={{ display: 'flex', justifyContent: 'center', mt: -7, mb: 2 }}>
                         <Tooltip title={uploading ? "Uploading..." : "Click to change avatar"} arrow>
-                            <Avatar
-                                src={user.avatar}
-                                alt={user.nick_name}
-                                onClick={handleAvatarClick}
-                                sx={{
-                                    width: 100,
-                                    height: 100,
-                                    border: '4px solid white',
-                                    boxShadow: 2,
-                                    fontSize: 36,
-                                    bgcolor: 'secondary.main',
-                                    cursor: 'pointer',
-                                    opacity: uploading ? 0.6 : 1,
-                                    transition: 'all 0.2s ease-in-out',
-                                    '&:hover': {
-                                        transform: 'scale(1.04)',
-                                        boxShadow: 4,
-                                    },
-                                }}
-                            >
+                            <Avatar src={user.avatar} alt={user.nick_name} onClick={handleAvatarClick} sx={{ width: 100, height: 100, border: '4px solid white', boxShadow: 2, fontSize: 36, bgcolor: 'secondary.main', cursor: 'pointer', opacity: uploading ? 0.6 : 1, transition: 'all 0.2s ease-in-out', '&:hover': { transform: 'scale(1.04)', boxShadow: 4, }, }}>
                                 {user.nick_name ? user.nick_name.charAt(0).toUpperCase() : 'U'}
                             </Avatar>
                         </Tooltip>
-                        <input
-                            type="file"
-                            ref={fileInputRef}
-                            accept="image/*"
-                            disabled={uploading}
-                            onChange={handleFileUpload}
-                            style={{ display: 'none' }}
-                        />
+                        <input type="file" ref={fileInputRef} accept="image/*" disabled={uploading} onChange={handleFileUpload} style={{ display: 'none' }} />
                     </Box>
 
                     <Stack spacing={1} sx={{ alignItems: 'center', textAlign: 'center' }}>
                         {isEditingName ? (
                             <Stack spacing={1} sx={{ width: '100%', alignItems: 'center' }}>
-                                <TextField
-                                    label="Nick name"
-                                    size="small"
-                                    value={nickName}
-                                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNickName(e.target.value)}
-                                    sx={{ minWidth: 140 }}
-                                />
+                                <TextField label="Nick name" size="small" value={nickName} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNickName(e.target.value)} sx={{ minWidth: 140 }} />
                                 <Stack direction="row" spacing={1}>
                                     <Button variant="contained" size="small" onClick={handleNameSave}>
                                         Save
@@ -213,13 +180,9 @@ export default function ProfileCard() {
                                 </Stack>
                             </Stack>
                         ) : (
-                            <Typography
-                                variant="h5"
-                                component="h1"
-                                sx={{ fontWeight: 'bold', cursor: 'pointer', userSelect: 'none' }}
+                            <Typography variant="h5" component="h1" sx={{ fontWeight: 'bold', cursor: 'pointer', userSelect: 'none' }}
                                 // o campo de edição nasce com o nome atual
-                                onDoubleClick={() => { setNickName(user.nick_name ?? ''); setIsEditingName(true); }}
-                            >
+                                onDoubleClick={() => { setNickName(user.nick_name ?? ''); setIsEditingName(true); }}>
                                 {user.nick_name}
                             </Typography>
                         )}
@@ -228,27 +191,18 @@ export default function ProfileCard() {
                             <EmailIcon fontSize="small" />
                             <Typography variant="body1">{user.email}</Typography>
                         </Stack>
-                        <Stack direction="row" spacing={1} sx={{ mt: 2 }}>
-                            {user.is_superuser ? (
-                                <Chip icon={<AdminIcon />} label="Superuser" color="secondary" variant="filled" size="small" />
-                            ) : (
-                                <Chip icon={<UserIcon />} label="Standard User" variant="outlined" size="small" />
-                            )}
-                            {user.is_active ? (
-                                <Chip icon={<ActiveIcon />} label="Active" color="success" variant="outlined" size="small" />
-                            ) : (
-                                <Chip icon={<InactiveIcon />} label="Inactive" color="error" variant="outlined" size="small" />
-                            )}
+                        <Stack direction="row" spacing={1} sx={{ mt: 2 }}>                            
+                            <Chip icon={<ActiveIcon />} label="Active" color="success" variant="outlined" size="small" />
+                            
                             <Tooltip title="Click to manage 2FA settings" arrow>
-                                <Button variant="outlined" size="small" onClick={handle2FAClick} sx={{ textTransform: 'none',borderWidth:0 }}>
-                                    {user.use2fa ? (
-                                        <Chip icon={<ActiveIcon />} label="2FA Enabled" color="primary" variant="soft" size="small" />
+                                {user.use2fa ? (
+                                        <Chip icon={<ActiveIcon />} label="2FA Enabled" color="primary" onClick={handle2FAClick} variant="soft" size="small" />
                                     ) : (
-                                        <Chip icon={<InactiveIcon />} label="2FA Disabled" color="warning" variant="soft" size="small" />
+                                        <Chip icon={<InactiveIcon />} label="2FA Disabled" color="warning" onClick={handle2FAClick} variant="soft" size="small" />
                                     )}
-                                </Button>
                             </Tooltip>
                             <Enable2FADialog open={enable2FADialogOpen} onClose={() => setEnable2FADialogOpen(false)} onSuccess={handle2FAEnabled} />
+                            <Disable2FADialog open={disable2FADialogOpen} onClose={() => setDisable2FADialogOpen(false)} onSuccess={handle2FADisabled} />
                         </Stack>
                     </Stack>
                 </CardContent>

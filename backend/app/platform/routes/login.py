@@ -1,5 +1,3 @@
-import token
-
 import jwt
 import httpx
 import logging
@@ -7,16 +5,16 @@ import logging
 from datetime import timedelta, datetime, timezone
 from typing import Annotated, Any
 
-from fastapi import APIRouter, Depends, HTTPException, status, BackgroundTasks
+from fastapi import APIRouter, Depends, status, BackgroundTasks, Body
 from fastapi.security import OAuth2PasswordRequestForm
     
 from app.platform.service import userservice, twofa_service
-from app.platform.deps import CurrentUser, SessionDep, TokenDep, get_current_active_superuser
+from app.platform.deps import SessionDep, TokenDep
 from app.platform import security
 from app.platform.config import settings
 
-from app.platform.service.mailservice import send_password_reset_email
-from app.models.all import ErrorResponse, Message, OAuthAccountCreate, ProviderType, TokenAndUser, TokenPayload, UserCreate, UserPublic, UserUpdate, User
+from app.platform.service.mailservice import create_verification_token, send_password_reset_email, verify_token
+from app.models.all import EmailVerificationType, ErrorResponse, Message, OAuthAccountCreate, ProviderType, TokenPayload, UserCreate, UserUpdate, User
 from app.models.all import APIError, APIErrorCode
 
 from fastapi.responses import RedirectResponse, Response
@@ -47,9 +45,9 @@ def generate_password_reset_token(email: str) -> str:
 
 
 @router.post("/login/access-token", response_model=Message, responses={401: {"model": ErrorResponse}})
-def login_access_token(session: SessionDep, form_data: Annotated[OAuth2PasswordRequestForm, Depends()],response: Response) -> TokenAndUser:
+def login_access_token(session: SessionDep, form_data: Annotated[OAuth2PasswordRequestForm, Depends()],response: Response) -> Message:
     """
-    OAuth2 compatible token login, get an access token for future requests
+    User login with email and password. If the user has 2FA enabled, a temporary access token is returned and the user must validate 2FA to get a full access token. If the user does not have 2FA enabled, a full access token is returned.
     """
 
     user = userservice.authenticate_user(session=session, email=form_data.username, password=form_data.password)
@@ -117,45 +115,31 @@ def validate_2fa(session: SessionDep, token: TokenDep, code: str, response: Resp
 
     return Message(status_code=200, code="success", message="Two-factor authentication validated successfully")
 
-@router.get("/password-recovery/{email}")
-def recover_password(email: str, session: SessionDep, background_tasks: BackgroundTasks):
+@router.post("/request-password-reset", response_model=Message, responses={401: {"model": ErrorResponse}})
+def recover_password(session: SessionDep, background_tasks: BackgroundTasks, email: str= Body(..., embed=True)):
     """
-    Password Recovery
+    Password reset request. If the user exists and is active, send a password reset email with a temporary password.
     """
     user = userservice.get_user_by_email(session=session, email=email)
     if user:
         if settings.EMAILS_ENABLED and user.is_active:
-            new_password = security.generate_password(8)
-            userservice.update_user(session=session, db_user=user, user_in=UserUpdate(password=new_password))
-            background_tasks.add_task(send_password_reset_email, email=email, username=user.nick_name, new_password=new_password)
-    return RedirectResponse(
-        url="/login?info=password reset email sent, please check your email",
-        status_code=status.HTTP_307_TEMPORARY_REDIRECT
-    )
+            expire_minutes = 10
+            token = create_verification_token(email, EmailVerificationType.PASSWORD_RESET, expire_minutes=expire_minutes)
+            background_tasks.add_task(send_password_reset_email, email=email, username=user.nick_name, token=token, expire_minutes=expire_minutes)
 
+    return Message(status_code=200, code="success", message="Check your email and reset your password.")
 
-# @router.post("/reset-password/")
-# def reset_password(session: SessionDep, body: NewPassword) -> Message:
-#     """
-#     Reset password
-#     """
-#     email = verify_password_reset_token(token=body.token)
-#     if not email:
-#         raise HTTPException(status_code=400, detail="Invalid token")
-#     user = userservice.get_user_by_email(session=session, email=email)
-#     if not user:
-#         # Don't reveal that the user doesn't exist - use same error as invalid token
-#         raise HTTPException(status_code=400, detail="Invalid token")
-#     elif not user.is_active:
-#         raise HTTPException(status_code=400, detail="Inactive user")
-#     user_in_update = UserUpdate(password=body.new_password)
-#     userservice.update_user(
-#         session=session,
-#         db_user=user,
-#         user_in=user_in_update,
-#     )
-#     return Message(message="Password updated successfully")
+@router.post("/set-password", response_model=Message, responses={401: {"model": ErrorResponse}})
+def reset_password_me(*, session: SessionDep, password: str = Body(..., embed=True), token: str = Body(..., embed=True)) -> Any:
+    """
+    Use a verification token to set a new password.
+    """
+    email = verify_token(token)
+    current_user = userservice.get_user_by_email(session=session, email=email)
+    userservice.update_user(session=session, db_user=current_user, user_in=UserUpdate(password=password))
+    return Message(status_code=200, code="success", message="Password reset successfully")
 
+# authRouter is used for routes OAuth2 login
 authRouter = APIRouter(tags=["auth"], include_in_schema=False)
 
 @authRouter.post("/auth/logout")
@@ -200,19 +184,12 @@ async def callback_42(code: str, session: SessionDep):
     async with httpx.AsyncClient() as client:
         response = await client.post(token_url, data=data)
         if response.status_code != 200:
-            response=RedirectResponse(
-                url="/login?error=oauth2_error",
-                status_code=status.HTTP_307_TEMPORARY_REDIRECT,
-                
-            )
+            response=RedirectResponse(url="/login?error=oauth2_error", status_code=status.HTTP_307_TEMPORARY_REDIRECT,)
             return response;
         response_data = response.json()
         access_token = response_data.get("access_token")
         if not access_token:
-            response=RedirectResponse(
-                url="/login?error=oauth2_error",
-                status_code=status.HTTP_307_TEMPORARY_REDIRECT
-            )
+            response=RedirectResponse(url="/login?error=oauth2_error", status_code=status.HTTP_307_TEMPORARY_REDIRECT)
             return response;
         
         # Use the access token to get user info
@@ -220,10 +197,7 @@ async def callback_42(code: str, session: SessionDep):
         headers = {"Authorization": f"Bearer {access_token}"}
         user_response = await client.get(user_info_url, headers=headers)
         if user_response.status_code != 200:
-            response=RedirectResponse(
-				url="/login?error=oauth2_error",
-				status_code=status.HTTP_307_TEMPORARY_REDIRECT
-			)
+            response=RedirectResponse(url="/login?error=oauth2_error", status_code=status.HTTP_307_TEMPORARY_REDIRECT)
             return response;
 
         user_info = user_response.json()
@@ -252,10 +226,7 @@ async def callback_42(code: str, session: SessionDep):
                 access_token=access_token,
                 user_id=str(user.id)
             ))
-        response = RedirectResponse(
-            url=f"/dashboard",
-            status_code=status.HTTP_307_TEMPORARY_REDIRECT
-        )
+        response = RedirectResponse(url=f"/dashboard", status_code=status.HTTP_307_TEMPORARY_REDIRECT)
         
         response.set_cookie(
             key="access_token",
@@ -263,7 +234,7 @@ async def callback_42(code: str, session: SessionDep):
             httponly=True,       # Prevents JS reading the token (XSS protection)
             secure=True,         # Set to True in production (HTTPS)
             samesite="lax",      # Crucial for OAuth redirects across domains
-            max_age=1800         # 30 minutes in seconds
+            max_age=settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60         # 30 minutes in seconds
         )
         
         return response

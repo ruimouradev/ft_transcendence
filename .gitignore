@@ -5,3 +5,5 @@ backend/app/static/*
 docs
 
 dbdata/
+
+data/
