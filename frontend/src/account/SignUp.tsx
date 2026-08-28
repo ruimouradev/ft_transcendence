@@ -205,7 +205,7 @@ const returnErrorMessageHandler = (error: unknown) => {
                                     }
                                     label={
                                         <Typography variant="body2" color="text.secondary">
-                                            I agree to the <Link href="#" color="primary">Terms of Service</Link> and <Link href="#" color="primary">Privacy Policy</Link>.
+                                            I agree to the <Link href="#" onClick={(e) => { e.preventDefault(); navigate('/terms'); }} color="primary">Terms of Service</Link> and <Link href="/privacy" onClick={(e) => { e.preventDefault(); navigate('/privacy'); }} color="primary">Privacy Policy</Link>.
                                         </Typography>
                                     }/>
                             {errors.agreeTerms && <FormHelperText>{errors.agreeTerms}</FormHelperText>}
