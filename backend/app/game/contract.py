@@ -1,7 +1,7 @@
 """
 The message types the server and the client exchange. A player sends
 actions (create, join, add_bot, kick, leave, start, play, draw,
-pass, say_uno, catch, challenge), the server sends back the game state after each
+say_uno, catch, challenge), the server sends back the game state after each
 move, or an error when a move is refused.
 """
 
@@ -97,11 +97,6 @@ class Draw(BaseModel):
     type: Literal["draw"] = "draw"
 
 
-class Pass(BaseModel):
-    # Can only be played after drawing a playable card
-    type: Literal["pass"] = "pass"
-
-
 class SayUno(BaseModel):
     # The Uno call as its own message, so it can race the catch, both
     # before the play with two cards and after it with one undeclared
@@ -124,7 +119,7 @@ class Challenge(BaseModel):
 # the type field tells pydantic which model to build from the raw text
 PlayerAction = Annotated[
     Create | Join | AddBot | Kick | Leave | Start | Play | Draw
-    | Pass | SayUno | Catch | Challenge,
+    | SayUno | Catch | Challenge,
     Field(discriminator="type"),
 ]
 
@@ -179,7 +174,7 @@ class PrivateView(BaseModel):
     # ids of the cards you may play right now, straight from the engine,
     # so the frontend never has to know the rules
     playable: list[str] = []
-    # the card you just drew, while you may still play it or pass
+    # the card you just drew, the only one you may play now
     drawn: str | None = None
 
 
@@ -207,10 +202,15 @@ class LastAction(BaseModel):
     # "timeout" is the server closing an idle turn, never a player act
     player: str
     kind: Literal[
-        "join", "start", "play", "draw", "pass", "catch", "challenge",
+        "join", "start", "play", "draw", "catch", "challenge",
         "timeout", "uno",
     ]
     card: Card | None = None
+    # Who the action lands on: the victim of an action card, the swap
+    # target of a seven, the caught player, the exposed bluffer
+    target: str | None = None
+    # How many cards moved, on draws, catches and settled penalties
+    count: int | None = None
 
 
 class GameState(BaseModel):
