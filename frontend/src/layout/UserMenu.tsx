@@ -58,7 +58,7 @@ export default function UserMenu() {
                     <div className="hidden sm:block">
                         <div>{user?.nick_name}</div>
                         <div className="text-sm text-gray-400">
-                            {user?.is_superuser ? 'Super User' : 'User'}
+                            User
                         </div>
                     </div>
                 </div>
