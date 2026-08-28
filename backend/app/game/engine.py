@@ -466,7 +466,8 @@ class Game:
         """Close an idle player's turn after the room's clock runs out.
 
         The realtime layer calls this when the player on turn let the
-        time limit pass. If the turn is still theirs it moves on; either
+        time limit pass. A pending +4 or +2 pile is settled on this
+        hand first, sleeping through a penalty is accepting it. Either
         way the state records the timeout so everyone sees why the turn
         jumped.
 
@@ -477,6 +478,16 @@ class Game:
         self.seq += 1
         if self.phase == "playing" and self.hands[self.turn].id == player_id:
             self.drawn = None
+            if self.plus4:
+                # the cards land on the sleeper, never on the next player
+                plus4, self.plus4 = self.plus4, None
+                self._deal(self.hands[self.turn],
+                           effect_of(self.discard[-1]).draw)
+                self._finish_or_step(plus4.by)
+                return
+            if self.stack:
+                owed, self.stack = self.stack, 0
+                self._deal(self.hands[self.turn], owed)
             self._step(1)
 
     def _rotate(self) -> None:
