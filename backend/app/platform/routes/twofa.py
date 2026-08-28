@@ -23,7 +23,7 @@ async def setup_two_factor(request: TwoFactorSetupRequest, current_user: Current
     verified, _ = userservice.verify_password(request.password,current_user.hashed_password)
     if verified is False:
         raise APIError(status_code=400, code=APIErrorCode.UNAUTHORIZED, msg="Invalid password")
-    if request.recovery_code is None and current_user.use2fa:
+    if current_user.use2fa:
         raise APIError(status_code=400, code=APIErrorCode.BAD_REQUEST, msg="Two-Factor Authentication is already enabled")
 
     secret = twofa_service.generate_secret()
@@ -41,6 +41,9 @@ async def verify_two_factor_setup(request: TwoFactorVerifyRequest, current_user:
     """
     if current_user.use2fa:
         raise APIError(status_code=400, code=APIErrorCode.BAD_REQUEST, msg="Two-Factor Authentication is already enabled for this user")
+
+    if current_user.two_factor_secret is None:
+        raise APIError(status_code=400, code=APIErrorCode.BAD_REQUEST, msg="Follow the setup process first to generate a secret before verifying the two-factor authentication setup")
 
     if not twofa_service.verify_totp(secret=current_user.two_factor_secret, code=request.code):
         raise APIError(status_code=400, code=APIErrorCode.BAD_REQUEST, msg="Invalid verification code")
