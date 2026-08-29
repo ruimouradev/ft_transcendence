@@ -117,13 +117,12 @@ class Challenge(BaseModel):
 
 
 class Emote(BaseModel):
-    # A little reaction sent to the table, purely visual. It never
-    # touches the game, the server relays it to everyone as a Notice.
-    # A fixed set of codes, not free text, so nothing arbitrary travels
+    # A reaction the player sends to the table, only for show. It never
+    # touches the game, the server passes it on to everyone as a Notice
     type: Literal["emote"] = "emote"
-    # the id of the reaction, the frontend maps id to a picture. The
-    # set lives there, here we only keep it a small number so nothing
-    # arbitrary travels. An id with no picture just shows no bubble
+    # the id of the reaction, the frontend maps it to a picture. Kept a
+    # small number so nothing odd travels, an id with no picture on the
+    # frontend shows nothing
     icon: int = Field(ge=1, le=9)
 
 
@@ -171,9 +170,9 @@ class Error(BaseModel):
 
 
 class Notice(BaseModel):
-    # A short-lived bubble the server sends to everyone, the shout of an
-    # uno, the call of a catch, or a player's emote. It carries no game
-    # state and does not move the seq, the frontend just shows it
+    # A short notice the server sends to everyone, an uno, a catch or a
+    # player's emote. It carries no game state and does not move the
+    # seq, the frontend just shows it
     type: Literal["notice"] = "notice"
     sender: str
     kind: Literal["uno", "catch", "emote"]
