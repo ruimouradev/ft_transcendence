@@ -38,6 +38,7 @@ type GameContextType = {
 	lastMessage: string | null,
 	gameState: GameState | null,
 
+	resetGameState: () => void
 	closeRoomConnection: () => void
 	sendMessage: (message: object) => void
 	joinRoom: (roomID: string, message: object) => void
@@ -45,7 +46,8 @@ type GameContextType = {
 
 const GameContext = createContext<GameContextType | null>(null);
 
-export function getGameContext() {
+export function getGameContext() 
+{
 	const context = useContext(GameContext);
 
 	if (!context)
@@ -64,6 +66,11 @@ function GameWebSocket({ children }: { children: React.ReactNode }) {
 	const pendingRoomRef = useRef<string | null>(null);
 
 	const { user } = useAuth();
+
+	function resetGameState()
+	{
+		setGameState(null);
+	}
 
 	function joinRoom(roomID: string, message: object)
 	{
@@ -202,7 +209,7 @@ function GameWebSocket({ children }: { children: React.ReactNode }) {
 		*/
 	}
 	return (
-		<GameContext.Provider value={{ roomID, connected, error, lastMessage, gameState, joinRoom, closeRoomConnection, sendMessage }}>
+		<GameContext.Provider value={{ roomID, connected, error, lastMessage, gameState, resetGameState, joinRoom, closeRoomConnection, sendMessage }}>
 			{ children }
 		</GameContext.Provider>
 	)

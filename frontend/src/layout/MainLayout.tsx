@@ -1,9 +1,11 @@
 import Navbar from "./Navbar";
 import Footer from "./Footer";
+import GamePopUps from "../core/GamePopUps";
 import GameWebSocket from "../core/GameWebSocket";
 import { Outlet, useLocation } from "react-router-dom";
 import bgHome from "../assets/utils/bg.jpeg"
 import bgPlain from "../assets/utils/bg_plain.jpeg"
+import PopUp from '../components/PopUp'
 
 // A moldura do site: navbar pegajosa em cima, footer em baixo, e a
 // página de cada rota a desenhar-se no Outlet do meio.
@@ -30,9 +32,12 @@ export default function MainLayout() {
                     <Navbar />
                 </div>
                 <main className="flex-1 p-6">
-					<GameWebSocket>
-                    	<Outlet />
-					</GameWebSocket>
+					<GamePopUps>
+						<GameWebSocket>
+							<PopUp />
+							<Outlet />
+						</GameWebSocket>
+					</GamePopUps>
                 </main>
 				{isHome && <Footer />}
             </div>
