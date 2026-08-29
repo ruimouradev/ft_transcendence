@@ -82,8 +82,8 @@ def login_access_token(session: SessionDep, form_data: Annotated[OAuth2PasswordR
 
     return Message(status_code=200, code="success", message="Login successful")
 
-@router.get("/login/verify-2fa", response_model=Message, responses={401: {"model": ErrorResponse}})
-def validate_2fa(session: SessionDep, token: TokenDep, code: str, response: Response) -> Message:
+@router.post("/login/verify-2fa", response_model=Message, responses={400: {"model": ErrorResponse},403: {"model": ErrorResponse}})
+def validate_2fa(session: SessionDep, token: TokenDep, response: Response, code: str = Body(..., embed=True)) -> Message:
     """
     Validate 2FA and return access token
     """
@@ -115,8 +115,8 @@ def validate_2fa(session: SessionDep, token: TokenDep, code: str, response: Resp
 
     return Message(status_code=200, code="success", message="Two-factor authentication validated successfully")
 
-@router.post("/request-password-reset", response_model=Message, responses={401: {"model": ErrorResponse}})
-def recover_password(session: SessionDep, background_tasks: BackgroundTasks, email: str= Body(..., embed=True)):
+@router.post("/request-password-reset", response_model=Message)
+def recover_password(session: SessionDep, background_tasks: BackgroundTasks, email: str = Body(..., embed=True)):
     """
     Password reset request. If the user exists and is active, send a password reset email with a temporary password.
     """
@@ -129,7 +129,7 @@ def recover_password(session: SessionDep, background_tasks: BackgroundTasks, ema
 
     return Message(status_code=200, code="success", message="Check your email and reset your password.")
 
-@router.post("/set-password", response_model=Message, responses={401: {"model": ErrorResponse}})
+@router.post("/set-password", response_model=Message, responses={400: {"model": ErrorResponse}})
 def reset_password_me(*, session: SessionDep, password: str = Body(..., embed=True), token: str = Body(..., embed=True)) -> Any:
     """
     Use a verification token to set a new password.
