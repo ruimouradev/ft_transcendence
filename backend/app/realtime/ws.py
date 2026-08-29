@@ -20,8 +20,8 @@ from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 
 from app.game.contract import (
     AddBot, Catch, Challenge, Create, Draw, Error, ErrorCode,
-    GameSettings, Join, Kick, Leave, Play, PlayerAction, SayUno,
-    Start, Welcome, parse_action,
+    Emote, GameSettings, Join, Kick, Leave, Notice, Play, PlayerAction,
+    SayUno, Start, Welcome, parse_action,
 )
 from app.game.engine import Game, GameError
 from app.platform.config import settings
@@ -119,6 +119,18 @@ async def broadcast(room: Room) -> None:
                 await p.ws.send_text(snapshot_json(room, p.id))
             except Exception:
                 # died mid send; its own handler deals with the goodbye
+                continue
+
+
+async def relay(room: Room, notice: Notice) -> None:
+    # A notice carries no game state, it is sent to everyone as is, for
+    # an uno, a catch or an emote. The frontend shows it and drops it
+    payload = notice.model_dump_json()
+    for p in room.players:
+        if p.connected and p.ws:
+            try:
+                await p.ws.send_text(payload)
+            except Exception:
                 continue
 
 
@@ -407,19 +419,19 @@ async def apply(room: Room, player: Player, action: PlayerAction) -> Error | Non
 
     try:
         if isinstance(action, Start):
-            if player is not host_of(room):
-                return err(ErrorCode.INVALID_MESSAGE, "only the host starts")
             if room.game.phase == "finished":
+                # Back to the lobby, and anyone may ask for it since the
+                # game is already over. A second start from the lobby deals
+                # the cards, and that one is the host's. Whoever left for
+                # good loses the seat now
                 room.recorded = False
-                # Play again: the ended game turns back into a lobby.
-                # Whoever left for good loses the seat now; if seats
-                # are missing the room just waits there, no error
                 room.players = [p for p in room.players
                                 if p.connected or p.bot]
                 reseat(room)
-                if len(room.players) < room.settings.max_players:
-                    return None
-            elif len(room.players) < room.settings.max_players:
+                return None
+            if player is not host_of(room):
+                return err(ErrorCode.INVALID_MESSAGE, "only the host starts")
+            if len(room.players) < room.settings.max_players:
                 return err(ErrorCode.INVALID_MESSAGE, "the room is not full")
             elif any(not p.bot and not p.connected for p in room.players):
                 # a chair still waiting for its player is not a chair
@@ -609,6 +621,12 @@ async def game(ws: WebSocket, room_id: str) -> None:
                     player = await seat_player(ws, room, action.name, user)
                 continue
 
+            if isinstance(action, Emote):
+                # a reaction, not a move, passed on without touching the game
+                await relay(room, Notice(sender=player.id, kind="emote",
+                                         icon=action.icon))
+                continue
+
             error = await apply(room, player, action)
             if error:
                 metrics.rejected.labels(code=error.code.value).inc()
@@ -616,6 +634,13 @@ async def game(ws: WebSocket, room_id: str) -> None:
             else:
                 metrics.moves.labels(kind=action.type).inc()
                 await broadcast(room)
+                # an uno and a catch also go out as their own notice, so
+                # the frontend can show them apart from the board
+                if isinstance(action, SayUno):
+                    await relay(room, Notice(sender=player.id, kind="uno"))
+                elif isinstance(action, Catch):
+                    await relay(room, Notice(sender=player.id, kind="catch",
+                                             target=action.target))
     except WebSocketDisconnect:
         pass
     finally:
