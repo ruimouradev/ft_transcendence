@@ -47,7 +47,6 @@ function PlayCard({card, gameState, sendMessage, handleNewID}:
 	// handleNewID('game_end', card.id);
 	// return ;
 
-
 	if (gameState?.you.id !== gameState?.turn
 		|| !gameState?.you.playable?.includes(card.id))
 		return null;
@@ -124,7 +123,6 @@ function DeckArea()
 		</Box>
 	)
 }
-
 
 function DrawHands({deck, amount, card_class}:
 	{deck: GameCard[] | undefined,
