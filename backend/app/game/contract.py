@@ -116,10 +116,21 @@ class Challenge(BaseModel):
     type: Literal["challenge"] = "challenge"
 
 
+class Emote(BaseModel):
+    # A little reaction sent to the table, purely visual. It never
+    # touches the game, the server relays it to everyone as a Notice.
+    # A fixed set of codes, not free text, so nothing arbitrary travels
+    type: Literal["emote"] = "emote"
+    # the id of the reaction, the frontend maps id to a picture. The
+    # set lives there, here we only keep it a small number so nothing
+    # arbitrary travels. An id with no picture just shows no bubble
+    icon: int = Field(ge=1, le=9)
+
+
 # the type field tells pydantic which model to build from the raw text
 PlayerAction = Annotated[
     Create | Join | AddBot | Kick | Leave | Start | Play | Draw
-    | SayUno | Catch | Challenge,
+    | SayUno | Catch | Challenge | Emote,
     Field(discriminator="type"),
 ]
 
@@ -157,6 +168,17 @@ class Error(BaseModel):
     # Only on ALREADY_IN_ROOM: the code of the room holding the seat,
     # so the frontend can offer the way back to it
     room: str | None = None
+
+
+class Notice(BaseModel):
+    # A short-lived bubble the server sends to everyone, the shout of an
+    # uno, the call of a catch, or a player's emote. It carries no game
+    # state and does not move the seq, the frontend just shows it
+    type: Literal["notice"] = "notice"
+    sender: str
+    kind: Literal["uno", "catch", "emote"]
+    target: str | None = None  # on a catch, who was caught
+    icon: int | None = None    # on an emote, the reaction id
 
 
 class Welcome(BaseModel):
