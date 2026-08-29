@@ -2,6 +2,7 @@ import asyncio
 import time
 from dataclasses import dataclass, field
 from uuid import uuid4
+from datetime import datetime, timezone
 
 import logging
 from uuid import UUID
@@ -19,8 +20,8 @@ from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 
 from app.game.contract import (
     AddBot, Catch, Challenge, Create, Draw, Error, ErrorCode,
-    GameSettings, Join, Kick, Leave, Play, PlayerAction, SayUno,
-    Start, Welcome, parse_action,
+    Emote, GameSettings, Join, Kick, Leave, Notice, Play, PlayerAction,
+    SayUno, Start, Welcome, parse_action,
 )
 from app.game.engine import Game, GameError
 from app.platform.config import settings
@@ -54,6 +55,8 @@ class Room:
     owner: str | None = None
     # the room's own clock, held here so it is not collected mid game
     timer: asyncio.Task | None = None
+    # the background task driving AI bots, kept here to prevent GC collection
+    ai_timer_task: asyncio.Task | None = None
     recorded: bool = False  # the finished game already went to the database
     # when a hand last dropped to one undeclared card, for the grace
     solo_at: float = 0.0
@@ -116,6 +119,18 @@ async def broadcast(room: Room) -> None:
                 await p.ws.send_text(snapshot_json(room, p.id))
             except Exception:
                 # died mid send; its own handler deals with the goodbye
+                continue
+
+
+async def relay(room: Room, notice: Notice) -> None:
+    # A notice carries no game state, it is sent to everyone as is, for
+    # an uno, a catch or an emote. The frontend shows it and drops it
+    payload = notice.model_dump_json()
+    for p in room.players:
+        if p.connected and p.ws:
+            try:
+                await p.ws.send_text(payload)
+            except Exception:
                 continue
 
 
@@ -213,7 +228,8 @@ async def record_finished_game(room: Room) -> None:
     metrics.games_finished.inc()
     has_guests = any(not p.bot and p.user is None for p in room.players)
     if not has_guests:
-        db_game = DBGame(status="finished")
+        now = datetime.now(timezone.utc)
+        db_game = DBGame(status="finished", created_at=now, finished_at=now)
         game_players = []
         bot_count = 0
         
@@ -273,63 +289,68 @@ async def record_finished_game(room: Room) -> None:
 
 async def ai_timer(room_id: str, room: Room) -> None:
     """Background task that plays for bot seats when it is their turn."""
-    last_seq = -1
+    last_seq_seen = -1
+    turn_started_at = 0.0
+
     while rooms.get(room_id) is room:
         await asyncio.sleep(0.5)
         if room.game is None or room.game.phase != "playing":
             continue
 
         current_seq = room.game.seq
-        if current_seq == last_seq:
-            continue
+        if current_seq != last_seq_seen:
+            last_seq_seen = current_seq
+            turn_started_at = time.monotonic()
 
         current_pid = room.game.hands[room.game.turn].id
-        bot_player = next((p for p in room.players if p.id == current_pid and p.bot), None)
-        if not bot_player:
-            continue
 
-        # Mark that we are processing this sequence so we don't double-trigger
-        last_seq = current_seq
+        # We process every bot to allow for out-of-turn Catch opportunities
+        for bot in [p for p in room.players if p.bot]:
+            # Construct GameState snapshot for the bot
+            bot_state = room.game.snapshot_for(bot.id)
+            bot_state.settings = room.settings
+            for seat in bot_state.players:
+                seat.bot = next((p.bot for p in room.players if p.id == seat.id), False)
+                seat.bot_level = next((p.bot_level for p in room.players if p.id == seat.id), None)
 
-        # Human-like delay
-        await asyncio.sleep(1.5)
+            bot_action = decide_bot_action(bot_state, bot.id)
+            if not bot_action:
+                continue
 
-        # Ensure turn didn't change during sleep (e.g. via timeout)
-        if room.game.phase != "playing" or room.game.seq != current_seq:
-            continue
+            if not isinstance(bot_action, Catch):
+                # Normal moves (Play, Draw, Challenge, SayUno) must be strictly on their turn
+                if bot.id != current_pid:
+                    continue
+                # Human-like delay for normal moves
+                if time.monotonic() - turn_started_at < 1.5:
+                    continue
+            else:
+                # Catch can be out-of-turn, but must respect UNO_GRACE
+                if time.monotonic() - room.solo_at < UNO_GRACE:
+                    continue
 
-        # Construct GameState snapshot for the bot
-        bot_state = room.game.snapshot_for(bot_player.id)
-        bot_state.settings = room.settings
-        for seat in bot_state.players:
-            seat.bot = next((p.bot for p in room.players if p.id == seat.id), False)
-            seat.bot_level = next((p.bot_level for p in room.players if p.id == seat.id), None)
-
-        bot_action = decide_bot_action(bot_state, bot_player.id)
-        if not bot_action:
-            continue
-
-        # Apply action directly
-        try:
-            if isinstance(bot_action, Play):
-                room.game.play(bot_player.id, bot_action.card, bot_action.color, bot_action.uno, bot_action.target)
-                hand = next((h for h in room.game.hands if h.id == bot_player.id), None)
-                if hand and len(hand.cards) == 1 and not hand.said_uno:
-                    room.solo_at = time.monotonic()
-            elif isinstance(bot_action, Catch):
-                room.game.catch(bot_player.id, bot_action.target)
-            elif isinstance(bot_action, Challenge):
-                room.game.challenge(bot_player.id)
-            elif isinstance(bot_action, Draw):
-                room.game.draw(bot_player.id)
-            elif isinstance(bot_action, SayUno):
-                room.game.say_uno(bot_player.id)
-                
-            metrics.moves.labels(kind=bot_action.type).inc()
-            await broadcast(room)
-            await record_finished_game(room)
-        except GameError as e:
-            logging.error(f"AI attempted illegal move: {e.msg}")
+            # Apply action directly
+            try:
+                if isinstance(bot_action, Play):
+                    room.game.play(bot.id, bot_action.card, bot_action.color, bot_action.uno, bot_action.target)
+                    hand = next((h for h in room.game.hands if h.id == bot.id), None)
+                    if hand and len(hand.cards) == 1 and not hand.said_uno:
+                        room.solo_at = time.monotonic()
+                elif isinstance(bot_action, Catch):
+                    room.game.catch(bot.id, bot_action.target)
+                elif isinstance(bot_action, Challenge):
+                    room.game.challenge(bot.id)
+                elif isinstance(bot_action, Draw):
+                    room.game.draw(bot.id)
+                elif isinstance(bot_action, SayUno):
+                    room.game.say_uno(bot.id)
+                    
+                metrics.moves.labels(kind=bot_action.type).inc()
+                await broadcast(room)
+                await record_finished_game(room)
+                break  # Apply max one bot action per tick to avoid race conditions
+            except GameError as e:
+                logging.error(f"AI attempted illegal move: {e.msg}")
 
 
 async def apply(room: Room, player: Player, action: PlayerAction) -> Error | None:
@@ -398,18 +419,19 @@ async def apply(room: Room, player: Player, action: PlayerAction) -> Error | Non
 
     try:
         if isinstance(action, Start):
-            if player is not host_of(room):
-                return err(ErrorCode.INVALID_MESSAGE, "only the host starts")
             if room.game.phase == "finished":
-                # Play again: the ended game turns back into a lobby.
-                # Whoever left for good loses the seat now; if seats
-                # are missing the room just waits there, no error
+                # Back to the lobby, and anyone may ask for it since the
+                # game is already over. A second start from the lobby deals
+                # the cards, and that one is the host's. Whoever left for
+                # good loses the seat now
+                room.recorded = False
                 room.players = [p for p in room.players
                                 if p.connected or p.bot]
                 reseat(room)
-                if len(room.players) < room.settings.max_players:
-                    return None
-            elif len(room.players) < room.settings.max_players:
+                return None
+            if player is not host_of(room):
+                return err(ErrorCode.INVALID_MESSAGE, "only the host starts")
+            if len(room.players) < room.settings.max_players:
                 return err(ErrorCode.INVALID_MESSAGE, "the room is not full")
             elif any(not p.bot and not p.connected for p in room.players):
                 # a chair still waiting for its player is not a chair
@@ -547,7 +569,7 @@ async def game(ws: WebSocket, room_id: str) -> None:
                     rooms[room_id] = room
                     metrics.rooms_active.inc()
                     room.timer = asyncio.create_task(room_timer(room_id, room))
-                    asyncio.create_task(ai_timer(room_id, room))
+                    room.ai_timer_task = asyncio.create_task(ai_timer(room_id, room))
                     player = await seat_player(ws, room, action.name, user)
                     continue
 
@@ -599,6 +621,12 @@ async def game(ws: WebSocket, room_id: str) -> None:
                     player = await seat_player(ws, room, action.name, user)
                 continue
 
+            if isinstance(action, Emote):
+                # a reaction, not a move, passed on without touching the game
+                await relay(room, Notice(sender=player.id, kind="emote",
+                                         icon=action.icon))
+                continue
+
             error = await apply(room, player, action)
             if error:
                 metrics.rejected.labels(code=error.code.value).inc()
@@ -606,6 +634,13 @@ async def game(ws: WebSocket, room_id: str) -> None:
             else:
                 metrics.moves.labels(kind=action.type).inc()
                 await broadcast(room)
+                # an uno and a catch also go out as their own notice, so
+                # the frontend can show them apart from the board
+                if isinstance(action, SayUno):
+                    await relay(room, Notice(sender=player.id, kind="uno"))
+                elif isinstance(action, Catch):
+                    await relay(room, Notice(sender=player.id, kind="catch",
+                                             target=action.target))
     except WebSocketDisconnect:
         pass
     finally:

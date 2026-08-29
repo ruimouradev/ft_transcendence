@@ -32,6 +32,28 @@ type Room = {
 	}
 }
 
+// Generates a 5 character Uppercase Hash.
+function createRoomID({ rooms }: { rooms: Room[]})
+{
+	function checkRoom()
+	{
+		for (let i =0; i < rooms?.length; i++)
+		{
+			if (rooms[i].code === hash)
+				return (true);
+		}
+		return (false);
+	}
+
+	let hash = '';
+	do
+	{
+		hash = Math.random().toString(36).slice(2, 7).toUpperCase();
+	}
+	while (hash.length < 5 || checkRoom()); // Need to check here if the room already exists
+	return (hash);
+}
+
 function EachRoom({room, room_flag, onSelect}: {room: Room, room_flag: boolean | null, onSelect: () => void })
 {
 	const bg = room_flag ? '#0f172a' : 'primary.color';
@@ -60,13 +82,13 @@ function HandCount({handCount, setHandCount, defaultTooltip, setOptionsTooltip}:
 			<Box sx={{display: 'flex', alignItems: 'center', width: '35%'}}>
 				<Typography sx={{ fontWeight: 'bold', mx: 2 }} >Initial Hand: </Typography>
 			</Box>
-			<Box onMouseEnter={() => setOptionsTooltip(text)} onMouseLeave={() => setOptionsTooltip(defaultTooltip)} sx={{display: 'flex', alignItems: 'center', width: '50%', height: '100%'}}>
+			<Box onMouseEnter={() => setOptionsTooltip(text)} onMouseLeave={() => setOptionsTooltip(defaultTooltip)} sx={{display: 'flex', alignItems: 'center', width: '50%'}}>
 				<IconButton >
-					<RemoveSharpIcon onClick={() => setHandCount(prev => prev > 3 ? prev - 1 : prev)} sx={{ color: 'gray', border: 4, fontSize: 30 }}/>
+					<RemoveSharpIcon onClick={() => setHandCount(prev => prev > 3 ? prev - 1 : prev)} sx={{ color: 'gray', border: 3, borderRadius: 1, fontSize: 35 }}/>
 				</IconButton>
-				<Box sx={{ color: '#ececec', border: 4, width: '20%', height: '50%', fontSize: 30 }}>{handCount}</Box>
+				<Box sx={{ color: '#ececec', border: 3, borderRadius: 1, width: '3vw', aspectRatio: '1 / 1', fontSize: 30, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{handCount}</Box>
 				<IconButton >
-					<AddSharpIcon onClick={() => setHandCount(prev => prev < 10 ? prev + 1 : prev)} sx={{ color: 'gray', border: 4, fontSize: 30 }}/>
+					<AddSharpIcon onClick={() => setHandCount(prev => prev < 10 ? prev + 1 : prev)} sx={{ color: 'gray', border: 3, borderRadius: 1, fontSize: 35 }}/>
 				</IconButton>
 			</Box>
 		</Box>
@@ -88,11 +110,11 @@ function PlayerCount({playerCount, setPlayerCount, defaultTooltip, setOptionsToo
 			</Box>
 			<Box onMouseEnter={() => setOptionsTooltip(text)} onMouseLeave={() => setOptionsTooltip(defaultTooltip)} sx={{display: 'flex', alignItems: 'center', width: '50%'}}>
 				<IconButton >
-					<RemoveSharpIcon onClick={() => setPlayerCount(prev => prev > 2 ? prev - 1 : prev)} sx={{ color: 'gray', border: 4, fontSize: 30 }}/>
+					<RemoveSharpIcon onClick={() => setPlayerCount(prev => prev > 2 ? prev - 1 : prev)} sx={{ color: 'gray', border: 3, borderRadius: 1, fontSize: 35 }}/>
 				</IconButton>
-				<Box sx={{ color: '#ececec', border: 4, width: '20%', height: '45%', fontSize: 30 }}>{playerCount}</Box>
+				<Box sx={{ color: '#ececec', border: 3, borderRadius: 1, width: '3vw', aspectRatio: '1 / 1', fontSize: 30, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{playerCount}</Box>
 				<IconButton >
-					<AddSharpIcon onClick={() => setPlayerCount(prev => prev < 4 ? prev + 1 : prev)} sx={{ color: 'gray', border: 4, fontSize: 30 }}/>
+					<AddSharpIcon onClick={() => setPlayerCount(prev => prev < 4 ? prev + 1 : prev)} sx={{ color: 'gray', border: 3, borderRadius: 1, fontSize: 35 }}/>
 				</IconButton>
 			</Box>
 		</Box>
@@ -114,10 +136,10 @@ function Stacking({stacking, setStacking, defaultTooltip, setOptionsTooltip}:
 			</Box>
 			<Box onMouseEnter={() => setOptionsTooltip(text)} onMouseLeave={() => setOptionsTooltip(defaultTooltip)} sx={{display: 'flex', alignItems: 'center', width: '50%'}}>
 				<IconButton >
-					<ClearSharpIcon onClick={() => setStacking(false)} sx={{ color: [!stacking ? 'primary.main' : 'gray'], border: 4, fontSize: 30 }}/>
+					<ClearSharpIcon onClick={() => setStacking(false)} sx={{ color: [!stacking ? 'primary.main' : 'gray'], border: 3, borderRadius: 1, fontSize: 35 }}/>
 				</IconButton>
 				<IconButton >
-					<CheckSharpIcon onClick={() => setStacking(true)} sx={{ color: [stacking ? 'success.main' : 'gray'], border: 4, fontSize: 30 }}/>
+					<CheckSharpIcon onClick={() => setStacking(true)} sx={{ color: [stacking ? 'success.main' : 'gray'], border: 3, borderRadius: 1, fontSize: 35 }}/>
 				</IconButton>
 			</Box>
 		</Box>
@@ -140,36 +162,14 @@ function SevenZero({sevenZero, setSevenZero, defaultTooltip, setOptionsTooltip}:
 			</Box>
 			<Box onMouseEnter={() => setOptionsTooltip(text)} onMouseLeave={() => setOptionsTooltip(defaultTooltip)} sx={{ display: 'flex', alignItems: 'center', width: '50%', height: '100%' }}>
 				<IconButton>
-					<ClearSharpIcon onClick={() => setSevenZero(false)} sx={{ color: [!sevenZero ? 'primary.main' : 'gray'], border: 4, fontSize: 30 }}/>
+					<ClearSharpIcon onClick={() => setSevenZero(false)} sx={{ color: [!sevenZero ? 'primary.main' : 'gray'], border: 3, borderRadius: 1, fontSize: 35 }}/>
 				</IconButton>
 				<IconButton >
-					<CheckSharpIcon onClick={() => setSevenZero(true)} sx={{ color: [sevenZero ? 'success.main' : 'gray'], border: 4, fontSize: 30 }}/>
+					<CheckSharpIcon onClick={() => setSevenZero(true)} sx={{ color: [sevenZero ? 'success.main' : 'gray'], border: 3, borderRadius: 1, fontSize: 35 }}/>
 				</IconButton>
 			</Box>
 		</Box>
 	)
-}
-
-// Generates a 5 character Uppercase Hash.
-function createRoomID({ rooms }: { rooms: Room[]})
-{
-	function checkRoom()
-	{
-		for (let i =0; i < rooms?.length; i++)
-		{
-			if (rooms[i].code === hash)
-				return (true);
-		}
-		return (false);
-	}
-
-	let hash = '';
-	do
-	{
-		hash = Math.random().toString(36).slice(2, 7).toUpperCase();
-	}
-	while (hash.length < 5 || checkRoom()); // Need to check here if the room already exists
-	return (hash);
 }
 
 function Privacy({privacy, setPrivacy, defaultTooltip, setOptionsTooltip}:
@@ -187,10 +187,10 @@ function Privacy({privacy, setPrivacy, defaultTooltip, setOptionsTooltip}:
 			</Box>
 			<Box onMouseEnter={() => setOptionsTooltip(text)} onMouseLeave={() => setOptionsTooltip(defaultTooltip)} sx={{display: 'flex', alignItems: 'center', width: '50%'}}>
 				<IconButton >
-					<ClearSharpIcon onClick={() => setPrivacy(false)} sx={{ color: [!privacy ? 'primary.main' : 'gray'], border: 4, fontSize: 30 }}/>
+					<ClearSharpIcon onClick={() => setPrivacy(false)} sx={{ color: [!privacy ? 'primary.main' : 'gray'], border: 3, borderRadius: 1, fontSize: 35 }}/>
 				</IconButton>
 				<IconButton >
-					<CheckSharpIcon onClick={() => setPrivacy(true)} sx={{ color: [privacy ? 'success.main' : 'gray'], border: 4, fontSize: 30 }}/>
+					<CheckSharpIcon onClick={() => setPrivacy(true)} sx={{ color: [privacy ? 'success.main' : 'gray'], border: 3, borderRadius: 1, fontSize: 35 }}/>
 				</IconButton>
 			</Box>
 		</Box>
@@ -226,10 +226,10 @@ function CreateRoom({ rooms }: { rooms: Room[]})
 	}
 
 	return (
-		<Box sx={{width: '100%', height: '85%'}}>
+		<Box sx={{ width: '100%', height: '85%' }}>
 			<Box sx={{ width: '50%', height: '85%', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-				<Box sx={{height: '25%', borderBottom: '1pxsolid', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'auto', whiteSpace: 'pre-line', textAlign: 'center'}} >
-					<Typography sx={{fontSize: {xs: '0.6rem', sm: '0.8rem', md: '1rem'}}}>{optionsTooltip}</Typography>
+				<Box sx={{ height: '25%', borderBottom: '1pxsolid', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'auto', whiteSpace: 'pre-line', textAlign: 'center' }} >
+					<Typography sx={{ fontSize: {xs: '0.6rem', sm: '0.8rem', md: '1rem'} }}>{optionsTooltip}</Typography>
 				</Box>
 				<HandCount handCount={handCount} setHandCount={setHandCount} defaultTooltip={defaultTooltip} setOptionsTooltip={setOptionsTooltip} />
 				<Stacking stacking={stacking} setStacking={setStacking} defaultTooltip={defaultTooltip} setOptionsTooltip={setOptionsTooltip} /> 
@@ -281,19 +281,12 @@ function JoinPublic({rooms}: {rooms: Room[]})
 function JoinPrivate()
 {
 	const [code, setCode] = useState<string>('');
-		const { joinRoom } = getGameContext();
+	const { joinRoom } = getGameContext();
 	const { user } = useAuth();
 
 	function PrivateClick()
 	{
-		// Need to validate the join
-		// Room member++ (State)
-		// console.log({ "type:": "join", 
-		// 			"name": "test1" })
-		// console.log(code);
-
 		const message = {"type": "join", "name": user?.nick_name};
-		console.log(message);
 		joinRoom(code.trim(), message)
 		setCode('');
 	}
