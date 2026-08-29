@@ -8,7 +8,7 @@ import { winner_image } from '../ui/ImagesUtils'
 
 function GameEnd()
 {
-	const { gameState, sendMessage } = getGameContext();
+	const { gameState, sendMessage, resetGameState } = getGameContext();
 	const { identifierID, resetPopUpStates } = getPopUpContext();
 
 	const align = {display: 'flex', justifyContent: 'center', alignItems: 'center'}
@@ -20,6 +20,13 @@ function GameEnd()
 
 	const winner = gameState?.winner ? gameState?.winner : "No Winner";
 
+	function endGame(str: string)
+	{
+		resetPopUpStates();
+		resetGameState();
+		sendMessage({"type": str})
+	}
+
 	return (
 		<ThemeProvider theme={unoTheme}>
 			<Box sx={{ width: '40vw', aspectRatio: '2 / 1', border: '0.1vw solid', borderColor: 'divider', borderRadius: 2, bgcolor: 'background.paper', gap: '5vw' }}>
@@ -28,10 +35,10 @@ function GameEnd()
 					<Box sx={{ bgcolor: 'orange', p: 0.5, border: '0.1vw solid black', borderRadius: '5%',position: 'absolute', bottom: '15%' }}><Typography sx={{ fontSize: 'clamp(0.5vw, 1.2vw, 2vw)' }}>{winner}</Typography></Box>	
 				</Box>
 				<Box sx={{ height: '15%', width: '100%', ...align, gap: 3 }}>
-						<Button variant="contained" onClick={() => {resetPopUpStates(); sendMessage({"type": "start"})}} sx={{ width: '45%', height: '90%', minWidth: 0   }}>
+						<Button variant="contained" onClick={() => endGame("start")} sx={{ width: '45%', height: '90%', minWidth: 0   }}>
 							<Typography sx={{ fontSize: 'clamp(0.5vw, 1.2vw, 2vw)' }}>TO LOBBY</Typography>
 						</Button>
-						<Button variant="contained" onClick={() => {resetPopUpStates(); sendMessage({"type": "leave"})}} sx={{ width: '45%', height: '90%', minWidth: 0 }}>
+						<Button variant="contained" onClick={() => endGame("leave")} sx={{ width: '45%', height: '90%', minWidth: 0 }}>
 							<Typography sx={{ fontSize: 'clamp(0.5vw, 1.2vw, 2vw)' }}>QUIT</Typography>
 						</Button>
 				</Box>

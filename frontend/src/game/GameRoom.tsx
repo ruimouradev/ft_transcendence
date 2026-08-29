@@ -1,5 +1,5 @@
 import { Box, Button, Card, CardContent , CardMedia, Container, Chip, IconButton,  List, ListItem, Paper, ThemeProvider, Typography } from '@mui/material';
-import { createContext, useState, useContext, Fragment } from 'react';
+import { createContext, useState, useContext, Fragment, useEffect } from 'react';
 
 import StarOutlinedIcon from '@mui/icons-material/StarOutlined';
 import WifiOffOutlinedIcon from '@mui/icons-material/WifiOffOutlined';
@@ -356,8 +356,10 @@ function GameRoom()
 	const { gameState } = getGameContext();
 	const { handleGameEnd } = getPopUpContext();
 
-	if (gameState?.winner !== null)
-		handleGameEnd(); // Not working well yet !
+	useEffect(() => {
+		if (gameState?.winner != null)
+			handleGameEnd();
+	}, [gameState?.winner]);
 
 	return ( gameState?.phase === 'lobby' ? <WaitRoom /> :
 		<ThemeProvider theme={unoTheme}>
