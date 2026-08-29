@@ -354,6 +354,10 @@ function GameRoom()
 		return ;
 
 	const { gameState } = getGameContext();
+	const { handleGameEnd } = getPopUpContext();
+
+	if (gameState?.winner !== null)
+		handleGameEnd();
 
 	return ( gameState?.phase === 'lobby' ? <WaitRoom /> :
 		<ThemeProvider theme={unoTheme}>
