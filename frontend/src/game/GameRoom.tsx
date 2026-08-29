@@ -17,6 +17,8 @@ import type { PopUpTypes } from '../core/GamePopUps';
 import { bg_image, cardBacks, defaultCardBack, direction_plus, direction_minus } from '../ui/ImagesUtils.ts';
 
 import {easy_bot, medium_bot, hard_bot, start_game} from './messages.ts'
+import { color_red, color_blue, color_green, color_yellow } from '../ui/ImagesUtils.ts'
+
 
 import type {Color, valueNum, valueAction, valueWild, GameCard, PublicPlayer, PrivatePlayer, LastAction, GameState} from './types.ts'
 
@@ -41,8 +43,9 @@ function PlayCard({card, gameState, sendMessage, handleNewID}:
 	sendMessage: (message: object) => void,
 	handleNewID: (type: PopUpTypes, new_id: string) => void})
 {
-	handleNewID('game_end', card.id);
-	return ;
+	// NEEDED FOR TESTING !!!! DEL
+	// handleNewID('game_end', card.id);
+	// return ;
 
 
 	if (gameState?.you.id !== gameState?.turn
@@ -74,7 +77,7 @@ function DeckArea()
 		{ eager: true, query: '?url', import: 'default' }
 	)
 
-	const box_shadow = {boxSizing: 'content-box', borderLeft: '0.6vw solid black', borderBottom: '0.6vw solid black', borderTop: '0.15vw solid black', borderRight: '0.15vw solid black'};
+	const box_shadow = {boxSizing: 'content-box', borderLeft: '0.5vw solid black', borderBottom: '0.5vw solid black', borderTop: '0.15vw solid black', borderRight: '0.15vw solid black'};
 
 	const card = gameState?.top_card;
 	if (card == undefined)
@@ -84,22 +87,23 @@ function DeckArea()
 	switch (gameState?.active_color)
 	{
 		case ('blue'):
-			color = 'info.main';
+			color = color_blue;
 			break ;
 		case ('green'):
-			color = 'success.main';
+			color = color_green;
 			break ;
 		case ('red'):
-			color = 'primary.main';
+			color = color_red;
 			break ;
 		case ('yellow'):
-			color = 'secondary.main';
+			color = color_yellow;
 			break ;
 		default:
 			color = 'black';
 	}
 	
 	const direction = gameState?.direction === 1 ? direction_plus : direction_minus;
+	const image_styles: React.CSSProperties = {width: '100%', aspectRatio: '1 / 1', objectFit: 'fill'};
 
 	return (
 		<Box sx={{ height: '100%', width: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center', position: 'relative' }}>
@@ -111,7 +115,9 @@ function DeckArea()
 				<img className="arrow" src={direction} alt="" draggable={false}/>
 			</Box>
 			<Box sx={{ width: '25%', height: '100%', right: 0, position: 'absolute', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
-				<Paper elevation={10} sx={{ width: '4vw',  aspectRatio: '1 / 1', bgcolor: color, borderRadius: 1, ...box_shadow }}></Paper>
+				<Paper elevation={10} sx={{ width: '4vw',  aspectRatio: '1 / 1', bgcolor: color, borderRadius: 1, ...box_shadow }}>
+					<img src={color} draggable={false} style={image_styles}/>
+				</Paper>
 				<Button className="rainbow-button" variant="contained" onClick={() => sendMessage(uno_click)} sx={{ width: '4vw',  aspectRatio: '1 / 1', minWidth: 0, p: 0, fontSize: 'clamp(0.2rem, 0.8rem, 1rem)', ...box_shadow }}>UNO!</Button>
 				<Button variant="contained" disabled={disable_challenge} onClick={() => sendMessage(challenge_click)}sx={{ width: '4vw',  aspectRatio: '1 / 1', minWidth: 0, p: 0, fontSize: 'clamp(0.2rem, 0.8rem, 1rem)', ...box_shadow }}>DARE</Button>
 			</Box>

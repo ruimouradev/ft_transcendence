@@ -22,16 +22,16 @@ function WildCard()
 	return (
 		<Box sx={{ width: '40vw', aspectRatio: '3 / 1', ...align, border: '0.1vw solid', borderColor: 'divider', borderRadius: 2, bgcolor: '#1C1221', gap: '3vw' }}>
 			<Box onClick={() => {resetPopUpStates(); sendMessage({...message, "color": "red"})}} sx={{ ...box_options, ...align }}>
-				<img src={color_red} style={image_styles}/>
+				<img src={color_red} draggable={false} style={image_styles}/>
 			</Box>
 			<Box onClick={() => {resetPopUpStates(); sendMessage({...message, "color": "blue"})}} sx={{ ...box_options, ...align }}>
-				<img src={color_blue} style={image_styles}/>
+				<img src={color_blue} draggable={false} style={image_styles}/>
 			</Box>
 			<Box onClick={() => {resetPopUpStates(); sendMessage({...message, "color": "yellow"})}} sx={{ ...box_options, ...align }}>
-				<img src={color_yellow} style={image_styles}/>
+				<img src={color_yellow} draggable={false} style={image_styles}/>
 			</Box>
 			<Box onClick={() => {resetPopUpStates(); sendMessage({...message, "color": "green"})}} sx={{ ...box_options, ...align }}>
-				<img src={color_green} style={image_styles}/>
+				<img src={color_green} draggable={false} style={image_styles}/>
 			</Box>
 		</Box>
 	)

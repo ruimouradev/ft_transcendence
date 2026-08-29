@@ -8,6 +8,7 @@ import red from '../assets/utils/color_red.png';
 import blue from '../assets/utils/color_blue.png';
 import green from '../assets/utils/color_green.png';
 import yellow from '../assets/utils/color_yellow.png';
+import winner from '../assets/utils/winner.png';
 import arrow_01 from '../assets/utils/arrow_01.png';
 import arrow_02 from '../assets/utils/arrow_02.png';
 
@@ -32,5 +33,6 @@ export const color_red = red;
 export const color_blue = blue;
 export const color_green = green;
 export const color_yellow = yellow;
+export const winner_image = winner;
 export const direction_plus = arrow_01;
 export const direction_minus = arrow_02;
