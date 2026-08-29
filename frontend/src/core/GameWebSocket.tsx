@@ -45,7 +45,8 @@ type GameContextType = {
 
 const GameContext = createContext<GameContextType | null>(null);
 
-export function getGameContext() {
+export function getGameContext() 
+{
 	const context = useContext(GameContext);
 
 	if (!context)

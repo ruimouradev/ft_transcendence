@@ -68,19 +68,19 @@
 }
 
 .avatar-south {
-	transform: translateY(10%);
+	transform: translateY(-180%);
 }
 
 .avatar-north {
-	transform: translateY(50%);
+	transform: translateY(100%);
 }
 
 .avatar-west {
-	transform: translateX(25%);
+	transform: translateX(70%);
 }
 
 .avatar-east {
-	transform: translateX(-25%);
+	transform: translateX(-70%);
 }
 
 

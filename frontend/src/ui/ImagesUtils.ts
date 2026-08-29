@@ -3,10 +3,13 @@ import back01 from '../assets/cardbacks/back_card_01.png';
 import back02 from '../assets/cardbacks/back_card_02.png';
 import back03 from '../assets/cardbacks/back_card_03.png';
 import back04 from '../assets/cardbacks/back_card_04.png';
-
+import bg from '../assets/utils/game_bg.png';
+import red from '../assets/utils/color_red.png';
+import blue from '../assets/utils/color_blue.png';
+import green from '../assets/utils/color_green.png';
+import yellow from '../assets/utils/color_yellow.png';
 import arrow_01 from '../assets/utils/arrow_01.png';
 import arrow_02 from '../assets/utils/arrow_02.png';
-import bg from '../assets/utils/game_bg.png';
 
 // A tabela dos versos de carta. Na base de dados guarda-se o nome de
 // código (back00, back01...), nunca o caminho do ficheiro: caminhos
@@ -24,6 +27,10 @@ export const cardBacks: Record<string, string> = {
 // O verso usado quando a conta tem um valor antigo ou desconhecido
 export const defaultCardBack = back00;
 
+export const bg_image = bg;
+export const color_red = red;
+export const color_blue = blue;
+export const color_green = green;
+export const color_yellow = yellow;
 export const direction_plus = arrow_01;
 export const direction_minus = arrow_02;
-export const bg_image = bg;
