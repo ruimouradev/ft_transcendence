@@ -37,11 +37,19 @@ type GameContextType = {
 	error: string | null,
 	lastMessage: string | null,
 	gameState: GameState | null,
+	notice: Notice | null,
 
+	resetNotice: () => void
 	resetGameState: () => void
 	closeRoomConnection: () => void
 	sendMessage: (message: object) => void
 	joinRoom: (roomID: string, message: object) => void
+}
+
+type Notice = {
+	kind: 'emote' | 'uno' | 'catch',
+	sender: string,
+	icon: number
 }
 
 const GameContext = createContext<GameContextType | null>(null);
@@ -61,6 +69,7 @@ function GameWebSocket({ children }: { children: React.ReactNode }) {
 	const [roomID, setRoomID] = useState<string | null>(null);
 	const [gameState, setGameState] = useState<GameState | null>(null);
 	const [connected, setConnected] = useState<ConnectionState>('offline');
+	const [notice, setNotice] = useState<Notice | null>(null);
 
 	const socketRef = useRef<WebSocket | null>(null);
 	const pendingRoomRef = useRef<string | null>(null);
@@ -102,6 +111,9 @@ function GameWebSocket({ children }: { children: React.ReactNode }) {
 					setConnected('online');
 					sessionStorage.setItem('roomID', roomID);
 					// sessionStorage.setItem('reconnectToken', token);
+					break ;
+				case 'notice':
+					setNotice(message);
 					break ;
 				case 'error':
 					handleErrorMessages(message);
@@ -208,8 +220,14 @@ function GameWebSocket({ children }: { children: React.ReactNode }) {
 			// ALREADY_IN_ROOM = "ALREADY_IN_ROOM"
 		*/
 	}
+
+	function resetNotice()
+	{
+		setNotice(null);
+	}
+
 	return (
-		<GameContext.Provider value={{ roomID, connected, error, lastMessage, gameState, resetGameState, joinRoom, closeRoomConnection, sendMessage }}>
+		<GameContext.Provider value={{ roomID, connected, error, lastMessage, gameState, notice, resetNotice, resetGameState, joinRoom, closeRoomConnection, sendMessage }}>
 			{ children }
 		</GameContext.Provider>
 	)

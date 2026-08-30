@@ -20,6 +20,7 @@ import {easy_bot, medium_bot, hard_bot, start_game} from './messages.ts'
 import { color_red, color_blue, color_green, color_yellow } from '../ui/ImagesUtils.ts'
 
 import Avatar from '../components/Avatar'
+import Emoticons from '../components/Emoticons'
 
 import type {Color, valueNum, valueAction, valueWild, GameCard, PublicPlayer, PrivatePlayer, LastAction, GameState} from './types.ts'
 
@@ -191,13 +192,12 @@ function DrawHidden({amount, card_class}: {amount: number, card_class: string})
 
 function PlayerOneHand({player}: {player: PublicPlayer})
 {
-	const { user } = useAuth();
-	const { gameState } = getGameContext();
-
+	const { notice, gameState } = getGameContext();
 	const private_player = gameState?.you !== undefined ? gameState?.you : {id: 0, hand: [], platable: [], drawn: null};
 
 	return (
 		<Box className="board-south" sx={{ position: 'relative' }}>
+			{(notice !== null && notice.sender === player.id) && <Emoticons position={'south'}/>}
 			<Avatar player={player} position={'south'} />
 			<Box sx={{ position: 'absolute', inset: 0 }}>
 				<DrawHands deck={private_player.hand} amount={private_player.hand.length} card_class="card-south" />
@@ -208,7 +208,8 @@ function PlayerOneHand({player}: {player: PublicPlayer})
 
 function PlayersUI({players}: {players: PublicPlayer[]})
 {
-	let player_pos: string[];	
+	const { notice } = getGameContext();
+	let player_pos: string[];
 
 	if (players.length == 2) {
 		player_pos = [ "south", "north" ]
@@ -228,6 +229,7 @@ function PlayersUI({players}: {players: PublicPlayer[]})
 		else {
 			return (
 				<Box key={player.id} className={`board-${player_pos[i]}`} sx={{ position: 'relative' }}>
+					{(notice !== null && notice.sender === player.id) && <Emoticons position={player_pos[i]}/>}
 					<Avatar player={player} position={player_pos[i]} />
 					<Box sx={{position: 'absolute', inset: 0, }}>
 						<DrawHidden amount={player.cards} card_class={`card-${player_pos[i]}`} />
@@ -342,7 +344,7 @@ function GameRoom()
 			handleGameEnd();
 	}, [gameState?.winner]);
 
-	return ( gameState?.phase === 'lobby' ? <WaitRoom /> :
+	return ( gameState === null || gameState?.phase === 'lobby' ? <WaitRoom /> :
 		<ThemeProvider theme={unoTheme}>
 			<Box sx={{ height: '85dvh', maxWidth: '90vw', aspectRatio: {sm: '1.1 / 1', md: '1.4 / 1'} , position: 'relative', mx: 'auto', my: '1%' }}>
 			<Container sx={{ width: '100%', height: '100%', display: 'grid',

@@ -11,6 +11,8 @@ import yellow from '../assets/utils/color_yellow.png';
 import winner from '../assets/utils/winner.png';
 import arrow_01 from '../assets/utils/arrow_01.png';
 import arrow_02 from '../assets/utils/arrow_02.png';
+import _catch from '../assets/utils/catch.png';
+import uno from '../assets/utils/uno.png';
 
 import sad from '../assets/utils/sad.png';
 import angry from '../assets/utils/angry.png';
@@ -39,6 +41,9 @@ export const bg_image = bg;
 export const winner_image = winner;
 export const direction_plus = arrow_01;
 export const direction_minus = arrow_02;
+export const emoticon_uno = uno;
+export const emoticon_catch = _catch;
+
 
 // Square Colors
 export const color_red = red;

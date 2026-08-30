@@ -1,4 +1,5 @@
 import { Box, Card, Popover } from '@mui/material'
+import { getGameContext } from '../core/GameWebSocket';
 import { emoticon_sad, emoticon_angry, emoticon_happy, emoticon_excited, emoticon_nervous, emoticon_surprised } from '../ui/ImagesUtils'
 
 function EmoticonsMenu({anchor, handleClose}:
@@ -7,11 +8,12 @@ function EmoticonsMenu({anchor, handleClose}:
 	if (anchor === null)
 		return (null);
 
+	const { sendMessage } = getGameContext();
 	const emoticons = [emoticon_sad, emoticon_angry, emoticon_happy, emoticon_excited, emoticon_nervous, emoticon_surprised];
 
 	function execEmoticon(index: number)
 	{
-		console.log(emoticons[index]);
+		sendMessage({"type": "emote", "icon": index + 1});
 		handleClose();
 	}
 
