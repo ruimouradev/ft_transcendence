@@ -34,9 +34,6 @@ function DrawCard(sendMessage: (message: object) => void)
 {
 	const message = {"type": "draw"};
 	sendMessage(message);
-
-	// DEL
-	console.log(message)
 }
 
 function PlayCard({card, gameState, sendMessage, handleNewID}:
@@ -107,20 +104,25 @@ function DeckArea()
 	const image_styles: React.CSSProperties = {width: '100%', aspectRatio: '1 / 1', objectFit: 'fill'};
 
 	return (
-		<Box sx={{ height: '100%', width: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center', position: 'relative' }}>
-			<Box sx={{ width: '50%', height: '50%', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 1, }}>
-				<img className="card deck_card" src={cardBacks[user?.card_back ?? ''] ?? defaultCardBack} alt="" draggable={false} onClick={() => DrawCard(sendMessage)}/>
-				<img className="card deck_card" src={images[getCardName({card})]} alt="" draggable={false}/>
+		<Box sx={{ height: '80%', width: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center', position: 'relative' }}>
+			<Box sx={{ width: '50%', height: '50%', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 1, top: 0, position: 'absolute' }}>
+				<img className="card" src={cardBacks[user?.card_back ?? ''] ?? defaultCardBack} alt="" draggable={false} onClick={() => DrawCard(sendMessage)}/>
+				<img className="card" src={images[getCardName({card})]} alt="" draggable={false}/>
 			</Box>
-			<Box sx={{ bottom: 0, position: 'absolute', width: '30%', height: '20%', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+			<Box sx={{ bottom: 0, position: 'absolute', width: '50%', height: '50%', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
 				<img className="arrow" src={direction} alt="" draggable={false}/>
 			</Box>
 			<Box sx={{ width: '25%', height: '100%', right: 0, position: 'absolute', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
-				<Paper elevation={10} sx={{ width: '4vw',  aspectRatio: '1 / 1', bgcolor: color, borderRadius: 1, ...box_shadow }}>
+				<Paper elevation={0} sx={{ width: '4vw', aspectRatio: '1 / 1', bgcolor: color, borderRadius: 1, ...box_shadow }}>
 					<img src={color} draggable={false} style={image_styles}/>
 				</Paper>
 				<Button className="rainbow-button" variant="contained" onClick={() => sendMessage(uno_click)} sx={{ width: '4vw',  aspectRatio: '1 / 1', minWidth: 0, p: 0, fontSize: 'clamp(0.2rem, 0.8rem, 1rem)', ...box_shadow }}>UNO!</Button>
+			</Box>
+			<Box sx={{ width: '25%', height: '100%', left: 0, position: 'absolute', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
 				<Button variant="contained" disabled={disable_challenge} onClick={() => sendMessage(challenge_click)}sx={{ width: '4vw',  aspectRatio: '1 / 1', minWidth: 0, p: 0, fontSize: 'clamp(0.2rem, 0.8rem, 1rem)', ...box_shadow }}>DARE</Button>
+				{gameState?.stack !== 0 && <Paper elevation={0} sx={{ width: '4vw', aspectRatio: '1 / 1', bgcolor: color, borderRadius: 1, ...box_shadow }}>
+					<Typography>Stack {gameState?.stack}</Typography>
+				</Paper>}
 			</Box>
 		</Box>
 	)
@@ -221,10 +223,7 @@ function PlayersUI({players}: {players: PublicPlayer[]})
 		player_pos = [ "south", "west", "north", "east" ]
 	}
 
-// onClick={() => sendMessage({"type": "catch", "target": player.id})}
-
 	return (players.map((player, i) => {
-		console.log(player.cards);
 		if (i == 0) {
 			return (<PlayerOneHand key={player.id} player={player}/>)
 		}
@@ -346,9 +345,9 @@ function GameRoom()
 			handleGameEnd();
 	}, [gameState?.winner]);
 
-	return ( gameState === null || gameState?.phase === 'lobby' ? <WaitRoom /> :
+	return ( gameState === null || gameState.phase === 'lobby' ? <WaitRoom /> :
 		<ThemeProvider theme={unoTheme}>
-			<Box sx={{ height: '85dvh', maxWidth: '90vw', aspectRatio: {sm: '1.1 / 1', md: '1.4 / 1'} , position: 'relative', mx: 'auto', my: '1%' }}>
+			<Box className="no-select" sx={{ height: '85dvh', maxWidth: '90vw', aspectRatio: {sm: '1.1 / 1', md: '1.4 / 1'} , position: 'relative', mx: 'auto', my: '1%' }}>
 			<Container sx={{ width: '100%', height: '100%', display: 'grid',
 				gridTemplateColumns: 'repeat(10, 1fr)', gridTemplateRows: 'repeat(12, 1fr)',
 				backgroundImage: `url(${bg_image})`, backgroundSize: 'cover',

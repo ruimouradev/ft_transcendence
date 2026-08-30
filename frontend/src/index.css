@@ -279,15 +279,13 @@
 	z-index: 100;
 }
 
-.deck_card {
-	transform: translateX(0px) translateY(-60px);
+.arrow {
+	width: 70%;
+	height: 70%;
+	object-fit: contain;
 }
 
-.arrow {
+.no-select {
 	user-select: none;
     -webkit-user-drag: none;
-	width: 80%;
-	height: 80%;
-	object-fit: contain;
-	transform: translateY(-50px);
 }
