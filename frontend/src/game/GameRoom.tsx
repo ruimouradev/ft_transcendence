@@ -363,7 +363,7 @@ function GameRoom()
 
 	return ( gameState?.phase === 'lobby' ? <WaitRoom /> :
 		<ThemeProvider theme={unoTheme}>
-			<Box sx={{ height: '85dvh', aspectRatio: {sm: '1.1 / 1', md: '1.5 / 1'} , position: 'relative', mx: 'auto' }}>
+			<Box sx={{ height: '85dvh', maxWidth: '90vw', aspectRatio: {sm: '1.1 / 1', md: '1.4 / 1'} , position: 'relative', mx: 'auto', my: '1%' }}>
 			<Container sx={{ width: '100%', height: '100%', display: 'grid',
 				gridTemplateColumns: 'repeat(10, 1fr)', gridTemplateRows: 'repeat(12, 1fr)',
 				backgroundImage: `url(${bg_image})`, backgroundSize: 'cover',
