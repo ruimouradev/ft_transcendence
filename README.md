@@ -163,7 +163,7 @@ friendships, and its OAuth and recovery links.
 | Remote players | major | 2 | Alexandre |
 | AI opponent | major | 2 | Alexandre |
 | Frameworks, frontend + backend | major | 2 | Bin, Vinicius |
-| Real-time with WebSockets | major | 2 | Alexandre, Rui |
+| Real-time with WebSockets | major | 2 | Alexandre |
 | Standard user management | major | 2 | Bin |
 | Public API | major | 2 | Bin |
 | Monitoring (Prometheus + Grafana) | major | 2 | Rui |
