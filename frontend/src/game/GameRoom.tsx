@@ -221,6 +221,8 @@ function PlayersUI({players}: {players: PublicPlayer[]})
 		player_pos = [ "south", "west", "north", "east" ]
 	}
 
+// onClick={() => sendMessage({"type": "catch", "target": player.id})}
+
 	return (players.map((player, i) => {
 		console.log(player.cards);
 		if (i == 0) {
