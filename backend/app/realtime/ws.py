@@ -42,6 +42,7 @@ class Player:
     user: str | None = None  # account id from the login cookie
     avatar: str = ""  # the account's picture, empty for guests and bots
     bot_level: str | None = None  # difficulty of an AI seat, None on humans
+    last_emote: float = 0.0  # monotonic time of the last emote, to space them
 
 
 @dataclass
@@ -68,6 +69,7 @@ TURN_TIMEOUT = 60  # seconds an idle turn is allowed to sit
 TIMER_TICK = 5  # how often each room looks at its clock
 UNO_GRACE = 0.5  # seconds a fresh one-card hand is safe from the catch
 SEAT_GRACE = 5  # seconds a lobby chair waits for its player to come back
+EMOTE_COOLDOWN = 1.0  # seconds a player must wait between emotes
 ROOM_GRACE = 5  # seconds an empty room waits before it is dropped
 
 
@@ -306,14 +308,18 @@ async def ai_timer(room_id: str, room: Room) -> None:
 
         # We process every bot to allow for out-of-turn Catch opportunities
         for bot in [p for p in room.players if p.bot]:
-            # Construct GameState snapshot for the bot
-            bot_state = room.game.snapshot_for(bot.id)
-            bot_state.settings = room.settings
-            for seat in bot_state.players:
-                seat.bot = next((p.bot for p in room.players if p.id == seat.id), False)
-                seat.bot_level = next((p.bot_level for p in room.players if p.id == seat.id), None)
-
-            bot_action = decide_bot_action(bot_state, bot.id)
+            # Construct GameState snapshot for the bot. Guarded so a
+            # stray error building it or deciding does not kill the loop
+            try:
+                bot_state = room.game.snapshot_for(bot.id)
+                bot_state.settings = room.settings
+                for seat in bot_state.players:
+                    seat.bot = next((p.bot for p in room.players if p.id == seat.id), False)
+                    seat.bot_level = next((p.bot_level for p in room.players if p.id == seat.id), None)
+                bot_action = decide_bot_action(bot_state, bot.id)
+            except Exception:
+                logging.exception("ai_timer failed to decide a bot move")
+                continue
             if not bot_action:
                 continue
 
@@ -351,6 +357,8 @@ async def ai_timer(room_id: str, room: Room) -> None:
                 break  # Apply max one bot action per tick to avoid race conditions
             except GameError as e:
                 logging.error(f"AI attempted illegal move: {e.msg}")
+            except Exception:
+                logging.exception("ai_timer failed to apply a bot move")
 
 
 async def apply(room: Room, player: Player, action: PlayerAction) -> Error | None:
@@ -622,7 +630,12 @@ async def game(ws: WebSocket, room_id: str) -> None:
                 continue
 
             if isinstance(action, Emote):
-                # a reaction, not a move, passed on without touching the game
+                # a reaction, not a move, passed on without touching the
+                # game. Spaced out so no one can flood the table with them
+                now = time.monotonic()
+                if now - player.last_emote < EMOTE_COOLDOWN:
+                    continue
+                player.last_emote = now
                 await relay(room, Notice(sender=player.id, kind="emote",
                                          icon=action.icon))
                 continue
