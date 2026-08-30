@@ -19,6 +19,7 @@ import { bg_image, cardBacks, defaultCardBack, direction_plus, direction_minus }
 import {easy_bot, medium_bot, hard_bot, start_game} from './messages.ts'
 import { color_red, color_blue, color_green, color_yellow } from '../ui/ImagesUtils.ts'
 
+import Avatar from '../components/Avatar'
 
 import type {Color, valueNum, valueAction, valueWild, GameCard, PublicPlayer, PrivatePlayer, LastAction, GameState} from './types.ts'
 
@@ -188,27 +189,18 @@ function DrawHidden({amount, card_class}: {amount: number, card_class: string})
 	)
 }
 
-function PlayerOneHand()
+function PlayerOneHand({player}: {player: PublicPlayer})
 {
 	const { user } = useAuth();
 	const { gameState } = getGameContext();
 
-	const player = gameState?.you !== undefined ? gameState?.you : {id: 0, hand: [], platable: [], drawn: null};
+	const private_player = gameState?.you !== undefined ? gameState?.you : {id: 0, hand: [], platable: [], drawn: null};
 
 	return (
 		<Box className="board-south" sx={{ position: 'relative' }}>
-			<Box sx={{ position: 'absolute', inset: 0, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-				<Card className="avatar-south" elevation={0} onClick={() => console.log("IMPLEMENT EMOTICON")} sx={{ width: '4vw',
-					aspectRatio: '1 / 1', overflow: 'visible', bgcolor: 'rgba(255, 255, 255, 0)', display: 'flex', justifyContent: 'center', 
-					border: 0, position: 'relative', zIndex: 5, filter: player.id === gameState?.turn ? 'none' : 'grayscale(100%)' }}>
-					<CardMedia component="img" sx={{ border: 1, width: '100%', height: '100%', aspectRatio: '1 / 1',
-						borderRadius: '50%', objectFit: 'cover' }} image={user?.avatar} draggable={false}/>
-					<Typography sx={{ color: 'black', bgcolor: 'orange', border: 1, zIndex: '10', position: 'absolute', 
-						bottom: 0, transform: 'translateY(70%)', fontSize: 'clamp(0.5vh, 2vh, 3vh)' }}>{user?.nick_name}</Typography>
-				</Card>
-			</Box>
+			<Avatar player={player} position={'south'} />
 			<Box sx={{ position: 'absolute', inset: 0 }}>
-				<DrawHands deck={player.hand} amount={player.hand.length} card_class="card-south" />
+				<DrawHands deck={private_player.hand} amount={private_player.hand.length} card_class="card-south" />
 			</Box>
 		</Box>
 	)
@@ -216,8 +208,6 @@ function PlayerOneHand()
 
 function PlayersUI({players}: {players: PublicPlayer[]})
 {
-	const { gameState, sendMessage } = getGameContext();
-
 	let player_pos: string[];	
 
 	if (players.length == 2) {
@@ -233,21 +223,12 @@ function PlayersUI({players}: {players: PublicPlayer[]})
 	return (players.map((player, i) => {
 		console.log(player.cards);
 		if (i == 0) {
-			return (<PlayerOneHand key={player.id} />)
+			return (<PlayerOneHand key={player.id} player={player}/>)
 		}
 		else {
 			return (
 				<Box key={player.id} className={`board-${player_pos[i]}`} sx={{ position: 'relative' }}>
-					<Box sx={{ position: 'absolute', inset: 0, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-						<Card className={`avatar-${player_pos[i]}`} elevation={0} onClick={() => sendMessage({"type": "catch", "target": player.id})}
-							sx={{ width: '4vw', aspectRatio: '1 / 1', overflow: 'visible', bgcolor: 'rgba(255, 255, 255, 0)', display: 'flex',
-							justifyContent: 'center', border: 0, position: 'relative', zIndex: 5, filter: player.id === gameState?.turn ? 'none' : 'grayscale(100%)' }}>
-							<CardMedia component="img" sx={{ border: 1, width: '100%', height: '100%', aspectRatio: '1 / 1',
-								borderRadius: '50%', objectFit: 'cover' }} image={player.avatar} draggable={false}/>
-							<Typography sx={{ color: 'black', bgcolor: 'orange', border: 1, zIndex: '10', position: 'absolute', 
-								bottom: 0, transform: 'translateY(70%)', fontSize: 'clamp(0.5vh, 2vh, 3vh)' }}>{player.name}</Typography>
-						</Card>
-					</Box>
+					<Avatar player={player} position={player_pos[i]} />
 					<Box sx={{position: 'absolute', inset: 0, }}>
 						<DrawHidden amount={player.cards} card_class={`card-${player_pos[i]}`} />
 					</Box>

@@ -1,0 +1,40 @@
+import { Box, Card, Popover } from '@mui/material'
+import { emoticon_sad, emoticon_angry, emoticon_happy, emoticon_excited, emoticon_nervous, emoticon_surprised } from '../ui/ImagesUtils'
+
+function EmoticonsMenu({anchor, handleClose}:
+	 {anchor: HTMLElement | null, handleClose: () => void})
+{
+	if (anchor === null)
+		return (null);
+
+	const emoticons = [emoticon_sad, emoticon_angry, emoticon_happy, emoticon_excited, emoticon_nervous, emoticon_surprised];
+
+	function execEmoticon(index: number)
+	{
+		console.log(emoticons[index]);
+		handleClose();
+	}
+
+	return (
+		<Popover open={true} anchorEl={anchor} onClose={handleClose} anchorOrigin={{ vertical: 'top', horizontal: 'center'}}
+			transformOrigin={{vertical: 'center', horizontal: 'center'}} 
+			slotProps={{ paper: { sx: { bgcolor: 'transparent',  boxShadow: 'none', overflow: 'visible', transform: 'translateY(-3vw) !important' }} }}>
+			<Box sx={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center',
+					justifyContent: 'center', gap: '1vw',}}>
+				{emoticons.map((emoticon, index) => {
+					const mid = (emoticons.length - 1) / 2;
+					const distance = Math.abs(index - mid);
+					const offset = (distance * 30) - 40;
+					return (
+						<Card key={index} onClick={() => execEmoticon(index)} sx={{ bgcolor: 'white', width: '5vw', aspectRatio: '1 / 1',
+							display: 'flex', alignItems: 'center', justifyContent: 'center', transform: `translateY(${offset}%)`, border: '0.1vw solid black' }}>
+							<img src={emoticon} draggable={false} />
+						</Card>
+					)
+				})}
+			</Box>
+		</Popover>
+	)
+}
+
+export default EmoticonsMenu
