@@ -1,23 +1,5 @@
-import { createContext, useContext, useEffect, useRef, useState } from 'react';
-import type { ReactNode } from 'react';
+import { createContext, useContext, useRef, useState } from 'react';
 import { useAuth } from './AuthContext';
-
-import { fakeState } from '../game/fake_gamestate';
-
-// A presença: nasce no login e morre no logout, um websocket que vive
-// a sessão inteira e diz ao servidor "continuo aqui" a cada batida.
-// É isto que acende o ponto verde dos amigos. Não confundir com o
-// websocket do jogo, que abre e fecha com cada sala e fala outro
-// protocolo. Não desenha nada nem expõe nada: se um dia precisares
-// do estado da ligação no ecrã, é aqui que ele nasce.
-
-
-// Need to understand better when to use this variables
-
-// const MAX_RECONNECT_ATTEMPTS = 5;
-// const BASE_RECONNECT_DELAY = 1000; // primeiro reencontro ao fim de 1s
-// const HEARTBEAT_INTERVAL = 10000; // uma batida a cada 10s
-
 
 const originalSetItem = sessionStorage.setItem;
 
@@ -119,7 +101,6 @@ function GameWebSocket({ children }: { children: React.ReactNode }) {
 					handleErrorMessages(message);
 					break ;
 				case 'state':
-				//	setGameState(fakeState); // FAKE TEST STATE !!!! REMOVE DEL
 					setGameState(message);
 					break ;
 				default:

@@ -9,9 +9,17 @@ function GameEnd()
 	const { gameState, sendMessage, resetGameState } = getGameContext();
 	const { resetPopUpStates } = getPopUpContext();
 
-	const align = {display: 'flex', justifyContent: 'center', alignItems: 'center'}
+	if (gameState === null)
+		return (null);
 
-	const winner = gameState?.winner ? gameState?.winner : "No Winner";
+	const align = {display: 'flex', justifyContent: 'center', alignItems: 'center'}
+	let winner = "No Winner";
+
+	for (let i = 0; i < gameState.players.length; i++)
+	{
+		if (gameState.winner === gameState.players[i].id)
+			winner = gameState.players[i].name;
+	}
 
 	function endGame(str: string)
 	{
