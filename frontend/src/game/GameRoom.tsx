@@ -262,7 +262,7 @@ function RotatePlayers(): PublicPlayer[]
 
 function WaitRoom()
 {
-	const { roomID, gameState, sendMessage, closeRoomConnection } = getGameContext();
+	const { roomID, gameState, sendMessage, leaveRoom } = getGameContext();
 
 	const host = gameState?.you.id !== gameState?.host_id;
 	const room_full = gameState?.players.length !== gameState?.settings?.max_players;
@@ -274,7 +274,7 @@ function WaitRoom()
 				position: 'relative', border: '1px solid', borderColor: 'divider', borderRadius: 2, bgcolor: 'background.paper' }}>
 				<Box sx={{height: '10%', width: '100%'}}>
 					<Typography variant="h5" sx={{  height: '100%', width: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>ROOM ID: {roomID}</Typography>
-					<IconButton size="large" sx={{ position: 'absolute', top: 0, right: 0, zIndex: 1 }} onClick={() => closeRoomConnection()}>
+					<IconButton size="large" sx={{ position: 'absolute', top: 0, right: 0, zIndex: 1 }} onClick={() => leaveRoom()}>
 						<ExitToAppOutlinedIcon fontSize="inherit"/>
 					</IconButton>
 				</Box>

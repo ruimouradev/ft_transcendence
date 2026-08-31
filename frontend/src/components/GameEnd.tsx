@@ -6,7 +6,7 @@ import { winner_image } from '../ui/ImagesUtils'
 
 function GameEnd()
 {
-	const { gameState, sendMessage, resetGameState } = getGameContext();
+	const { gameState, leaveRoom, sendMessage, resetGameState } = getGameContext();
 	const { resetPopUpStates } = getPopUpContext();
 
 	if (gameState === null)
@@ -25,7 +25,7 @@ function GameEnd()
 	{
 		resetPopUpStates();
 		resetGameState();
-		sendMessage({"type": str})
+		str === 'start' ? sendMessage({"type": str}) : leaveRoom();
 	}
 
 	return (
