@@ -620,19 +620,24 @@ async def game(ws: WebSocket, room_id: str) -> None:
                         None,
                     )
                 if existing:
-                    if existing.connected:
-                        await reject(ws, ErrorCode.INVALID_MESSAGE,
-                                     "player already connected")
-                    else:
-                        player = existing
-                        player.ws = ws
-                        player.connected = True
+                    # the newest window wins the chair, the old socket
+                    # is closed only after the handover
+                    old = existing.ws if existing.connected else None
+                    if not existing.connected:
                         metrics.players_connected.inc()
-                        room.game.set_connected(player.id, True)
-                        await ws.send_text(
-                            Welcome(id=player.id, token=player.token).model_dump_json()
-                        )
-                        await broadcast(room)
+                    player = existing
+                    player.ws = ws
+                    player.connected = True
+                    room.game.set_connected(player.id, True)
+                    await ws.send_text(
+                        Welcome(id=player.id, token=player.token).model_dump_json()
+                    )
+                    await broadcast(room)
+                    if old is not None:
+                        try:
+                            await old.close()
+                        except Exception:
+                            pass  # already gone
                 elif room.game is not None and room.game.phase != "lobby":
                     await reject(ws, ErrorCode.GAME_ALREADY_STARTED,
                                  "game already started")
@@ -672,8 +677,9 @@ async def game(ws: WebSocket, room_id: str) -> None:
     finally:
         # the goodbye runs whatever went wrong, otherwise a stray error
         # would leave the seat marked as connected and the player
-        # locked out of their own room until the server restarts
-        if player and room:
+        # locked out of their own room until the server restarts.
+        # A taken over chair is not ours to touch
+        if player and room and player.ws is ws:
             player.connected = False
             metrics.players_connected.dec()
             if room.game is not None and room.game.phase == "lobby":
