@@ -1,35 +1,32 @@
-import { useEffect } from 'react'
-import { Box, Button } from '@mui/material'
-import { getGameContext } from '../core/GameWebSocket';
+import { Box, IconButton, ThemeProvider, Typography } from '@mui/material'
+import { unoTheme } from '../ui/unoTheme';
 import { getPopUpContext } from '../core/GamePopUps';
+
+import ClearSharpIcon from '@mui/icons-material/ClearSharp';
 
 function Error()
 {
-	const { gameState, sendMessage } = getGameContext();
-	const { identifierID, resetPopUpStates } = getPopUpContext();
+	const { errorMessage, resetPopUpStates } = getPopUpContext();
 
-	const align = {display: 'flex', justifyContent: 'center', alignItems: 'center'}
-
-	// useEffect(() => {
-	// 	if (gameState?.turn !== gameState?.you.id)
-	// 		resetPopUpStates();
-	// }, [gameState?.turn]);
+	const text_size = {textAlign: 'center', fontSize: 'clamp(0.7rem, 1.5vw, 2rem)'};
+	const align = {display: 'flex', justifyContent: 'center', alignItems: 'center'};
 
 	return (
-		<Box sx={{ bgcolor: 'white', width: '99%', height: '15vh', ...align, border: 3, borderRadius: '2%' }}>
-			<Box sx={{ width: '25%', height: '50%' }}>
-				<Button onClick={() => {resetPopUpStates(); console.log({"type": "play", "card": identifierID, "color": "red"})}} sx={{ height: '100%', bgcolor: 'red'}}/>
+		<ThemeProvider theme={unoTheme}>
+			<Box sx={{ width: '35vw', aspectRatio: '1.6 / 1', ...align, border: '0.3vw solid',
+				borderColor: 'primary.main', borderRadius: 2, bgcolor: 'background.default', flexDirection: 'column' }}>
+				<Box sx={{ width: '100%', height: '15%', ...align, borderBottom: '0.1vh solid', borderBottomColor: 'primary.main'  }}>
+					<Typography sx={{ ...text_size }}>ERROR</Typography>
+				</Box>
+				<Box sx={{ width: '100%', height: '75%',...align }}>
+					<Typography sx={{ ...text_size, p: '1%' }}>{errorMessage}</Typography>
+				</Box>
+				<IconButton >
+					<ClearSharpIcon onClick={resetPopUpStates} sx={{ color: 'primary.main', border: 3, borderRadius: 1,
+						fontSize: 'clamp(0.7rem, 4vw, 2.5rem)' }}/>
+				</IconButton>
 			</Box>
-			<Box sx={{ width: '25%', height: '50%', ...align }}>
-				<Button onClick={() => {resetPopUpStates(); console.log({"type": "play", "card": identifierID, "color": "blue"})}}  sx={{ height: '100%', bgcolor: 'blue'}}/>
-			</Box>
-			<Box sx={{ width: '25%', height: '50%', ...align }}>
-				<Button onClick={() => {console.log({"type": "play", "card": identifierID, "color": "yellow"})}}  sx={{ height: '100%', bgcolor: 'yellow'}}/>
-			</Box>
-			<Box sx={{ width: '25%', height: '50%', ...align }}>
-				<Button onClick={() => {console.log({"type": "play", "card": identifierID, "color": "green"})}}  sx={{ height: '100%', bgcolor: 'green'}}/>
-			</Box>
-		</Box>
+		</ThemeProvider>
 	)
 }
 

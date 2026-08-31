@@ -1,12 +1,12 @@
 import { Box, Card, Popover } from '@mui/material';
 import { getGameContext } from '../core/GameWebSocket';
-import { emoticon_sad, emoticon_angry, emoticon_happy, emoticon_excited, emoticon_nervous, emoticon_surprised } from '../ui/ImagesUtils';
+import { emoticon_sad, emoticon_angry, emoticon_happy, emoticon_confidence, emoticon_nervous, emoticon_surprised } from '../ui/ImagesUtils';
 
 function EmoticonsMenu({anchor, handleClose, startCooldown}:
 	 {anchor: HTMLElement | null, handleClose: () => void, startCooldown: () => void})
 {
 	const { sendMessage } = getGameContext();
-	const emoticons = [emoticon_sad, emoticon_angry, emoticon_happy, emoticon_excited, emoticon_nervous, emoticon_surprised];
+	const emoticons = [emoticon_sad, emoticon_angry, emoticon_happy, emoticon_confidence, emoticon_nervous, emoticon_surprised];
 
 	if (anchor === null)
 		return (null);

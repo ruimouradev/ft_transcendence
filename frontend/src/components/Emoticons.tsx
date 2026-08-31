@@ -1,12 +1,12 @@
 import { useEffect } from 'react';
 import { Box, Card } from '@mui/material';
 import { getGameContext } from '../core/GameWebSocket';
-import { emoticon_catch, emoticon_sad, emoticon_angry, emoticon_happy, emoticon_excited, emoticon_nervous, emoticon_surprised, emoticon_uno } from '../ui/ImagesUtils';
+import { emoticon_catch, emoticon_sad, emoticon_angry, emoticon_happy, emoticon_confidence, emoticon_nervous, emoticon_surprised, emoticon_uno } from '../ui/ImagesUtils';
 
 function Emoticons({position}: {position: string})
 {
 	const { notice, resetNotice } = getGameContext();
-	const emoticons = [emoticon_sad, emoticon_angry, emoticon_happy, emoticon_excited, emoticon_nervous, emoticon_surprised, emoticon_catch, emoticon_uno];
+	const emoticons = [emoticon_sad, emoticon_angry, emoticon_happy, emoticon_confidence, emoticon_nervous, emoticon_surprised, emoticon_catch, emoticon_uno];
 
 	useEffect(() => {
 		if (notice === null)
