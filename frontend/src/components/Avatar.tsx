@@ -3,6 +3,7 @@ import { Box, Card, CardMedia, Typography } from '@mui/material'
 import { getGameContext } from '../core/GameWebSocket'
 import type { PublicPlayer } from '../game/types.ts'
 import EmoticonsMenu from './EmoticonsMenu'
+import { avatar_bot } from '../ui/ImagesUtils.ts'
 
 function Avatar({player, position}: {player: PublicPlayer, position: string})
 {
@@ -38,9 +39,18 @@ function Avatar({player, position}: {player: PublicPlayer, position: string})
 		setCooldown(true);
 	}
 
+	function catchPlayer(player: PublicPlayer)
+	{
+		if (player.uno === true || player.cards > 1)
+			return ;
+		sendMessage({"type": "catch", "target": player.id});
+	}
+
 	const function_call = position !== 'south' 
-		?  () => sendMessage({"type": "catch", "target": player.id}) 
+		?  () => catchPlayer(player) 
 		: handleEmoticon;
+
+	const avatar = player.bot ? avatar_bot : player.avatar;
 
 	return (
 		<Box sx={{ position: 'absolute', inset: 0, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
@@ -50,7 +60,7 @@ function Avatar({player, position}: {player: PublicPlayer, position: string})
 				justifyContent: 'center', border: 0, position: 'relative', zIndex: 5,
 				filter: player.id === gameState?.turn ? 'none' : 'grayscale(100%)', pointerEvents: position === 'south' && cooldown ? 'none' : 'auto' }}>
 				<CardMedia component="img" sx={{ border: 1, width: '100%', height: '100%', aspectRatio: '1 / 1',
-					borderRadius: '50%', objectFit: 'cover' }} image={player.avatar} draggable={false}/>
+					borderRadius: '50%', objectFit: 'cover' }} image={avatar} draggable={false}/>
 				<Typography sx={{ color: 'black', bgcolor: 'orange', border: 1, zIndex: '10', position: 'absolute', 
 					bottom: 0, transform: 'translateY(70%)', fontSize: 'clamp(0.5vh, 2vh, 3vh)', px: '5%' }}>{player.name}</Typography>
 			</Card>

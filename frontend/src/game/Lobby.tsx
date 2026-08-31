@@ -362,7 +362,7 @@ function Lobby()
 			}
 		}
 		getRooms();
-		const interval = setInterval(getRooms, 1500);
+		const interval = setInterval(getRooms, 2000);
 		return () => clearInterval(interval);
 	}, []);
 
