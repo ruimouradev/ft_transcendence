@@ -31,7 +31,7 @@ export default function MainLayout() {
                 <div className="sticky top-0 z-50 bg-slate-950/90 backdrop-blur-md">
                     <Navbar />
                 </div>
-                <main className="flex-1 p-6">
+                <main className="flex-1">
 					<GamePopUps>
 						<GameWebSocket>
 							<PopUp />

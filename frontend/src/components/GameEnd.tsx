@@ -1,24 +1,25 @@
-import { useEffect } from 'react'
 import { Box, Button, ThemeProvider, Typography } from '@mui/material'
 import { getGameContext } from '../core/GameWebSocket';
 import { getPopUpContext } from '../core/GamePopUps';
-
 import { unoTheme } from '../ui/unoTheme';
 import { winner_image } from '../ui/ImagesUtils'
 
 function GameEnd()
 {
 	const { gameState, sendMessage, resetGameState } = getGameContext();
-	const { identifierID, resetPopUpStates } = getPopUpContext();
+	const { resetPopUpStates } = getPopUpContext();
+
+	if (gameState === null)
+		return (null);
 
 	const align = {display: 'flex', justifyContent: 'center', alignItems: 'center'}
+	let winner = "No Winner";
 
-	// useEffect(() => {
-	// 	if (gameState?.turn !== gameState?.you.id)
-	// 		resetPopUpStates();
-	// }, [gameState?.turn]);
-
-	const winner = gameState?.winner ? gameState?.winner : "No Winner";
+	for (let i = 0; i < gameState.players.length; i++)
+	{
+		if (gameState.winner === gameState.players[i].id)
+			winner = gameState.players[i].name;
+	}
 
 	function endGame(str: string)
 	{
