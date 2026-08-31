@@ -1,5 +1,6 @@
 import { createContext, useContext, useRef, useState } from 'react';
 import { useAuth } from './AuthContext';
+import { getPopUpContext } from '../core/GamePopUps';
 
 const originalSetItem = sessionStorage.setItem;
 
@@ -21,10 +22,11 @@ type GameContextType = {
 	gameState: GameState | null,
 	notice: Notice | null,
 
-	resetNotice: () => void
-	resetGameState: () => void
-	closeRoomConnection: () => void
-	sendMessage: (message: object) => void
+	resetError: () => void,
+	resetNotice: () => void,
+	resetGameState: () => void,
+	closeRoomConnection: () => void,
+	sendMessage: (message: object) => void,
 	joinRoom: (roomID: string, message: object) => void
 }
 
@@ -57,11 +59,7 @@ function GameWebSocket({ children }: { children: React.ReactNode }) {
 	const pendingRoomRef = useRef<string | null>(null);
 
 	const { user } = useAuth();
-
-	function resetGameState()
-	{
-		setGameState(null);
-	}
+	const { handleNewError } = getPopUpContext();
 
 	function joinRoom(roomID: string, message: object)
 	{
@@ -75,6 +73,13 @@ function GameWebSocket({ children }: { children: React.ReactNode }) {
 		const socket = new WebSocket(`${protocol}://${window.location.host}/ws/game/${roomID}`)
 		socketRef.current = socket;
 
+		// Not final, maybe there is a better way ? Browser complains
+		const timeout = setTimeout(() => {
+			if (socket.readyState === WebSocket.CONNECTING) {
+				socket.close();
+			}
+		}, 5000);
+
 		// Wait to connect
 		socket.onopen = () => {
 			socket.send(JSON.stringify(message));
@@ -83,7 +88,6 @@ function GameWebSocket({ children }: { children: React.ReactNode }) {
 		socket.onmessage = (event) => {
 			// Handle backend message
 			const message = JSON.parse(event.data);
-
 			const { type } = message;
 
 			switch (type) {
@@ -115,6 +119,7 @@ function GameWebSocket({ children }: { children: React.ReactNode }) {
 		socket.onerror = () => {
 			// Create close function
 			setError("Connection failed");
+			handleNewError("Connection failed");
 			// create a popup to notify user.
 		}
 
@@ -128,12 +133,9 @@ function GameWebSocket({ children }: { children: React.ReactNode }) {
 				const room = pendingRoomRef.current;
 				pendingRoomRef.current = null;
 
-				console.log(room, {"type": "join", "name": user.nick_name});
+//				console.log(room, {"type": "join", "name": user.nick_name});
 				joinRoom(room, {"type": "join", "name": user.nick_name})
 			}
-
-//			sessionStorage.removeItem('roomID');
-//			sessionStorage.removeItem('reconnectToken');
 		}
 	}
 
@@ -142,6 +144,12 @@ function GameWebSocket({ children }: { children: React.ReactNode }) {
 		socketRef.current?.close();
 		sessionStorage.removeItem('roomID');
 	}
+
+	function leaveRoom()
+	{
+		
+	}
+
 
 	function sendMessage(message: object)
 	{
@@ -154,6 +162,9 @@ function GameWebSocket({ children }: { children: React.ReactNode }) {
 
 	function handleErrorMessages({type, code, msg, room}: {type: string, code: string, msg:string, room: string | null})
 	{
+//		setError(msg);
+		handleNewError(msg);
+		console.log(type, msg);
 		switch(code)
 		{
 			case ("ALREADY_IN_ROOM"):
@@ -173,7 +184,7 @@ function GameWebSocket({ children }: { children: React.ReactNode }) {
 			// case("GAME_NOT_STARTED"):
 			// 	return ;
 		}
-		alert(`${type} ${msg}`);
+//		alert(`${type} ${msg}`);
 
 		/* ALERT
 		{
@@ -182,7 +193,7 @@ function GameWebSocket({ children }: { children: React.ReactNode }) {
 			// CARD_NOT_IN_HAND = "CARD_NOT_IN_HAND"
 			// COLOR_REQUIRED = "COLOR_REQUIRED"
 			// TARGET_REQUIRED = "TARGET_REQUIRED"
-
+ 
 			// IGNORE ?? //
 				// NOT_YOUR_TURN = "NOT_YOUR_TURN"
 				// INVALID_CARD = "INVALID_CARD"
@@ -202,13 +213,23 @@ function GameWebSocket({ children }: { children: React.ReactNode }) {
 		*/
 	}
 
+	function resetGameState()
+	{
+		setGameState(null);
+	}
+
 	function resetNotice()
 	{
 		setNotice(null);
 	}
 
+	function resetError()
+	{
+		setError(null);
+	}
+
 	return (
-		<GameContext.Provider value={{ roomID, connected, error, lastMessage, gameState, notice, resetNotice, resetGameState, joinRoom, closeRoomConnection, sendMessage }}>
+		<GameContext.Provider value={{ roomID, connected, error, lastMessage, gameState, notice, resetError, resetNotice, resetGameState, joinRoom, closeRoomConnection, sendMessage }}>
 			{ children }
 		</GameContext.Provider>
 	)

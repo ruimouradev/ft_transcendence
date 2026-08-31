@@ -17,9 +17,11 @@ import uno from '../assets/utils/uno.png';
 import sad from '../assets/utils/sad.png';
 import angry from '../assets/utils/angry.png';
 import happy from '../assets/utils/happy.png';
-import excited from '../assets/utils/excited.png';
 import nervous from '../assets/utils/nervous.png';
 import surprised from '../assets/utils/surprised.png';
+import confidence from '../assets/utils/confidence.png';
+
+import bot from '../assets/utils/avatar_bot.png';
 
 // A tabela dos versos de carta. Na base de dados guarda-se o nome de
 // código (back00, back01...), nunca o caminho do ficheiro: caminhos
@@ -55,6 +57,8 @@ export const color_yellow = yellow;
 export const emoticon_sad = sad;
 export const emoticon_angry = angry;
 export const emoticon_happy = happy;
-export const emoticon_excited = excited;
 export const emoticon_nervous = nervous;
 export const emoticon_surprised = surprised;
+export const emoticon_confidence = confidence;
+
+export const avatar_bot = bot;
