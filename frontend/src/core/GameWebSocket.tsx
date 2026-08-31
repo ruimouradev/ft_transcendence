@@ -1,23 +1,5 @@
-import { createContext, useContext, useEffect, useRef, useState } from 'react';
-import type { ReactNode } from 'react';
+import { createContext, useContext, useRef, useState } from 'react';
 import { useAuth } from './AuthContext';
-
-import { fakeState } from '../game/fake_gamestate';
-
-// A presença: nasce no login e morre no logout, um websocket que vive
-// a sessão inteira e diz ao servidor "continuo aqui" a cada batida.
-// É isto que acende o ponto verde dos amigos. Não confundir com o
-// websocket do jogo, que abre e fecha com cada sala e fala outro
-// protocolo. Não desenha nada nem expõe nada: se um dia precisares
-// do estado da ligação no ecrã, é aqui que ele nasce.
-
-
-// Need to understand better when to use this variables
-
-// const MAX_RECONNECT_ATTEMPTS = 5;
-// const BASE_RECONNECT_DELAY = 1000; // primeiro reencontro ao fim de 1s
-// const HEARTBEAT_INTERVAL = 10000; // uma batida a cada 10s
-
 
 const originalSetItem = sessionStorage.setItem;
 
@@ -37,11 +19,19 @@ type GameContextType = {
 	error: string | null,
 	lastMessage: string | null,
 	gameState: GameState | null,
+	notice: Notice | null,
 
+	resetNotice: () => void
 	resetGameState: () => void
 	closeRoomConnection: () => void
 	sendMessage: (message: object) => void
 	joinRoom: (roomID: string, message: object) => void
+}
+
+type Notice = {
+	kind: 'emote' | 'uno' | 'catch',
+	sender: string,
+	icon: number
 }
 
 const GameContext = createContext<GameContextType | null>(null);
@@ -61,6 +51,7 @@ function GameWebSocket({ children }: { children: React.ReactNode }) {
 	const [roomID, setRoomID] = useState<string | null>(null);
 	const [gameState, setGameState] = useState<GameState | null>(null);
 	const [connected, setConnected] = useState<ConnectionState>('offline');
+	const [notice, setNotice] = useState<Notice | null>(null);
 
 	const socketRef = useRef<WebSocket | null>(null);
 	const pendingRoomRef = useRef<string | null>(null);
@@ -103,11 +94,13 @@ function GameWebSocket({ children }: { children: React.ReactNode }) {
 					sessionStorage.setItem('roomID', roomID);
 					// sessionStorage.setItem('reconnectToken', token);
 					break ;
+				case 'notice':
+					setNotice(message);
+					break ;
 				case 'error':
 					handleErrorMessages(message);
 					break ;
 				case 'state':
-				//	setGameState(fakeState); // FAKE TEST STATE !!!! REMOVE DEL
 					setGameState(message);
 					break ;
 				default:
@@ -208,8 +201,14 @@ function GameWebSocket({ children }: { children: React.ReactNode }) {
 			// ALREADY_IN_ROOM = "ALREADY_IN_ROOM"
 		*/
 	}
+
+	function resetNotice()
+	{
+		setNotice(null);
+	}
+
 	return (
-		<GameContext.Provider value={{ roomID, connected, error, lastMessage, gameState, resetGameState, joinRoom, closeRoomConnection, sendMessage }}>
+		<GameContext.Provider value={{ roomID, connected, error, lastMessage, gameState, notice, resetNotice, resetGameState, joinRoom, closeRoomConnection, sendMessage }}>
 			{ children }
 		</GameContext.Provider>
 	)

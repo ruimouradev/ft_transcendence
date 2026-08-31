@@ -227,7 +227,7 @@ function CreateRoom({ rooms }: { rooms: Room[]})
 
 	return (
 		<Box sx={{ width: '100%', height: '85%' }}>
-			<Box sx={{ width: '50%', height: '85%', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+			<Box sx={{ width: '50%', height: '85%', display: 'flex', flexDirection: 'column', justifyContent: 'center', mx: 'auto' }}>
 				<Box sx={{ height: '25%', borderBottom: '1pxsolid', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'auto', whiteSpace: 'pre-line', textAlign: 'center' }} >
 					<Typography sx={{ fontSize: {xs: '0.6rem', sm: '0.8rem', md: '1rem'} }}>{optionsTooltip}</Typography>
 				</Box>
