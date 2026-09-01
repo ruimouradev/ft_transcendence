@@ -10,6 +10,7 @@ import FriendsPage from './friends/FriendsPage'
 import UnoDashboard from './stats/UnoDashboard'
 import Privacy from './legal/Privacy'
 import Terms from './legal/Terms'
+import Rules from './legal/Rules'
 import Play from './game/Play'
 import Lobby from './game/Lobby'
 import Error from './layout/Error'
@@ -30,6 +31,7 @@ function App() {
                 <Route path="signup" element={<SignUp />} />
                 <Route path="privacy" element={<Privacy />} />
                 <Route path="terms" element={<Terms />} />
+				<Route path="rules" element={<Rules />} />
                 <Route path="login/2fa" element={<Verify2fa />} />
                 <Route path="reset-password" element={<ResetPassword />} />
 

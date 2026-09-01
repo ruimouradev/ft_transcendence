@@ -25,7 +25,7 @@ function Play()
 	}, []);
 
 	// if player in room, connect to room
-	return (connected === 'online' ? <GameRoom /> : <Lobby />);
+	return (connected === true ? <GameRoom /> : <Lobby />);
 }
 
 export default Play

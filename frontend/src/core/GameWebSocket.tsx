@@ -1,23 +1,6 @@
-import { createContext, useContext, useEffect, useRef, useState } from 'react';
-import type { ReactNode } from 'react';
+import { createContext, useContext, useRef, useState } from 'react';
 import { useAuth } from './AuthContext';
-
-import { fakeState } from '../game/fake_gamestate';
-
-// A presença: nasce no login e morre no logout, um websocket que vive
-// a sessão inteira e diz ao servidor "continuo aqui" a cada batida.
-// É isto que acende o ponto verde dos amigos. Não confundir com o
-// websocket do jogo, que abre e fecha com cada sala e fala outro
-// protocolo. Não desenha nada nem expõe nada: se um dia precisares
-// do estado da ligação no ecrã, é aqui que ele nasce.
-
-
-// Need to understand better when to use this variables
-
-// const MAX_RECONNECT_ATTEMPTS = 5;
-// const BASE_RECONNECT_DELAY = 1000; // primeiro reencontro ao fim de 1s
-// const HEARTBEAT_INTERVAL = 10000; // uma batida a cada 10s
-
+import { getPopUpContext } from '../core/GamePopUps';
 
 const originalSetItem = sessionStorage.setItem;
 
@@ -33,15 +16,31 @@ type ConnectionState = 'online' | 'offline' | 'retry'
 
 type GameContextType = {
 	roomID: string | null,
-	connected: ConnectionState,
-	error: string | null,
-	lastMessage: string | null,
+	connected: boolean,
+	// error: string | null,
+	// lastMessage: string | null,
 	gameState: GameState | null,
+//	notices: Notices,
+	notice: Notice | null,
 
-	resetGameState: () => void
-	closeRoomConnection: () => void
-	sendMessage: (message: object) => void
+	leaveRoom: () => void,
+	// resetError: () => void,
+	resetGameState: () => void,
+	closeRoomConnection: () => void,
+	resetNotice: () => void,
+	// resetNotices: (id: string) => void,
+	sendMessage: (message: object) => void,
 	joinRoom: (roomID: string, message: object) => void
+}
+
+type Notice = {
+	kind: 'emote' | 'uno' | 'catch',
+	sender: string,
+	icon: number
+}
+
+type Notices = {
+	[id: string]: Notice;
 }
 
 const GameContext = createContext<GameContextType | null>(null);
@@ -56,58 +55,73 @@ export function getGameContext()
 }
 
 function GameWebSocket({ children }: { children: React.ReactNode }) {
-	const [lastMessage, setLastMessage] = useState<string | null>(null);
-	const [error, setError] = useState<string | null>(null);
+	// const [lastMessage, setLastMessage] = useState<string | null>(null);
+	// const [error, setError] = useState<string | null>(null);
+
+
 	const [roomID, setRoomID] = useState<string | null>(null);
 	const [gameState, setGameState] = useState<GameState | null>(null);
-	const [connected, setConnected] = useState<ConnectionState>('offline');
+	const [connected, setConnected] = useState<boolean>(false);
+//	const [notices, setNotices] = useState<Notices>({});
+	const [notice, setNotice] = useState<Notice | null>(null);
 
 	const socketRef = useRef<WebSocket | null>(null);
 	const pendingRoomRef = useRef<string | null>(null);
 
 	const { user } = useAuth();
-
-	function resetGameState()
-	{
-		setGameState(null);
-	}
+	const { handleNewError } = getPopUpContext();
 
 	function joinRoom(roomID: string, message: object)
 	{
+		console.log("connected: ", connected);
+		console.log("roomID: ", roomID);
+		console.log("socketRef: ", socketRef);
+		console.log("pendingRoomRef: ", pendingRoomRef);
+		console.log("sessionStorage: ", sessionStorage);
+
 		// Dont accept two connections from same user if it already has one
 		if (socketRef.current)
 			return ;
-		setError(null);
+		// setError(null);
 
 		// Create new socket
 		const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws';
 		const socket = new WebSocket(`${protocol}://${window.location.host}/ws/game/${roomID}`)
 		socketRef.current = socket;
 
+		// Not final, maybe there is a better way ? Browser complains
+		const timeout = setTimeout(() => {
+			if (socket.readyState === WebSocket.CONNECTING) {
+				socket.close();
+			}
+		}, 5000);
+
 		// Wait to connect
 		socket.onopen = () => {
+			clearTimeout(timeout);
 			socket.send(JSON.stringify(message));
 		}
 
 		socket.onmessage = (event) => {
 			// Handle backend message
 			const message = JSON.parse(event.data);
-
 			const { type } = message;
 
 			switch (type) {
 				case 'welcome':
 					// const { token } = message;
 					setRoomID(roomID);
-					setConnected('online');
+					setConnected(true);
 					sessionStorage.setItem('roomID', roomID);
 					// sessionStorage.setItem('reconnectToken', token);
+					break ;
+				case 'notice':
+					setNotice(message);
 					break ;
 				case 'error':
 					handleErrorMessages(message);
 					break ;
 				case 'state':
-				//	setGameState(fakeState); // FAKE TEST STATE !!!! REMOVE DEL
 					setGameState(message);
 					break ;
 				default:
@@ -115,39 +129,50 @@ function GameWebSocket({ children }: { children: React.ReactNode }) {
 			}
 
 			// DEL !
-			console.log("game engine: ", message);
-			setLastMessage(message);
+			// console.log("game engine: ", message);
+			// setLastMessage(message);
 		}
 
 		socket.onerror = () => {
 			// Create close function
-			setError("Connection failed");
+			// setError("Connection failed");
+			handleNewError("Connection failed");
 			// create a popup to notify user.
 		}
 
 		socket.onclose = () => {
 			// Need to check error messages, to determine if retry or not
 			socketRef.current = null;
-			setConnected('offline');
+			setConnected(false);
 			setRoomID(null);
+			resetGameState();
+			resetNotice();
+			clearTimeout(timeout);
+			// if (gameState?.you.id)
+			// 	resetNotices(gameState.you.id)
  
+			console.log("connection closed by backend !!!")
+
 			if (pendingRoomRef.current && user) {
 				const room = pendingRoomRef.current;
 				pendingRoomRef.current = null;
 
-				console.log(room, {"type": "join", "name": user.nick_name});
+//				console.log(room, {"type": "join", "name": user.nick_name});
 				joinRoom(room, {"type": "join", "name": user.nick_name})
 			}
-
-//			sessionStorage.removeItem('roomID');
-//			sessionStorage.removeItem('reconnectToken');
 		}
 	}
 
 	function closeRoomConnection()
 	{
 		socketRef.current?.close();
+	}
+
+	function leaveRoom()
+	{
+		pendingRoomRef.current = null;
 		sessionStorage.removeItem('roomID');
+		sendMessage({"type": "leave"});
 	}
 
 	function sendMessage(message: object)
@@ -170,18 +195,22 @@ function GameWebSocket({ children }: { children: React.ReactNode }) {
 				}
 				return ;
 			case ("KICKED"):
+				pendingRoomRef.current = null;
+				sessionStorage.removeItem('roomID');
+				closeRoomConnection();			
+				break ;
 			case ('ROOM_FULL'):
 			case ("AUTH_REQUIRED"):
 			case ('ROOM_NOT_FOUND'):
 			case ("GAME_ALREADY_STARTED"):
 			// AUTH_REQUIRED = "AUTH_REQUIRED"
+				console.log("connection closed by me !!!")
 				closeRoomConnection();			
 				break ;
 			// case("GAME_NOT_STARTED"):
 			// 	return ;
 		}
-		alert(`${type} ${msg}`);
-
+		handleNewError(msg);
 		/* ALERT
 		{
 			// INVALID_MESSAGE = "INVALID_MESSAGE"
@@ -189,7 +218,7 @@ function GameWebSocket({ children }: { children: React.ReactNode }) {
 			// CARD_NOT_IN_HAND = "CARD_NOT_IN_HAND"
 			// COLOR_REQUIRED = "COLOR_REQUIRED"
 			// TARGET_REQUIRED = "TARGET_REQUIRED"
-
+ 
 			// IGNORE ?? //
 				// NOT_YOUR_TURN = "NOT_YOUR_TURN"
 				// INVALID_CARD = "INVALID_CARD"
@@ -208,8 +237,33 @@ function GameWebSocket({ children }: { children: React.ReactNode }) {
 			// ALREADY_IN_ROOM = "ALREADY_IN_ROOM"
 		*/
 	}
+
+	function resetGameState()
+	{
+		setGameState(null);
+	}
+
+	function resetNotice()
+	{
+		setNotice(null);
+	}
+
+	// function resetNotices(id: string)
+	// {
+	// 	setNotices(prev => {
+	// 		const tmp = {...prev};
+	// 		delete tmp[id];
+	// 		return tmp;
+	// 	})
+	// }
+
+	// function resetError()
+	// {
+	// 	setError(null);
+	// }
+
 	return (
-		<GameContext.Provider value={{ roomID, connected, error, lastMessage, gameState, resetGameState, joinRoom, closeRoomConnection, sendMessage }}>
+		<GameContext.Provider value={{ roomID, connected, gameState, notice, leaveRoom, resetNotice, resetGameState, joinRoom, closeRoomConnection, sendMessage }}>
 			{ children }
 		</GameContext.Provider>
 	)

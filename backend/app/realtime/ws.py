@@ -42,6 +42,7 @@ class Player:
     user: str | None = None  # account id from the login cookie
     avatar: str = ""  # the account's picture, empty for guests and bots
     bot_level: str | None = None  # difficulty of an AI seat, None on humans
+    last_emote: float = 0.0  # monotonic time of the last emote, to space them
 
 
 @dataclass
@@ -68,6 +69,7 @@ TURN_TIMEOUT = 60  # seconds an idle turn is allowed to sit
 TIMER_TICK = 5  # how often each room looks at its clock
 UNO_GRACE = 0.5  # seconds a fresh one-card hand is safe from the catch
 SEAT_GRACE = 5  # seconds a lobby chair waits for its player to come back
+EMOTE_COOLDOWN = 1.0  # seconds a player must wait between emotes
 ROOM_GRACE = 5  # seconds an empty room waits before it is dropped
 
 
@@ -306,14 +308,18 @@ async def ai_timer(room_id: str, room: Room) -> None:
 
         # We process every bot to allow for out-of-turn Catch opportunities
         for bot in [p for p in room.players if p.bot]:
-            # Construct GameState snapshot for the bot
-            bot_state = room.game.snapshot_for(bot.id)
-            bot_state.settings = room.settings
-            for seat in bot_state.players:
-                seat.bot = next((p.bot for p in room.players if p.id == seat.id), False)
-                seat.bot_level = next((p.bot_level for p in room.players if p.id == seat.id), None)
-
-            bot_action = decide_bot_action(bot_state, bot.id)
+            # Construct GameState snapshot for the bot. Guarded so a
+            # stray error building it or deciding does not kill the loop
+            try:
+                bot_state = room.game.snapshot_for(bot.id)
+                bot_state.settings = room.settings
+                for seat in bot_state.players:
+                    seat.bot = next((p.bot for p in room.players if p.id == seat.id), False)
+                    seat.bot_level = next((p.bot_level for p in room.players if p.id == seat.id), None)
+                bot_action = decide_bot_action(bot_state, bot.id)
+            except Exception:
+                logging.exception("ai_timer failed to decide a bot move")
+                continue
             if not bot_action:
                 continue
 
@@ -347,10 +353,25 @@ async def ai_timer(room_id: str, room: Room) -> None:
                     
                 metrics.moves.labels(kind=bot_action.type).inc()
                 await broadcast(room)
+
+                # bots announce their uno and catch too, so the frontend
+                # pops the same bubble for them as for players
+                if isinstance(bot_action, Play) and bot_action.uno:
+                    hand = next((h for h in room.game.hands if h.id == bot.id), None)
+                    if hand and hand.said_uno and len(hand.cards) == 1:
+                        await relay(room, Notice(sender=bot.id, kind="uno"))
+                elif isinstance(bot_action, SayUno):
+                    await relay(room, Notice(sender=bot.id, kind="uno"))
+                elif isinstance(bot_action, Catch):
+                    await relay(room, Notice(sender=bot.id, kind="catch",
+                                             target=bot_action.target))
+
                 await record_finished_game(room)
                 break  # Apply max one bot action per tick to avoid race conditions
             except GameError as e:
                 logging.error(f"AI attempted illegal move: {e.msg}")
+            except Exception:
+                logging.exception("ai_timer failed to apply a bot move")
 
 
 async def apply(room: Room, player: Player, action: PlayerAction) -> Error | None:
@@ -562,9 +583,12 @@ async def game(ws: WebSocket, room_id: str) -> None:
 
                 if isinstance(action, Create):
                     if room_id in rooms:
+                        # no seat to give, close so the client cannot
+                        # keep a dead socket that blocks its next join
                         await reject(ws, ErrorCode.INVALID_MESSAGE,
                                      "room already exists")
-                        continue
+                        await ws.close()
+                        return
                     room = Room(settings=action.settings, owner=user)
                     rooms[room_id] = room
                     metrics.rooms_active.inc()
@@ -582,7 +606,8 @@ async def game(ws: WebSocket, room_id: str) -> None:
                 if room is None:
                     await reject(ws, ErrorCode.ROOM_NOT_FOUND,
                                  "no such room")
-                    continue
+                    await ws.close()
+                    return
 
                 # Reconnection: the logged in account is enough to get
                 # the seat back, the welcome token still works as before
@@ -599,30 +624,44 @@ async def game(ws: WebSocket, room_id: str) -> None:
                         None,
                     )
                 if existing:
-                    if existing.connected:
-                        await reject(ws, ErrorCode.INVALID_MESSAGE,
-                                     "player already connected")
-                    else:
-                        player = existing
-                        player.ws = ws
-                        player.connected = True
+                    # the newest window wins the chair, the old socket
+                    # is closed only after the handover
+                    old = existing.ws if existing.connected else None
+                    if not existing.connected:
                         metrics.players_connected.inc()
-                        room.game.set_connected(player.id, True)
-                        await ws.send_text(
-                            Welcome(id=player.id, token=player.token).model_dump_json()
-                        )
-                        await broadcast(room)
+                    player = existing
+                    player.ws = ws
+                    player.connected = True
+                    room.game.set_connected(player.id, True)
+                    await ws.send_text(
+                        Welcome(id=player.id, token=player.token).model_dump_json()
+                    )
+                    await broadcast(room)
+                    if old is not None:
+                        try:
+                            await old.close()
+                        except Exception:
+                            pass  # already gone
                 elif room.game is not None and room.game.phase != "lobby":
                     await reject(ws, ErrorCode.GAME_ALREADY_STARTED,
                                  "game already started")
+                    await ws.close()
+                    return
                 elif len(room.players) >= room.settings.max_players:
                     await reject(ws, ErrorCode.ROOM_FULL, "room is full")
+                    await ws.close()
+                    return
                 else:
                     player = await seat_player(ws, room, action.name, user)
                 continue
 
             if isinstance(action, Emote):
-                # a reaction, not a move, passed on without touching the game
+                # a reaction, not a move, passed on without touching the
+                # game. Spaced out so no one can flood the table with them
+                now = time.monotonic()
+                if now - player.last_emote < EMOTE_COOLDOWN:
+                    continue
+                player.last_emote = now
                 await relay(room, Notice(sender=player.id, kind="emote",
                                          icon=action.icon))
                 continue
@@ -646,8 +685,9 @@ async def game(ws: WebSocket, room_id: str) -> None:
     finally:
         # the goodbye runs whatever went wrong, otherwise a stray error
         # would leave the seat marked as connected and the player
-        # locked out of their own room until the server restarts
-        if player and room:
+        # locked out of their own room until the server restarts.
+        # A taken over chair is not ours to touch
+        if player and room and player.ws is ws:
             player.connected = False
             metrics.players_connected.dec()
             if room.game is not None and room.game.phase == "lobby":

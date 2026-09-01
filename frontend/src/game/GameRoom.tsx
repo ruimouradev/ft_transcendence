@@ -17,8 +17,10 @@ import type { PopUpTypes } from '../core/GamePopUps';
 import { bg_image, cardBacks, defaultCardBack, direction_plus, direction_minus } from '../ui/ImagesUtils.ts';
 
 import {easy_bot, medium_bot, hard_bot, start_game} from './messages.ts'
-import { color_red, color_blue, color_green, color_yellow } from '../ui/ImagesUtils.ts'
+import { avatar_bot, color_red, color_blue, color_green, color_yellow } from '../ui/ImagesUtils.ts'
 
+import Avatar from '../components/Avatar'
+import Emoticons from '../components/Emoticons'
 
 import type {Color, valueNum, valueAction, valueWild, GameCard, PublicPlayer, PrivatePlayer, LastAction, GameState} from './types.ts'
 
@@ -32,9 +34,6 @@ function DrawCard(sendMessage: (message: object) => void)
 {
 	const message = {"type": "draw"};
 	sendMessage(message);
-
-	// DEL
-	console.log(message)
 }
 
 function PlayCard({card, gameState, sendMessage, handleNewID}:
@@ -43,8 +42,8 @@ function PlayCard({card, gameState, sendMessage, handleNewID}:
 	sendMessage: (message: object) => void,
 	handleNewID: (type: PopUpTypes, new_id: string) => void})
 {
-	// NEEDED FOR TESTING !!!! DEL
-	// handleNewID('game_end', card.id);
+	// NEEDED FOR TESTING !!!! DEL LATER
+	// handleNewID('seven', card.id);
 	// return ;
 
 	if (gameState?.you.id !== gameState?.turn
@@ -105,20 +104,25 @@ function DeckArea()
 	const image_styles: React.CSSProperties = {width: '100%', aspectRatio: '1 / 1', objectFit: 'fill'};
 
 	return (
-		<Box sx={{ height: '100%', width: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center', position: 'relative' }}>
-			<Box sx={{ width: '50%', height: '50%', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 1, }}>
-				<img className="card deck_card" src={cardBacks[user?.card_back ?? ''] ?? defaultCardBack} alt="" draggable={false} onClick={() => DrawCard(sendMessage)}/>
-				<img className="card deck_card" src={images[getCardName({card})]} alt="" draggable={false}/>
+		<Box sx={{ height: '80%', width: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center', position: 'relative' }}>
+			<Box sx={{ width: '50%', height: '50%', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 1, top: 0, position: 'absolute' }}>
+				<img className="card" src={cardBacks[user?.card_back ?? ''] ?? defaultCardBack} alt="" draggable={false} onClick={() => DrawCard(sendMessage)}/>
+				<img className="card" src={images[getCardName({card})]} alt="" draggable={false}/>
 			</Box>
-			<Box sx={{ bottom: 0, position: 'absolute', width: '30%', height: '20%', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+			<Box sx={{ bottom: 0, position: 'absolute', width: '50%', height: '50%', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
 				<img className="arrow" src={direction} alt="" draggable={false}/>
 			</Box>
 			<Box sx={{ width: '25%', height: '100%', right: 0, position: 'absolute', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
-				<Paper elevation={10} sx={{ width: '4vw',  aspectRatio: '1 / 1', bgcolor: color, borderRadius: 1, ...box_shadow }}>
+				<Paper elevation={0} sx={{ width: '4vw', aspectRatio: '1 / 1', bgcolor: color, borderRadius: 1, ...box_shadow }}>
 					<img src={color} draggable={false} style={image_styles}/>
 				</Paper>
 				<Button className="rainbow-button" variant="contained" onClick={() => sendMessage(uno_click)} sx={{ width: '4vw',  aspectRatio: '1 / 1', minWidth: 0, p: 0, fontSize: 'clamp(0.2rem, 0.8rem, 1rem)', ...box_shadow }}>UNO!</Button>
+			</Box>
+			<Box sx={{ width: '25%', height: '100%', left: 0, position: 'absolute', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
 				<Button variant="contained" disabled={disable_challenge} onClick={() => sendMessage(challenge_click)}sx={{ width: '4vw',  aspectRatio: '1 / 1', minWidth: 0, p: 0, fontSize: 'clamp(0.2rem, 0.8rem, 1rem)', ...box_shadow }}>DARE</Button>
+				{gameState?.stack !== 0 && <Paper elevation={0} sx={{ width: '4vw', aspectRatio: '1 / 1', bgcolor: color, borderRadius: 1, ...box_shadow }}>
+					<Typography>Stack {gameState?.stack}</Typography>
+				</Paper>}
 			</Box>
 		</Box>
 	)
@@ -188,27 +192,17 @@ function DrawHidden({amount, card_class}: {amount: number, card_class: string})
 	)
 }
 
-function PlayerOneHand()
+function PlayerOneHand({player}: {player: PublicPlayer})
 {
-	const { user } = useAuth();
-	const { gameState } = getGameContext();
-
-	const player = gameState?.you !== undefined ? gameState?.you : {id: 0, hand: [], platable: [], drawn: null};
+	const { notice, gameState } = getGameContext();
+	const private_player = gameState?.you !== undefined ? gameState?.you : {id: 0, hand: [], platable: [], drawn: null};
 
 	return (
 		<Box className="board-south" sx={{ position: 'relative' }}>
-			<Box sx={{ position: 'absolute', inset: 0, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-				<Card className="avatar-south" elevation={0} onClick={() => console.log("IMPLEMENT EMOTICON")} sx={{ width: '4vw',
-					aspectRatio: '1 / 1', overflow: 'visible', bgcolor: 'rgba(255, 255, 255, 0)', display: 'flex', justifyContent: 'center', 
-					border: 0, position: 'relative', zIndex: 5, filter: player.id === gameState?.turn ? 'none' : 'grayscale(100%)' }}>
-					<CardMedia component="img" sx={{ border: 1, width: '100%', height: '100%', aspectRatio: '1 / 1',
-						borderRadius: '50%', objectFit: 'cover' }} image={user?.avatar} draggable={false}/>
-					<Typography sx={{ color: 'black', bgcolor: 'orange', border: 1, zIndex: '10', position: 'absolute', 
-						bottom: 0, transform: 'translateY(70%)', fontSize: 'clamp(0.5vh, 2vh, 3vh)' }}>{user?.nick_name}</Typography>
-				</Card>
-			</Box>
+			{(notice !== null && notice.sender === player.id) && <Emoticons position={'south'}/>}
+			<Avatar player={player} position={'south'} />
 			<Box sx={{ position: 'absolute', inset: 0 }}>
-				<DrawHands deck={player.hand} amount={player.hand.length} card_class="card-south" />
+				<DrawHands deck={private_player.hand} amount={private_player.hand.length} card_class="card-south" />
 			</Box>
 		</Box>
 	)
@@ -216,9 +210,8 @@ function PlayerOneHand()
 
 function PlayersUI({players}: {players: PublicPlayer[]})
 {
-	const { gameState, sendMessage } = getGameContext();
-
-	let player_pos: string[];	
+	const { notice } = getGameContext();
+	let player_pos: string[];
 
 	if (players.length == 2) {
 		player_pos = [ "south", "north" ]
@@ -231,23 +224,14 @@ function PlayersUI({players}: {players: PublicPlayer[]})
 	}
 
 	return (players.map((player, i) => {
-		console.log(player.cards);
 		if (i == 0) {
-			return (<PlayerOneHand key={player.id} />)
+			return (<PlayerOneHand key={player.id} player={player}/>)
 		}
 		else {
 			return (
 				<Box key={player.id} className={`board-${player_pos[i]}`} sx={{ position: 'relative' }}>
-					<Box sx={{ position: 'absolute', inset: 0, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-						<Card className={`avatar-${player_pos[i]}`} elevation={0} onClick={() => sendMessage({"type": "catch", "target": player.id})}
-							sx={{ width: '4vw', aspectRatio: '1 / 1', overflow: 'visible', bgcolor: 'rgba(255, 255, 255, 0)', display: 'flex',
-							justifyContent: 'center', border: 0, position: 'relative', zIndex: 5, filter: player.id === gameState?.turn ? 'none' : 'grayscale(100%)' }}>
-							<CardMedia component="img" sx={{ border: 1, width: '100%', height: '100%', aspectRatio: '1 / 1',
-								borderRadius: '50%', objectFit: 'cover' }} image={player.avatar} draggable={false}/>
-							<Typography sx={{ color: 'black', bgcolor: 'orange', border: 1, zIndex: '10', position: 'absolute', 
-								bottom: 0, transform: 'translateY(70%)', fontSize: 'clamp(0.5vh, 2vh, 3vh)' }}>{player.name}</Typography>
-						</Card>
-					</Box>
+					{(notice !== null && notice.sender === player.id) && <Emoticons position={player_pos[i]}/>}
+					<Avatar player={player} position={player_pos[i]} />
 					<Box sx={{position: 'absolute', inset: 0, }}>
 						<DrawHidden amount={player.cards} card_class={`card-${player_pos[i]}`} />
 					</Box>
@@ -278,7 +262,7 @@ function RotatePlayers(): PublicPlayer[]
 
 function WaitRoom()
 {
-	const { roomID, gameState, sendMessage, closeRoomConnection } = getGameContext();
+	const { roomID, gameState, sendMessage, leaveRoom } = getGameContext();
 
 	const host = gameState?.you.id !== gameState?.host_id;
 	const room_full = gameState?.players.length !== gameState?.settings?.max_players;
@@ -290,17 +274,19 @@ function WaitRoom()
 				position: 'relative', border: '1px solid', borderColor: 'divider', borderRadius: 2, bgcolor: 'background.paper' }}>
 				<Box sx={{height: '10%', width: '100%'}}>
 					<Typography variant="h5" sx={{  height: '100%', width: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>ROOM ID: {roomID}</Typography>
-					<IconButton size="large" sx={{ position: 'absolute', top: 0, right: 0, zIndex: 1 }} onClick={() => closeRoomConnection()}>
+					<IconButton size="large" sx={{ position: 'absolute', top: 0, right: 0, zIndex: 1 }} onClick={() => leaveRoom()}>
 						<ExitToAppOutlinedIcon fontSize="inherit"/>
 					</IconButton>
 				</Box>
 				<Box sx={{ height: '90%', width: '100%' }}>
 					<Box sx={{ height: '85%', width: '100%', bgcolor: 'black' }}>
-						<List sx={{ height: '100%', width: '100%', display: 'flex', flexDirection: 'column', p: 0 }}>
-							{gameState?.players.map((player) => (
+						<List className="no-select"  sx={{ height: '100%', width: '100%', display: 'flex', flexDirection: 'column', p: 0 }}>
+							{gameState?.players.map((player) => {
+								const avatar = player.bot ? avatar_bot : player.avatar;
+								return (
 								<ListItem key={player.id} sx={{ height: '20%', width: '100%', p: 0.5 }}>
 									<Card sx={{ height: '100%', width: '100%', display: 'flex', position: 'relative' }}>
-										<CardMedia component="img" sx={{ width: '12%', height: 'auto', display: 'flex', alignItems: 'center' }} image={player.avatar}/>
+										<CardMedia draggable={false} component="img" sx={{ width: '12%', height: 'auto', display: 'flex', alignItems: 'center' }} image={avatar}/>
 										<CardContent sx={{display: 'flex', gap: 2}}>
 											<Typography variant="h6">{player.name}</Typography>
 											{player.connected 
@@ -322,7 +308,7 @@ function WaitRoom()
 										</CardContent>
 									</Card>
 								</ListItem>
-							))}
+							)})}
 							<ListItem key={'bot_menu'} sx={{ height: '20%', width: '100%', p: 0.5 }}>
 								<Card sx={{ height: '100%', width: '100%', display: 'flex', position: 'relative', alignItems: 'center' }}>
 									<Typography sx={{ p: 3 }}>ADD BOT</Typography>
@@ -361,9 +347,9 @@ function GameRoom()
 			handleGameEnd();
 	}, [gameState?.winner]);
 
-	return ( gameState?.phase === 'lobby' ? <WaitRoom /> :
+	return ( gameState === null || gameState.phase === 'lobby' ? <WaitRoom /> :
 		<ThemeProvider theme={unoTheme}>
-			<Box sx={{ height: '85dvh', aspectRatio: {sm: '1.1 / 1', md: '1.5 / 1'} , position: 'relative', mx: 'auto' }}>
+			<Box className="no-select" sx={{ height: '85dvh', maxWidth: '90vw', aspectRatio: {sm: '1.1 / 1', md: '1.4 / 1'} , position: 'relative', mx: 'auto', my: '1%' }}>
 			<Container sx={{ width: '100%', height: '100%', display: 'grid',
 				gridTemplateColumns: 'repeat(10, 1fr)', gridTemplateRows: 'repeat(12, 1fr)',
 				backgroundImage: `url(${bg_image})`, backgroundSize: 'cover',
