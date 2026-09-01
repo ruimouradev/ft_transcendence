@@ -48,7 +48,12 @@ def decide_bot_action(state: GameState, bot_id: str) -> PlayerAction | None:
 # ------------------ Strategy Helpers ------------------ #
 
 def _check_catch_opportunity(state: GameState, bot_id: str, difficulty: str) -> Catch | None:
-    catch_prob = {"easy": 0.2, "medium": 0.6, "hard": 0.95}.get(difficulty, 0.6)
+    # Because ai_timer checks every 0.5 seconds:
+    # Easy: 2% per tick (almost never catches you)
+    # Medium: 15% per tick (usually takes 1.5 to 3 seconds to notice, ~60% success rate overall)
+    # Hard: 100% per tick (punishes instantly after the UNO_GRACE period ends)
+    catch_prob = {"easy": 0.02, "medium": 0.15, "hard": 1.0}.get(difficulty, 0.6)
+    
     if random.random() > catch_prob:
         return None
 
@@ -89,11 +94,17 @@ def _select_card_by_difficulty(cards: list[Card], state: GameState, bot_id: str,
 
 def _build_play_action(card: Card, state: GameState, bot_id: str, difficulty: str) -> Play:
     will_have_one_card = (len(state.you.hand) - 1 == 1)
-    uno_call = will_have_one_card
+    uno_call = False
     
-    if difficulty == "easy" and will_have_one_card and random.random() < 0.3:
-        uno_call = False
+    # Easy: 10% chance to remember (forgets mostly)
+    # Medium: 60% chance to remember
+    # Hard: 100% chance to remember
+    if will_have_one_card:
+        uno_prob = {"easy": 0.1, "medium": 0.6, "hard": 1.0}.get(difficulty, 0.6)
+        if random.random() < uno_prob:
+            uno_call = True
 
+    # Choose color if playing a Wild / +4
     chosen_color: Color | None = None
     if card.color == "wild" or card.value in ["wild", "+4"]:
         colors = [c.color for c in state.you.hand if c.color in NON_WILD_COLORS]
