@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { useAuth } from '../core/AuthContext';
 import PersonIcon from '@mui/icons-material/Person';
 import { getGameContext } from '../core/GameWebSocket';
-import { tab_text } from '../game/macrosConfig.ts';
+import { menu_text } from '../game/macrosConfig.ts';
 import type { Room } from '../game/types.ts';
 
 function PrintRoom({room, room_flag, onSelect}: {room: Room, room_flag: boolean | null, onSelect: () => void })
@@ -47,7 +47,7 @@ function JoinPublic({rooms}: {rooms: Room[]})
 				</ul>
 			</Box>
 			<Button onClick={PublicClick} variant="contained" disabled={selected === null} sx={{ my: 1, width: '99%', height: '15%' }}>
-				<Typography sx={{ ...tab_text }}>JOIN</Typography>
+				<Typography sx={{ ...menu_text }}>JOIN</Typography>
 			</Button>
 		</Box>
 	)

@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Box, Button, Typography } from '@mui/material';
 import { useAuth } from '../core/AuthContext';
 import { getGameContext } from '../core/GameWebSocket';
-import { tab_text } from '../game/macrosConfig.ts';
+import { menu_text } from '../game/macrosConfig.ts';
 import HandCountSettings from './HandCountSettings';
 import StackingSettings  from './StackingSettings';
 import PlayerCountSettings  from './PlayerCountSettings';
@@ -70,7 +70,7 @@ function CreateRoom({ rooms }: { rooms: Room[]})
 				<PrivacySettings privacy={privacy} setPrivacy={setPrivacy} defaultTooltip={defaultTooltip} setOptionsTooltip={setOptionsTooltip} />
 			</Box>
 				<Button onClick={CreateRoom} variant="contained" sx={{ my:'-0.5%', width: '100%', height: '15%', mx: 'auto' }}>
-					<Typography sx={{ ...tab_text }}>CREATE ROOM</Typography>
+					<Typography sx={{ ...menu_text }}>CREATE ROOM</Typography>
 				</Button>
 		</Box>
 	)

@@ -296,3 +296,22 @@
 	justify-content: 'center';
 	align-items: 'center';
 }
+
+.play-button {
+    background: linear-gradient(
+        to right,
+        #a5f3fc,
+        #bae6fd,
+        #fbcfe8
+    );
+    box-shadow: 0 0 25px rgba(56, 189, 248, 0.6);
+}
+
+.play-button:hover {
+    transform: scale(1.05);
+    box-shadow: 0 0 35px rgba(244, 114, 182, 0.8);
+}
+
+.play-button:active {
+    transform: scale(0.95);
+}

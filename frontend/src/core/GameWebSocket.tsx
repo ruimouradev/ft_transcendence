@@ -55,10 +55,6 @@ export function getGameContext()
 }
 
 function GameWebSocket({ children }: { children: React.ReactNode }) {
-	// const [lastMessage, setLastMessage] = useState<string | null>(null);
-	// const [error, setError] = useState<string | null>(null);
-
-
 	const [roomID, setRoomID] = useState<string | null>(null);
 	const [gameState, setGameState] = useState<GameState | null>(null);
 	const [connected, setConnected] = useState<boolean>(false);
@@ -82,21 +78,19 @@ function GameWebSocket({ children }: { children: React.ReactNode }) {
 		// Dont accept two connections from same user if it already has one
 		if (socketRef.current)
 			return ;
-		// setError(null);
 
 		// Create new socket
 		const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws';
 		const socket = new WebSocket(`${protocol}://${window.location.host}/ws/game/${roomID}`)
 		socketRef.current = socket;
 
-		// Not final, maybe there is a better way ? Browser complains
+		// Determines a connection failed after 5s without server response
 		const timeout = setTimeout(() => {
 			if (socket.readyState === WebSocket.CONNECTING) {
 				socket.close();
 			}
 		}, 5000);
 
-		// Wait to connect
 		socket.onopen = () => {
 			clearTimeout(timeout);
 			socket.send(JSON.stringify(message));
@@ -109,11 +103,9 @@ function GameWebSocket({ children }: { children: React.ReactNode }) {
 
 			switch (type) {
 				case 'welcome':
-					// const { token } = message;
 					setRoomID(roomID);
 					setConnected(true);
 					sessionStorage.setItem('roomID', roomID);
-					// sessionStorage.setItem('reconnectToken', token);
 					break ;
 				case 'notice':
 					setNotice(message);
@@ -193,7 +185,7 @@ function GameWebSocket({ children }: { children: React.ReactNode }) {
 				if (room && user) {
 					pendingRoomRef.current = room;
 					socketRef.current?.close();
-					msg = "";
+					msg = "redirected to room ";
 				}
 				break ;
 			case ("KICKED"):

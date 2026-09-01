@@ -3,35 +3,27 @@ import Footer from "./Footer";
 import GamePopUps from "../core/GamePopUps";
 import GameWebSocket from "../core/GameWebSocket";
 import { Outlet, useLocation } from "react-router-dom";
-import bgHome from "../assets/utils/bg.jpeg"
+import bgHome from '../assets/utils/bg_home.png'
 import bgPlain from "../assets/utils/bg_plain.jpeg"
 import PopUp from '../components/PopUp'
+import { Box } from '@mui/material'
 
-// A moldura do site: navbar pegajosa em cima, footer em baixo, e a
-// página de cada rota a desenhar-se no Outlet do meio.
 export default function MainLayout() {
-    // a imagem com o leque de cartas é o cartaz da página inicial;
-    // as restantes páginas usam o mesmo céu sem cartas, para nada
-    // aparecer cortado atrás dos painéis. Para mudar o fundo da home
-    // basta substituir o ficheiro bg.jpeg por outra imagem
     const { pathname } = useLocation();
-    const isHome = pathname === "/" || pathname === "/dashboard";
-    const bgImg = isHome ? bgHome : bgPlain;
+    const isHome = pathname === "/";
 
     return (
-        <div
-            className="relative min-h-screen overflow-x-clip text-white bg-slate-950"
-            style={{ backgroundImage: `url(${bgImg})`, backgroundSize: 'cover', backgroundPosition: 'center' }}
-        >
-            {/* um véu escuro leve por cima do fundo, para o texto ser
-                legível em qualquer zona */}
-            <div className="absolute inset-0 bg-slate-950/25" />
-
-            <div className="relative z-10 flex min-h-screen flex-col">
-                <div className="sticky top-0 z-50 bg-slate-950/90 backdrop-blur-md">
+        <Box sx={{ minHeight: '100vh', position: 'relative', overflowX: 'clip', color: 'white', bgcolor: 'rgba(2, 6, 23, 1)', 
+			backgroundImage: `url(${bgPlain})`, backgroundSize: 'cover', backgroundPosition: 'center' }}>
+            <Box sx={{ position: 'absolute', inset: 0, bgcolor: 'rgba(2, 6, 23, 0.25)' }} />
+			<Box sx={{ width: '60vw', maxHeight: '90vh', aspectRatio: '1.5 / 1', position: 'absolute', top: '50%',
+				transform: 'translateY(-50%)', right: 0, backgroundImage: isHome ? `url(${bgHome})` : 'none',
+				backgroundSize: 'contain', backgroundPosition: 'center', backgroundRepeat: 'no-repeat'  }} />
+            <Box sx={{ minHeight: '100vh', position: 'relative', zIndex: 10, display: 'flex', flexDirection: 'column' }}>
+                <Box sx={{ position: 'sticky', zIndex: 50, top: 0, bgcolor: 'rgba(2, 6, 23, 0.9)', backdropFilter: 'blur(12px)' }}>
                     <Navbar />
-                </div>
-                <main className="flex-1">
+                </Box>
+                <main style={{ flex: '1 1 0%' }}>
 					<GamePopUps>
 						<GameWebSocket>
 							<PopUp />
@@ -40,7 +32,7 @@ export default function MainLayout() {
 					</GamePopUps>
                 </main>
 				{isHome && <Footer />}
-            </div>
-        </div>
+            </Box>
+        </Box>
     );
 }
