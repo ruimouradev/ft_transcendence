@@ -6,7 +6,7 @@ import Footer from "../layout/Footer";
 // para a própria imagem respirar. Sem números inventados: quando
 // quiseres mostrar jogadores online ou mesas a decorrer a sério,
 // a lista pública de salas (GET /api/rooms) dá-te os verdadeiros.
-export default function Hero() {
+export default function HomePage() {
     return (
         <section className="max-w-7xl mx-auto px-8 py-16 ">
             <div className="grid md:grid-cols-2 items-center ">

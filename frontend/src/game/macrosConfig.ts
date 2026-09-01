@@ -8,6 +8,7 @@ export const hard_bot = {"type": "add_bot", "level": "hard"};
 
 
 // Lobby macros
+export const align = {display: 'flex', alignItems: 'center', justifyContent: 'center'};
 export const align_noJustify = {display: 'flex', alignItems: 'center'};
 export const icons_text = {fontSize: 'clamp(1.1rem, 3vw, 2rem)'};
 export const buttons_text = {fontSize: 'clamp(1.3rem, 3.5vw, 2rem)'};

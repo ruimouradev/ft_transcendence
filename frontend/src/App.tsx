@@ -5,7 +5,7 @@ import SignUp from './account/SignUp'
 import ProfilePage from './account/Profile'
 import ApiKeyPage from './account/ApiKeyPage'
 import ChangePasswordCard from './account/ChangePasswordCard'
-import Dashboard from './dashboard/Dashboard'
+import HomePage from './pages/HomePage'
 import FriendsPage from './friends/FriendsPage'
 import UnoDashboard from './stats/UnoDashboard'
 import Privacy from './legal/Privacy'
@@ -13,7 +13,7 @@ import Terms from './legal/Terms'
 import Rules from './legal/Rules'
 import Play from './game/Play'
 import Lobby from './game/Lobby'
-import Error from './layout/Error'
+import Error from './pages/Error'
 import { ProtectedRoute } from './core/ProtectedRoute'
 import Verify2fa from './account/Verify2fa'
 import ResetPassword from './account/ResetPassword'
@@ -25,8 +25,7 @@ function App() {
     return (
         <Routes>
             <Route path="/" element={<Shell />}>
-                <Route index element={<Dashboard />} />
-                <Route path="dashboard" element={<Dashboard />} />
+                <Route index element={<HomePage />} />
                 <Route path="login" element={<Login />} />
                 <Route path="signup" element={<SignUp />} />
                 <Route path="privacy" element={<Privacy />} />
