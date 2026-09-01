@@ -105,28 +105,37 @@ function DeckArea()
 
 	return (
 		<Box sx={{ height: '80%', width: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center', position: 'relative' }}>
-			<Box sx={{ bgcolor: 'gray', width: '50%', height: '50%', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 1, top: 0, position: 'absolute' }}>
+			<Box sx={{ width: '50%', height: '50%', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 1, top: 0, position: 'absolute' }}>
 				<img className="card" src={cardBacks[user?.card_back ?? ''] ?? defaultCardBack} alt="" draggable={false} onClick={() => DrawCard(sendMessage)}/>
 				<img className="card" src={images[getCardName({card})]} alt="" draggable={false}/>
 			</Box>
-			<Box sx={{ bgcolor: 'blue', bottom: 0, position: 'absolute', width: '50%', height: '50%', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+			<Box sx={{ bottom: 0, position: 'absolute', width: '50%', height: '50%', display: 'flex', justifyContent: 'center', alignItems: 'end' }}>
 				<img className="arrow" src={direction} alt="" draggable={false}/>
 			</Box>
-			<Box sx={{ bgcolor: 'red', width: '25%', height: '100%', right: 0, position: 'absolute', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
+			<Box sx={{ width: '25%', height: '100%', right: 0, position: 'absolute', display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 2 }}>
 				<Paper elevation={0} sx={{ width: '4vw', aspectRatio: '1 / 1', bgcolor: color, borderRadius: 1, ...box_shadow }}>
 					<img src={color} draggable={false} style={image_styles}/>
 				</Paper>
-				<Button className="rainbow-button" variant="contained" onClick={() => sendMessage(uno_click)} sx={{ width: '4vw',  aspectRatio: '1 / 1', minWidth: 0, p: 0, fontSize: 'clamp(0.2rem, 0.8rem, 1rem)', ...box_shadow }}>UNO!</Button>
+				<Button className="rainbow-button" variant="contained" onClick={() => sendMessage(uno_click)} 
+					sx={{ width: '4vw',  aspectRatio: '1 / 1', minWidth: 0, p: 0, fontSize: 'clamp(0.2rem, 1.4vh, 1rem)', ...box_shadow }}>UNO!
+				</Button>
 			</Box>
-			<Box sx={{ bgcolor: 'yellow', width: '25%', height: '100%', left: 0, position: 'absolute', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
-				<Button variant="contained" disabled={disable_challenge} onClick={() => sendMessage(challenge_click)}sx={{ width: '4vw',  aspectRatio: '1 / 1', minWidth: 0, p: 0, fontSize: 'clamp(0.2rem, 0.8rem, 1rem)', ...box_shadow }}>DARE</Button>
-				{gameState?.stack !== 0 && <Paper elevation={0} sx={{ width: '4vw', aspectRatio: '1 / 1', bgcolor: color, borderRadius: 1, ...box_shadow }}>
-					<Typography>Stack {gameState?.stack}</Typography>
+			<Box sx={{ width: '25%', height: '100%', left: 0, position: 'absolute', display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 2 }}>
+				<Button variant="contained" disabled={disable_challenge} onClick={() => sendMessage(challenge_click)}
+					sx={{ width: '4vw',  aspectRatio: '1 / 1', minWidth: 0, p: 0, fontSize: 'clamp(0.2rem, 1.4vh, 1rem)', ...box_shadow }}>DARE
+				</Button>
+				{<Paper elevation={0} sx={{ width: '4vw', aspectRatio: '1 / 1', bgcolor: color, borderRadius: 1, ...box_shadow }}>
+					<Typography sx={{ width: '100%', height: '100%', color: 'backgorund.paper', fontSize: 'clamp(0.2rem, 1.4vh, 1rem)',
+						display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column' }}>
+						<span>STACK</span> <span>{gameState?.stack}</span>
+					</Typography>
 				</Paper>}
 			</Box>
 		</Box>
 	)
 }
+
+// gameState?.stack !== 0 && 
 
 function DrawHands({deck, amount, card_class}:
 	{deck: GameCard[] | undefined,
@@ -148,7 +157,7 @@ function DrawHands({deck, amount, card_class}:
 	)
 
 	const horizontal = card_class === 'card-north' || card_class === 'card-south';
-	const offset_multiplyer = amount > 20 ? 35 : amount > 15 ? 40 : 60;
+	const offset_multiplyer = amount > 20 ? 25 : amount > 15 ? 35 : 60;
 
 	return (
 		<List sx={{ width: '100%', height: '100%', display: 'grid', placeItems: 'center', p: 0 }}>
@@ -175,7 +184,7 @@ function DrawHidden({amount, card_class}: {amount: number, card_class: string})
 
 	const arr = Array.from({ length: amount });
 	const horizontal = card_class === 'card-north' || card_class === 'card-south';
-	const offset_multiplyer = amount > 20 ? 20 : amount > 15 ? 35 : 60;
+	const offset_multiplyer = amount > 20 ? 25 : amount > 15 ? 35 : 60;
 
 	return (
 		<List sx={{ width: '100%', height: '100%', display: 'grid', placeItems: 'center', p: 0 }}>
@@ -276,14 +285,16 @@ function GameRoom()
 
 	return ( gameState === null || gameState.phase === 'lobby' ? <WaitRoom /> :
 		<ThemeProvider theme={unoTheme}>
-			<Box className="no-select" sx={{ height: '85dvh', maxWidth: '90vw', aspectRatio: {sm: '1.1 / 1', md: '1.4 / 1'} , position: 'relative', mx: 'auto', my: '1%' }}>
+			<Box className="no-select" sx={{  height: { xs: 'auto', sm: '85dvh' },
+				width: { xs: '90vw', sm: 'auto' }, maxWidth: '90vw', aspectRatio: {xs: '1 / 1', sm: '1.1 / 1', md: '1.4 / 1' },
+				position: 'relative', mx: 'auto', my: '1%' }}>
 			<Container sx={{ width: '100%', height: '100%', display: 'grid',
 				gridTemplateColumns: 'repeat(10, 1fr)', gridTemplateRows: 'repeat(12, 1fr)',
 				backgroundImage: `url(${bg_image})`, backgroundSize: 'cover',
 				backgroundPosition: 'center', backgroundRepeat: 'no-repeat', border: '2px solid black' }}>
 				<PlayersUI players={new_players} />
 				<Box sx={{ gridColumn: '4/8', gridRow: '5/9' }}>
-						<DeckArea />
+					<DeckArea />
 				</Box>
 			</Container>
 			</Box>

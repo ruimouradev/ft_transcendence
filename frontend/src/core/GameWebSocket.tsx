@@ -69,6 +69,7 @@ function GameWebSocket({ children }: { children: React.ReactNode }) {
 
 	function joinRoom(roomID: string, message: object)
 	{
+		// DEL
 		console.log("connected: ", connected);
 		console.log("roomID: ", roomID);
 		console.log("socketRef: ", socketRef);
@@ -121,15 +122,11 @@ function GameWebSocket({ children }: { children: React.ReactNode }) {
 			}
 
 			// DEL !
-			// console.log("game engine: ", message);
-			// setLastMessage(message);
+			console.log("game engine: ", message);
 		}
 
 		socket.onerror = () => {
-			// Create close function
-			// setError("Connection failed");
 			handleNewError("Connection failed");
-			// create a popup to notify user.
 		}
 
 		socket.onclose = () => {
@@ -167,6 +164,20 @@ function GameWebSocket({ children }: { children: React.ReactNode }) {
 		sendMessage({"type": "leave"});
 	}
 
+	function forcedLeave()
+	{
+		socketRef.current?.close();
+		pendingRoomRef.current = null;
+		sessionStorage.removeItem('roomID');
+	}
+
+	function specialClose()
+	{
+		if (gameState?.phase === 'playing')
+			return ;
+		forcedLeave();
+	}
+
 	function sendMessage(message: object)
 	{
 		if (socketRef.current?.readyState  === WebSocket.OPEN)
@@ -178,7 +189,7 @@ function GameWebSocket({ children }: { children: React.ReactNode }) {
 
 	function handleErrorMessages({type, code, msg, room}: {type: string, code: string, msg:string, room: string | null})
 	{
-		console.log(room, msg);
+		// console.log(room, msg);
 		switch(code)
 		{
 			case ("ALREADY_IN_ROOM"):
@@ -189,47 +200,48 @@ function GameWebSocket({ children }: { children: React.ReactNode }) {
 				}
 				break ;
 			case ("KICKED"):
-				pendingRoomRef.current = null;
-				sessionStorage.removeItem('roomID');
-				// closeRoomConnection();
-				break ;
 			case ('ROOM_FULL'):
-			case ("AUTH_REQUIRED"):
 			case ('ROOM_NOT_FOUND'):
 			case ("GAME_ALREADY_STARTED"):
-			// AUTH_REQUIRED = "AUTH_REQUIRED"
-				console.log("connection closed by me !!!")
-				closeRoomConnection();			
+				forcedLeave();
 				break ;
-			// case("GAME_NOT_STARTED"):
-			// 	return ;
+			case ("AUTH_REQUIRED"):
+			case ("INVALID_MESSAGE"):
+				specialClose();
+				break ;
 		}
 		handleNewError(msg);
-		
-		/* ALERT
-		{
-			// INVALID_MESSAGE = "INVALID_MESSAGE"
-			// GAME_NOT_STARTED = "GAME_NOT_STARTED"
-			// CARD_NOT_IN_HAND = "CARD_NOT_IN_HAND"
-			// COLOR_REQUIRED = "COLOR_REQUIRED"
-			// TARGET_REQUIRED = "TARGET_REQUIRED"
- 
-			// IGNORE ?? //
-				// NOT_YOUR_TURN = "NOT_YOUR_TURN"
-				// INVALID_CARD = "INVALID_CARD"
-				// INVALID_CHALLENGE = "INVALID_CHALLENGE"
-				// INVALID_UNO = "INVALID_UNO"
-				// INVALID_CATCH = "INVALID_CATCH"
 
-			// CLOSE CONNECTION  //
-				// KICKED = "KICKED"
-				// ROOM_FULL = "ROOM_FULL"
-				// AUTH_REQUIRED = "AUTH_REQUIRED"
-				// ROOM_NOT_FOUND = "ROOM_NOT_FOUND"
-				// GAME_ALREADY_STARTED = "GAME_ALREADY_STARTED"
-		} 
-		// HANDLE //
-			// ALREADY_IN_ROOM = "ALREADY_IN_ROOM"
+		/*
+			HANDLE
+				ALREADY_IN_ROOM = "ALREADY_IN_ROOM"
+
+
+			JUST PROMPT
+				NOT_YOUR_TURN = "NOT_YOUR_TURN"
+				INVALID_CARD = "INVALID_CARD"
+				COLOR_REQUIRED = "COLOR_REQUIRED"
+				TARGET_REQUIRED = "TARGET_REQUIRED"
+				CARD_NOT_IN_HAND = "CARD_NOT_IN_HAND"
+				INVALID_CATCH = "INVALID_CATCH"
+				INVALID_UNO = "INVALID_UNO"
+				INVALID_CHALLENGE = "INVALID_CHALLENGE"
+				GAME_NOT_STARTED = "GAME_NOT_STARTED"
+
+
+			HARD
+				INVALID_MESSAGE = "INVALID_MESSAGE"
+				AUTH_REQUIRED = "AUTH_REQUIRED"
+
+				In game: Just Prompt
+				Outside: Close everything
+
+
+			BACKEND CLOSE (FULL CLEAR)
+				KICKED = "KICKED"
+				ROOM_FULL = "ROOM_FULL"
+				ROOM_NOT_FOUND = "ROOM_NOT_FOUND"
+				GAME_ALREADY_STARTED = "GAME_ALREADY_STARTED"
 		*/
 	}
 
