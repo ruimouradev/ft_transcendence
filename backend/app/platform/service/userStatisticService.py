@@ -63,37 +63,37 @@ def calculate_level_data(total_xp: int) -> UserStatisticLevel:
     )
 
 
-def get_user_statistic_info_by_user_id(session: SessionDep, user_id: str) -> UserStatisticInfo:
-    '''
-    gets the user statistic info for a specific user by their user_id, including total games, wins, losses, total score, and level information.
-    If the user statistic info does not exist, it creates a new entry with default values.
-    '''
-    userstatement = select(User).where(User.id == user_id)
-    user = session.exec(userstatement).first()
-    if not user:
-        return None
+# def get_user_statistic_info_by_user_id(session: SessionDep, user_id: str) -> UserStatisticInfo:
+#     '''
+#     gets the user statistic info for a specific user by their user_id, including total games, wins, losses, total score, and level information.
+#     If the user statistic info does not exist, it creates a new entry with default values.
+#     '''
+#     userstatement = select(User).where(User.id == user_id)
+#     user = session.exec(userstatement).first()
+#     if not user:
+#         return None
     
-    statement = select(UserStatistic).where(UserStatistic.user_id == user_id)
-    user_xp_info = session.exec(statement).first()
-    if not user_xp_info:
-        user_xp_info = UserStatistic(user_id=user_id, total_games=0, wins=0, losses=0, total_score=0)
-        session.add(user_xp_info)
-        session.commit()
-        session.refresh(user_xp_info)
+#     statement = select(UserStatistic).where(UserStatistic.user_id == user_id)
+#     user_xp_info = session.exec(statement).first()
+#     if not user_xp_info:
+#         user_xp_info = UserStatistic(user_id=user_id, total_games=0, wins=0, losses=0, total_score=0)
+#         session.add(user_xp_info)
+#         session.commit()
+#         session.refresh(user_xp_info)
     
-    total_xp = user_xp_info.total_score
-    level_data = calculate_level_data(int(total_xp))
+#     total_xp = user_xp_info.total_score
+#     level_data = calculate_level_data(int(total_xp))
 
-    user = session.get(User, user_id)
+#     user = session.get(User, user_id)
 
-    return UserStatisticInfo(
-        user=UserPublic.model_validate(user),
-        total_games=user_xp_info.total_games,
-        wins=user_xp_info.wins,
-        losses=user_xp_info.losses,
-        total_score=total_xp,
-        level_info=level_data
-    )
+#     return UserStatisticInfo(
+#         user=UserPublic.model_validate(user),
+#         total_games=user_xp_info.total_games,
+#         wins=user_xp_info.wins,
+#         losses=user_xp_info.losses,
+#         total_score=total_xp,
+#         level_info=level_data
+#     )
 
 
 def get_user_statistic_info(session: SessionDep, current_user: CurrentUser) -> UserStatisticInfo:
@@ -105,9 +105,6 @@ def get_user_statistic_info(session: SessionDep, current_user: CurrentUser) -> U
     user_xp_info = session.exec(statement).first()
     if not user_xp_info:
         user_xp_info = UserStatistic(user_id=current_user.id, total_games=0, wins=0, losses=0, total_score=0)
-        session.add(user_xp_info)
-        session.commit()
-        session.refresh(user_xp_info)
     
     total_xp = user_xp_info.total_score
     level_data = calculate_level_data(int(total_xp))
