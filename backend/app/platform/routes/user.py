@@ -254,41 +254,42 @@ else:
             )
         )
 
-@user_presence_router.websocket("/ws/presence/{user_id}")
-async def websocket_endpoint(websocket: WebSocket, user_id: str, session: SessionDep):
+@user_presence_router.websocket("/ws/presence")
+async def websocket_endpoint(websocket: WebSocket, session: SessionDep):
     """
     WebSocket endpoint for user presence management.
     """
-
-    current_user = get_current_user(session=session, token=str(websocket.cookies.get("access_token")).replace("Bearer ", ""))
-    
-    if str(current_user.id) != user_id:
+    logger.info(f"===> New WebSocket connection attempt from {websocket.client.host}:{websocket.client.port}")
+    try:
+        current_user = get_current_user(session=session, token=str(websocket.cookies.get("access_token")).replace("Bearer ", ""))
+    except Exception as e:
         await websocket.close(code=status.WS_1008_POLICY_VIOLATION)
-        logger.warning(f"===> User {user_id} attempted to connect with invalid token.")
+        logger.warning(f"===> User {current_user.id} attempted to connect with invalid token. Error: {e}")
         return
-
-    await presence_manager.connect(user_id, websocket)
+    logger.info(f"===> User {current_user.id} connected to WebSocket.")
+    await presence_manager.connect(current_user.id, websocket)
     try:
         while True:
             data = await websocket.receive_json()
-            if data.get("type") == "PING":
-                presence_manager.update_heartbeat(user_id)
-                logger.info(f"===> Received PING from user {user_id}.")
-                await websocket.send_json({"type": "PONG", "user_id": user_id})
-            else:
-                await presence_manager.handle_message(user_id, data)
+            # if data.get("type") == "PING":
+            #     presence_manager.update_heartbeat(user_id)
+            #     logger.info(f"===> Received PING from user {user_id}.")
+            #     await websocket.send_json({"type": "PONG", "user_id": user_id})
+            # else:
+            logger.info(f"===> Received message from user {current_user.id}: {data}")
+            await presence_manager.handle_message(current_user.id, data)
 
     except WebSocketDisconnect:
-        logger.info(f"===> User {user_id} disconnected.")
+        logger.info(f"===> User {current_user.id} disconnected.")
 
     except Exception as e:
-        logger.error(f"===> Error in WebSocket connection for user {user_id}: {e}")
+        logger.error(f"===> Error in WebSocket connection for user {current_user.id}: {e}")
 
     finally:
-        await presence_manager.disconnect(user_id)
+        await presence_manager.disconnect(current_user.id, websocket)
         logger.info(
-            f"===> User {user_id} disconnected. "
-            f"Current status: {presence_manager.get_status(user_id)}"
+            f"===> User {current_user.id} disconnected. "
+            f"Current status: {presence_manager.get_status(current_user.id)}"
         )
 
 

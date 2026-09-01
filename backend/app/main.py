@@ -1,7 +1,6 @@
 import asyncio
 import logging
 
-from app.presence_manager import check_heartbeat_timeouts
 from app.models.all import APIError, ErrorResponse
 from app.platform.service.userservice import get_robot_user_list
 from fastapi import FastAPI, Request
@@ -23,7 +22,7 @@ def custom_generate_unique_id(route: APIRoute) -> str:
     tag = route.tags[0] if route.tags else "default"
     return f"{tag}-{route.name}"
 
-# logger = logging.getLogger("uvicorn.error")
+logger = logging.getLogger("uvicorn.error")
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -31,15 +30,9 @@ async def lifespan(app: FastAPI):
         init_db(session)
         robots_user_manager.set_robots(get_robot_user_list(session=session))
 
-    heartbeat_task = asyncio.create_task(check_heartbeat_timeouts())
-
     yield
 
-    heartbeat_task.cancel()
-    try:
-        await heartbeat_task
-    except asyncio.CancelledError:
-        pass
+    logger.info("!!!!!!!!!!Shutting down the application!!!!!!!!!!!")
 
 app = FastAPI(title=settings.PROJECT_NAME, openapi_url=f"{settings.API_V1_STR}/openapi.json", generate_unique_id_function=custom_generate_unique_id, lifespan=lifespan, 
               description="""
