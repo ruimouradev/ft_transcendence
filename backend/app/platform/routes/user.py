@@ -16,8 +16,8 @@ from app.models.all import (APIError, APIErrorCode,APIKeyContext,APIKeyStatus,Em
 
 from app.platform.service import userservice
 from app.platform.service.mailservice import (
-    verify_token,
-    create_verification_token,
+    verify_token_in_email,
+    create_verification_token_used_in_mail,
     send_new_account_activation_email,
 )
 from app.platform.deps import get_current_user
@@ -92,7 +92,7 @@ def register_user(session: SessionDep, user_in: UserRegister, background_tasks: 
     userservice.create_user(session=session, user_create=user_create)
     if settings.EMAILS_ENABLED and user_in.email:
         expire_minutes = 30
-        token = create_verification_token(user_in.email, EmailVerificationType.ACCOUNT_ACTIVATION, expire_minutes=expire_minutes)
+        token = create_verification_token_used_in_mail(user_in.email, EmailVerificationType.ACCOUNT_ACTIVATION, expire_minutes=expire_minutes)
         background_tasks.add_task(send_new_account_activation_email, user_in.email, user_in.nick_name, token, expire_minutes=expire_minutes)
 
     return Message(status_code=200, code="success", message="User created successfully")
@@ -107,7 +107,7 @@ def resend_activation_email(session: SessionDep, user_in: UserRegister, backgrou
         verifyed, _ = verify_password(user_in.password, user.hashed_password)
         if verifyed and user.nick_name == user_in.nick_name:
             expire_minutes = 30
-            token = create_verification_token(user_in.email, EmailVerificationType.ACCOUNT_ACTIVATION, expire_minutes=expire_minutes)
+            token = create_verification_token_used_in_mail(user_in.email, EmailVerificationType.ACCOUNT_ACTIVATION, expire_minutes=expire_minutes)
             background_tasks.add_task(send_new_account_activation_email, user_in.email, user.nick_name, token, expire_minutes=expire_minutes)
             return Message(status_code=200, code="success", message="Activation email has already been sent. Please check your inbox.")
 
@@ -120,7 +120,7 @@ def verify_email(session: SessionDep, token: str):
     If the token is valid, the user's account will be activated.
     """
     try:
-        email = verify_token(token)
+        email = verify_token_in_email(token)
     except APIError as e:
         return RedirectResponse(
                 url=f"/login?error={e.message}",

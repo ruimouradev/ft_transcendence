@@ -4,6 +4,7 @@ import logging
 
 from datetime import timedelta, datetime, timezone
 from typing import Annotated, Any
+from pydantic import ValidationError
 
 from fastapi import APIRouter, Depends, status, BackgroundTasks, Body
 from fastapi.security import OAuth2PasswordRequestForm
@@ -13,8 +14,8 @@ from app.platform.deps import SessionDep, TokenDep
 from app.platform import security
 from app.platform.config import settings
 
-from app.platform.service.mailservice import create_verification_token, send_password_reset_email, verify_token
-from app.models.all import EmailVerificationType, ErrorResponse, Message, OAuthAccountCreate, ProviderType, TokenPayload, UserCreate, UserUpdate, User
+from app.platform.service.mailservice import create_verification_token_used_in_mail, send_password_reset_email, verify_token_in_email
+from app.models.all import EmailVerificationType, ErrorResponse, Message, OAuthAccountCreate, ProviderType, TokenPayload, UserCreate, UserUpdate, User, LoginTokenType
 from app.models.all import APIError, APIErrorCode
 
 from fastapi.responses import RedirectResponse, Response
@@ -24,24 +25,24 @@ router = APIRouter(tags=["login"], include_in_schema=False)
 logger = logging.getLogger("uvicorn.error")
 
 
-def verify_password_reset_token(token: str) -> str | None:
-    try:
-        decoded_token = jwt.decode(token, settings.SECRET_KEY, algorithms=[security.ALGORITHM])
-        return str(decoded_token["sub"])
-    except InvalidTokenError:
-        return None
+# def verify_password_reset_token(token: str) -> str | None:
+#     try:
+#         decoded_token = jwt.decode(token, settings.SECRET_KEY, algorithms=[security.ALGORITHM])
+#         return str(decoded_token["sub"])
+#     except InvalidTokenError:
+#         return None
 
-def generate_password_reset_token(email: str) -> str:
-    delta = timedelta(hours=settings.EMAIL_RESET_TOKEN_EXPIRE_HOURS)
-    now = datetime.now(timezone.utc)
-    expires = now + delta
-    exp = expires.timestamp()
-    encoded_jwt = jwt.encode(
-        {"exp": exp, "nbf": now, "sub": email},
-        settings.SECRET_KEY,
-        algorithm=security.ALGORITHM,
-    )
-    return encoded_jwt
+# def generate_password_reset_token(email: str) -> str:
+#     delta = timedelta(hours=settings.EMAIL_RESET_TOKEN_EXPIRE_HOURS)
+#     now = datetime.now(timezone.utc)
+#     expires = now + delta
+#     exp = expires.timestamp()
+#     encoded_jwt = jwt.encode(
+#         {"exp": exp, "nbf": now, "sub": email},
+#         settings.SECRET_KEY,
+#         algorithm=security.ALGORITHM,
+#     )
+#     return encoded_jwt
 
 
 @router.post("/login/access-token", response_model=Message, responses={401: {"model": ErrorResponse}})
@@ -87,17 +88,13 @@ def validate_2fa(session: SessionDep, token: TokenDep, response: Response, code:
     """
     Validate 2FA and return access token
     """
-    try:
-        payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[security.ALGORITHM])
-        token_data = TokenPayload(**payload)
-    except (InvalidTokenError, ValidationError):
-        raise APIError(status_code=403, code=APIErrorCode.INVALID_TOKEN, msg="Could not validate credentials.")
-    if token_data.type != "2fa":
-        raise APIError(status_code=403, code=APIErrorCode.INVALID_TOKEN, msg="Invalid token type.")
-    user = userservice.get_user_by_id(session=session, user_id=token_data.sub)
+    user = twofa_service.get_user_from_tfa_token(session=session, token=token)
+
     if user.use2fa is False:
         raise APIError(status_code=400, code=APIErrorCode.BAD_REQUEST, msg="Two-factor authentication is not enabled for this user")
     else:
+        if user.two_factor_secret is None:
+            raise APIError(status_code=400, code=APIErrorCode.BAD_REQUEST, msg="Two-factor authentication secret is not set for this user")
         if not twofa_service.verify_totp(secret=user.two_factor_secret, code=code):
             raise APIError(status_code=400, code=APIErrorCode.UNAUTHORIZED, msg="Invalid two-factor authentication code")
     
@@ -124,7 +121,7 @@ def recover_password(session: SessionDep, background_tasks: BackgroundTasks, ema
     if user:
         if settings.EMAILS_ENABLED and user.is_active:
             expire_minutes = 10
-            token = create_verification_token(email, EmailVerificationType.PASSWORD_RESET, expire_minutes=expire_minutes)
+            token = create_verification_token_used_in_mail(email, EmailVerificationType.PASSWORD_RESET, expire_minutes=expire_minutes)
             background_tasks.add_task(send_password_reset_email, email=email, username=user.nick_name, token=token, expire_minutes=expire_minutes)
 
     return Message(status_code=200, code="success", message="Check your email and reset your password.")
@@ -134,7 +131,7 @@ def reset_password_me(*, session: SessionDep, password: str = Body(..., embed=Tr
     """
     Use a verification token to set a new password.
     """
-    email = verify_token(token)
+    email = verify_token_in_email(token)
     current_user = userservice.get_user_by_email(session=session, email=email)
     userservice.update_user(session=session, db_user=current_user, user_in=UserUpdate(password=password))
     return Message(status_code=200, code="success", message="Password reset successfully")

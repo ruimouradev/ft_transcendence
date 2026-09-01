@@ -65,6 +65,9 @@ async def accept_friend(friend_id: str, status: FriendshipStatus, session: Sessi
     except ValueError:
         raise APIError(status_code=400, code=APIErrorCode.BAD_REQUEST, msg="Invalid friend ID format. Must be a valid UUID.")
     
+    if status not in [FriendshipStatus.ACCEPTED, FriendshipStatus.BLOCKED, FriendshipStatus.REJECTED]:
+        raise APIError(status_code=400, code=APIErrorCode.BAD_REQUEST, msg="Invalid friendship status.")
+
     friendship = friendservice.accept_friend(friend_id=uuid_friend_id, status=status, session=session, current_user=current_user)
     
     return friendship

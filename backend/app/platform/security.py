@@ -7,6 +7,7 @@ import jwt
 from pwdlib import PasswordHash
 from pwdlib.hashers.argon2 import Argon2Hasher
 from pwdlib.hashers.bcrypt import BcryptHasher
+from app.models.all import LoginTokenType, TokenPayload, TokenPayload
 
 from app.platform.config import settings
 
@@ -25,13 +26,13 @@ def generate_password(length: int = 16) -> str:
 
 def create_access_token(subject: str | Any, expires_delta: timedelta) -> str:
     expire = datetime.now(timezone.utc) + expires_delta
-    to_encode = {"exp": expire, "sub": str(subject), "type": "access"}
+    to_encode = {"exp": expire, "sub": str(subject), "type": LoginTokenType.ACCESS.value}
     encoded_jwt = jwt.encode(to_encode, settings.SECRET_KEY, algorithm=ALGORITHM)
     return encoded_jwt
 
 def create_temporary_access_token(subject: str | Any, expires_delta: timedelta) -> str:
     expire = datetime.now(timezone.utc) + expires_delta
-    to_encode = {"exp": expire, "sub": str(subject), "type": "2fa"}
+    to_encode = {"exp": expire, "sub": str(subject), "type": LoginTokenType.TFA.value}
     encoded_jwt = jwt.encode(to_encode, settings.SECRET_KEY, algorithm=ALGORITHM)
     return encoded_jwt
 

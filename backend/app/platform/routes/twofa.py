@@ -7,7 +7,7 @@ from fastapi.responses import Response
 from jwt.exceptions import InvalidTokenError
 from pydantic import ValidationError
 
-from app.models.all import APIError, APIErrorCode, Message, TokenPayload, TwoFADisableRequest, TwoFactorSetupRequest, TwoFactorSetupResponse, TwoFactorVerifyResponse, TwoFactorVerifyRequest, UserUpdate
+from app.models.all import APIError, APIErrorCode, Message, TokenPayload, TwoFADisableRequest, TwoFactorSetupRequest, TwoFactorSetupResponse, TwoFactorVerifyResponse, TwoFactorVerifyRequest, UserUpdate, LoginTokenType
 from app.platform.deps import CurrentUser, SessionDep, TokenDep
 from app.platform.service import twofa_service, userservice
 from app.platform.config import settings
@@ -59,34 +59,26 @@ async def setup_two_factor(session: SessionDep, request: TwoFactorSetupRequest, 
     """
     Reset Two-Factor Authentication for the current user. This endpoint requires the user's current password and recovery code to reset 2FA.
     """
-    try:
-        payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[security.ALGORITHM])
-        token_data = TokenPayload(**payload)
-    except (InvalidTokenError, ValidationError):
-        raise APIError(status_code=403, code=APIErrorCode.INVALID_TOKEN, msg="Could not validate credentials.")
-    current_user = userservice.get_user_by_id(session=session, user_id=token_data.sub)
-    if current_user is None:
-        raise APIError(status_code=404, code=APIErrorCode.NOT_FOUND, msg="User not found.")
-    
-    verified, _ = userservice.verify_password(request.password, current_user.hashed_password)
-    if verified is False:
+    current_user = twofa_service.get_user_from_tfa_token(session=session, token=token)
+
+    if not twofa_service.check_user_password(current_user, request.password):
         raise APIError(status_code=400, code=APIErrorCode.BAD_REQUEST, msg="Invalid password")
-    if request.recovery_code is None and current_user.use2fa:
-        raise APIError(status_code=400, code=APIErrorCode.BAD_REQUEST, msg="Need recovery code to reset Two-Factor Authentication")
+
+    if not current_user.use2fa:
+        raise APIError(status_code=400, code=APIErrorCode.BAD_REQUEST, msg="Two-Factor Authentication is not enabled for this user.")
+
+    if current_user.two_factor_secret is None:
+        raise APIError(status_code=400, code=APIErrorCode.BAD_REQUEST, msg="Two-Factor Authentication secret is not set for this user.")
 
     if not twofa_service.check_recovery_code(session=session, user=current_user, recovery_code=request.recovery_code):
         raise APIError(status_code=400, code=APIErrorCode.BAD_REQUEST, msg="Invalid recovery code")
-
-    userservice.update_user(session=session, db_user=current_user, user_in=UserUpdate(use2fa=False, two_factor_secret=None))
     
     secret = twofa_service.generate_secret()
     otpauth_url = twofa_service.get_otpauth_url(secret=secret, username=current_user.email)
 
-    current_user.two_factor_secret=secret
-    userservice.update_user(session=session,db_user=current_user,user_in=UserUpdate(two_factor_secret=secret))
+    userservice.update_user(session=session, db_user=current_user, user_in=UserUpdate(user2fa=False, two_factor_secret=secret))
 
-    access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
-    access_token=security.create_access_token(current_user.id, expires_delta=access_token_expires)
+    access_token=security.create_access_token(current_user.id, expires_delta=timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES))
 
     response.set_cookie(
         key="access_token",

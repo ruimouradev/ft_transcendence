@@ -25,13 +25,13 @@ conf = ConnectionConfig(
     TEMPLATE_FOLDER=Path(BASE_DIR,"templates")
 )
 
-def create_verification_token(email: str, verifyType: EmailVerificationType, expire_minutes: int = 15) -> str:
+def create_verification_token_used_in_mail(email: str, verifyType: EmailVerificationType, expire_minutes: int = 15) -> str:
     """create JWT Token for email verification with 15 minutes expiration"""
     expire = datetime.now(timezone.utc) + timedelta(minutes=expire_minutes)
     payload = {"sub": email, "exp": expire, "type": verifyType.value}
     return jwt.encode(payload, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
 
-def verify_token(token: str) -> str:
+def verify_token_in_email(token: str) -> str:
     """ verify JWT Token for email verification and return the email if valid, otherwise raise APIError """
     try:
         payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
