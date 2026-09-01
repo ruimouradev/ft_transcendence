@@ -4,7 +4,6 @@ import logging
 
 from datetime import timedelta, datetime, timezone
 from typing import Annotated, Any
-from pydantic import ValidationError
 
 from fastapi import APIRouter, Depends, status, BackgroundTasks, Body
 from fastapi.security import OAuth2PasswordRequestForm

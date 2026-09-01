@@ -4,8 +4,6 @@ import jwt
 
 from fastapi import APIRouter
 from fastapi.responses import Response
-from jwt.exceptions import InvalidTokenError
-from pydantic import ValidationError
 
 from app.models.all import APIError, APIErrorCode, Message, TokenPayload, TwoFADisableRequest, TwoFactorSetupRequest, TwoFactorSetupResponse, TwoFactorVerifyResponse, TwoFactorVerifyRequest, UserUpdate, LoginTokenType
 from app.platform.deps import CurrentUser, SessionDep, TokenDep
