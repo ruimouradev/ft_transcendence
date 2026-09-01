@@ -1,9 +1,9 @@
-import { useEffect } from 'react'
-import { Box, IconButton, ThemeProvider } from '@mui/material'
+import { useEffect } from 'react';
+import { Box, IconButton, ThemeProvider } from '@mui/material';
 import { unoTheme } from '../ui/unoTheme';
 import { getGameContext } from '../core/GameWebSocket';
 import { getPopUpContext } from '../core/GamePopUps';
-import { color_red, color_blue, color_green, color_yellow } from '../ui/ImagesUtils.ts'
+import { color_red, color_blue, color_green, color_yellow } from '../ui/ImagesUtils.ts';
 import ClearSharpIcon from '@mui/icons-material/ClearSharp';
 
 function WildCard()

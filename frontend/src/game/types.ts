@@ -67,3 +67,17 @@ export type GameState = {
 	winner : string | null,
 	winner_score : number | null
 }
+
+export type Room = {
+	code: string,
+	host: string,
+	max_players: number,
+	players: string[],
+	settings: {
+		hand_size: number,
+		max_players: number,
+		public: boolean,
+		seven_zero: boolean,
+		stacking: boolean,
+	}
+}

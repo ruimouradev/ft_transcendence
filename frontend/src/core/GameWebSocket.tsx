@@ -186,18 +186,20 @@ function GameWebSocket({ children }: { children: React.ReactNode }) {
 
 	function handleErrorMessages({type, code, msg, room}: {type: string, code: string, msg:string, room: string | null})
 	{
+		console.log(room, msg);
 		switch(code)
 		{
 			case ("ALREADY_IN_ROOM"):
 				if (room && user) {
 					pendingRoomRef.current = room;
 					socketRef.current?.close();
+					msg = "";
 				}
-				return ;
+				break ;
 			case ("KICKED"):
 				pendingRoomRef.current = null;
 				sessionStorage.removeItem('roomID');
-				closeRoomConnection();			
+				// closeRoomConnection();
 				break ;
 			case ('ROOM_FULL'):
 			case ("AUTH_REQUIRED"):
@@ -211,6 +213,7 @@ function GameWebSocket({ children }: { children: React.ReactNode }) {
 			// 	return ;
 		}
 		handleNewError(msg);
+		
 		/* ALERT
 		{
 			// INVALID_MESSAGE = "INVALID_MESSAGE"

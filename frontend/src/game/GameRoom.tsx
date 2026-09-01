@@ -16,11 +16,11 @@ import type { PopUpTypes } from '../core/GamePopUps';
 
 import { bg_image, cardBacks, defaultCardBack, direction_plus, direction_minus } from '../ui/ImagesUtils.ts';
 
-import {easy_bot, medium_bot, hard_bot, start_game} from './messages.ts'
-import { avatar_bot, color_red, color_blue, color_green, color_yellow } from '../ui/ImagesUtils.ts'
+import { color_red, color_blue, color_green, color_yellow } from '../ui/ImagesUtils.ts'
 
 import Avatar from '../components/Avatar'
 import Emoticons from '../components/Emoticons'
+import WaitRoom from '../components/WaitRoom'
 
 import type {Color, valueNum, valueAction, valueWild, GameCard, PublicPlayer, PrivatePlayer, LastAction, GameState} from './types.ts'
 
@@ -258,79 +258,6 @@ function RotatePlayers(): PublicPlayer[]
 	let new_players: PublicPlayer[] = players.slice(i);
 	new_players.push(...players.slice(0, i));
 	return (new_players);
-}
-
-function WaitRoom()
-{
-	const { roomID, gameState, sendMessage, leaveRoom } = getGameContext();
-
-	const host = gameState?.you.id !== gameState?.host_id;
-	const room_full = gameState?.players.length !== gameState?.settings?.max_players;
-	const text = room_full ? `WAITING FOR PLAYERS ${gameState?.players.length} / ${gameState?.settings?.max_players}` : 'START';
-
-	return (
-		<ThemeProvider theme={unoTheme}>
-			<Container sx={{ height: '65vh', width: '50%', display: 'flex', flexDirection: 'column', my: 2, p: 0.5,
-				position: 'relative', border: '1px solid', borderColor: 'divider', borderRadius: 2, bgcolor: 'background.paper' }}>
-				<Box sx={{height: '10%', width: '100%'}}>
-					<Typography variant="h5" sx={{  height: '100%', width: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>ROOM ID: {roomID}</Typography>
-					<IconButton size="large" sx={{ position: 'absolute', top: 0, right: 0, zIndex: 1 }} onClick={() => leaveRoom()}>
-						<ExitToAppOutlinedIcon fontSize="inherit"/>
-					</IconButton>
-				</Box>
-				<Box sx={{ height: '90%', width: '100%' }}>
-					<Box sx={{ height: '85%', width: '100%', bgcolor: 'black' }}>
-						<List className="no-select"  sx={{ height: '100%', width: '100%', display: 'flex', flexDirection: 'column', p: 0 }}>
-							{gameState?.players.map((player) => {
-								const avatar = player.bot ? avatar_bot : player.avatar;
-								return (
-								<ListItem key={player.id} sx={{ height: '20%', width: '100%', p: 0.5 }}>
-									<Card sx={{ height: '100%', width: '100%', display: 'flex', position: 'relative' }}>
-										<CardMedia draggable={false} component="img" sx={{ width: '12%', height: 'auto', display: 'flex', alignItems: 'center' }} image={avatar}/>
-										<CardContent sx={{display: 'flex', gap: 2}}>
-											<Typography variant="h6">{player.name}</Typography>
-											{player.connected 
-												? <></> 
-												: <Chip icon={<WifiOffOutlinedIcon />} label="Reconnecting" sx={{ backgroundColor: 'transparent',
-													color: 'text.secondary', border: '1px dashed', borderColor: 'text.secondary', opacity: 0.55,
-													fontSize: '0.95rem', py: 2.2, px: 0.5, '& .MuiChip-icon': { color: 'text.secondary' },}}/>}
-										</CardContent>
-										<CardContent>
-											{
-												(player.id !== gameState?.host_id)
-												?	<IconButton hidden={host} size="large" sx={{ position: 'absolute', right: 2, zIndex: 1, color: 'primary.main' }}
-												onClick={() => sendMessage({"type": "kick", "target": `${player.id}`})} >
-														<DisabledByDefaultOutlinedIcon fontSize="inherit"/>
-													</IconButton>
-												: <Chip icon={<StarOutlinedIcon />} label="HOST" sx={{ position: 'absolute', right: 15, backgroundColor: 'lightgreen',
-													color: '#0f172a', fontWeight: 'bold', fontSize: '0.95rem', py: 2.2, px: 0.5, '& .MuiChip-icon': { color: '#0f172a' },}}/>
-											}
-										</CardContent>
-									</Card>
-								</ListItem>
-							)})}
-							<ListItem key={'bot_menu'} sx={{ height: '20%', width: '100%', p: 0.5 }}>
-								<Card sx={{ height: '100%', width: '100%', display: 'flex', position: 'relative', alignItems: 'center' }}>
-									<Typography sx={{ p: 3 }}>ADD BOT</Typography>
-									<CardContent sx={{ display: 'flex', position: 'absolute', alignItems: 'center', right: 0 }}>
-										<Button disabled={host || !room_full} variant="contained" sx={{ mx: 2, bgcolor: '#708c08' }} onClick={() => sendMessage(easy_bot)}>EASY</Button>
-										<Button disabled={host || !room_full} variant="contained" sx={{ mx: 2, bgcolor: '#c7950e' }} onClick={() => sendMessage(medium_bot)}>MEDIUM</Button>
-										<Button disabled={host || !room_full} variant="contained" sx={{ mx: 2, bgcolor: '#cf5900' }} onClick={() => sendMessage(hard_bot)}>HARD</Button>
-									</CardContent> 
-								</Card>
-							</ListItem>
-						</List>
-					</Box>
-					<Box sx={{ height: '15%', width: '100%' }}>
-						<Button variant="contained" disabled={room_full || host} onClick={() => sendMessage(start_game)}
-						sx={{ height: '100%', width: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-							<Typography>{text}</Typography>
-						</Button>
-					</Box>
-				</Box>
-			</Container>
-		</ThemeProvider>
-	)
 }
 
 function GameRoom()

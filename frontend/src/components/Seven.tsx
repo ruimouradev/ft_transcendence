@@ -1,10 +1,10 @@
-import { useEffect } from 'react'
-import { Box, Card, CardMedia, IconButton, ThemeProvider, Typography } from '@mui/material'
+import { useEffect } from 'react';
+import { Box, Card, CardMedia, IconButton, ThemeProvider, Typography } from '@mui/material';
 import { unoTheme } from '../ui/unoTheme';
 import { getGameContext } from '../core/GameWebSocket';
 import { getPopUpContext } from '../core/GamePopUps';
 import ClearSharpIcon from '@mui/icons-material/ClearSharp';
-import { avatar_bot } from '../ui/ImagesUtils.ts'
+import { avatar_bot } from '../ui/ImagesUtils.ts';
 
 
 function Seven()
@@ -33,7 +33,7 @@ function Seven()
 					else {
 						return (
 							<Box key={player.id} sx={{ width: '5vw', aspectRatio: '1 / 1', position: 'relative', ...align }}>
-								<Card className="no-select" elevation={0} onClick={() => sendMessage({...message, "target": player.id})} sx={{ width: '100%', aspectRatio: '1 / 1',
+								<Card elevation={0} onClick={() => sendMessage({...message, "target": player.id})} sx={{ width: '100%', aspectRatio: '1 / 1',
 								overflow: 'visible', bgcolor: 'rgba(255, 255, 255, 0)', display: 'flex', justifyContent: 'center', border: 0, position: 'relative', zIndex: 5 }}>
 									<CardMedia component="img" sx={{ border: 1, width: '100%', height: '100%', aspectRatio: '1 / 1',
 										borderRadius: '50%', objectFit: 'cover' }} image={avatar} draggable={false}/>
