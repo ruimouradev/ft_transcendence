@@ -583,9 +583,12 @@ async def game(ws: WebSocket, room_id: str) -> None:
 
                 if isinstance(action, Create):
                     if room_id in rooms:
+                        # no seat to give, close so the client cannot
+                        # keep a dead socket that blocks its next join
                         await reject(ws, ErrorCode.INVALID_MESSAGE,
                                      "room already exists")
-                        continue
+                        await ws.close()
+                        return
                     room = Room(settings=action.settings, owner=user)
                     rooms[room_id] = room
                     metrics.rooms_active.inc()
@@ -603,7 +606,8 @@ async def game(ws: WebSocket, room_id: str) -> None:
                 if room is None:
                     await reject(ws, ErrorCode.ROOM_NOT_FOUND,
                                  "no such room")
-                    continue
+                    await ws.close()
+                    return
 
                 # Reconnection: the logged in account is enough to get
                 # the seat back, the welcome token still works as before
@@ -641,8 +645,12 @@ async def game(ws: WebSocket, room_id: str) -> None:
                 elif room.game is not None and room.game.phase != "lobby":
                     await reject(ws, ErrorCode.GAME_ALREADY_STARTED,
                                  "game already started")
+                    await ws.close()
+                    return
                 elif len(room.players) >= room.settings.max_players:
                     await reject(ws, ErrorCode.ROOM_FULL, "room is full")
+                    await ws.close()
+                    return
                 else:
                     player = await seat_player(ws, room, action.name, user)
                 continue
