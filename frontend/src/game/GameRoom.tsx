@@ -99,12 +99,12 @@ function DeckArea()
 		default:
 			color = 'black';
 	}
-	
+
 	const direction = gameState?.direction === 1 ? direction_plus : direction_minus;
 	const image_styles: React.CSSProperties = {width: '100%', aspectRatio: '1 / 1', objectFit: 'fill'};
 
 	return (
-		<Box sx={{ height: '80%', width: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center', position: 'relative' }}>
+		<Box sx={{ height: '80%', width: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center', position: 'relative', transform: 'translateY(10%)' }}>
 			<Box sx={{ width: '50%', height: '50%', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 1, top: 0, position: 'absolute' }}>
 				<img className="card" src={cardBacks[user?.card_back ?? ''] ?? defaultCardBack} alt="" draggable={false} onClick={() => DrawCard(sendMessage)}/>
 				<img className="card" src={images[getCardName({card})]} alt="" draggable={false}/>
@@ -124,7 +124,7 @@ function DeckArea()
 				<Button variant="contained" disabled={disable_challenge} onClick={() => sendMessage(challenge_click)}
 					sx={{ width: '4vw',  aspectRatio: '1 / 1', minWidth: 0, p: 0, fontSize: 'clamp(0.2rem, 1.4vh, 1rem)', ...box_shadow }}>DARE
 				</Button>
-				{<Paper elevation={0} sx={{ width: '4vw', aspectRatio: '1 / 1', bgcolor: color, borderRadius: 1, ...box_shadow }}>
+				{gameState?.stack !== 0 && <Paper elevation={0} sx={{ width: '4vw', aspectRatio: '1 / 1', bgcolor: color, borderRadius: 1, ...box_shadow }}>
 					<Typography sx={{ width: '100%', height: '100%', color: 'backgorund.paper', fontSize: 'clamp(0.2rem, 1.4vh, 1rem)',
 						display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column' }}>
 						<span>STACK</span> <span>{gameState?.stack}</span>
@@ -134,8 +134,6 @@ function DeckArea()
 		</Box>
 	)
 }
-
-// gameState?.stack !== 0 && 
 
 function DrawHands({deck, amount, card_class}:
 	{deck: GameCard[] | undefined,
@@ -157,7 +155,7 @@ function DrawHands({deck, amount, card_class}:
 	)
 
 	const horizontal = card_class === 'card-north' || card_class === 'card-south';
-	const offset_multiplyer = amount > 20 ? 25 : amount > 15 ? 35 : 60;
+	const offset_multiplyer = amount > 20 ? 25 : amount > 15 ? 35 : amount > 10 ? 50 : 60;
 
 	return (
 		<List sx={{ width: '100%', height: '100%', display: 'grid', placeItems: 'center', p: 0 }}>
@@ -184,7 +182,7 @@ function DrawHidden({amount, card_class}: {amount: number, card_class: string})
 
 	const arr = Array.from({ length: amount });
 	const horizontal = card_class === 'card-north' || card_class === 'card-south';
-	const offset_multiplyer = amount > 20 ? 25 : amount > 15 ? 35 : 60;
+	const offset_multiplyer = amount > 20 ? 25 : amount > 15 ? 35 : amount > 10 ? 50 : 60;
 
 	return (
 		<List sx={{ width: '100%', height: '100%', display: 'grid', placeItems: 'center', p: 0 }}>

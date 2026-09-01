@@ -12,19 +12,14 @@ sessionStorage.setItem = function (key, value) {
 
 import type { GameState } from '../game/types.ts'
 
-type ConnectionState = 'online' | 'offline' | 'retry'
-
 type GameContextType = {
 	roomID: string | null,
 	connected: boolean,
-	// error: string | null,
-	// lastMessage: string | null,
 	gameState: GameState | null,
 //	notices: Notices,
 	notice: Notice | null,
 
 	leaveRoom: () => void,
-	// resetError: () => void,
 	resetGameState: () => void,
 	closeRoomConnection: () => void,
 	resetNotice: () => void,
@@ -63,6 +58,7 @@ function GameWebSocket({ children }: { children: React.ReactNode }) {
 
 	const socketRef = useRef<WebSocket | null>(null);
 	const pendingRoomRef = useRef<string | null>(null);
+	const gameStateRef = useRef<GameState | null>(null);
 
 	const { user } = useAuth();
 	const { handleNewError } = getPopUpContext();
@@ -115,6 +111,7 @@ function GameWebSocket({ children }: { children: React.ReactNode }) {
 					handleErrorMessages(message);
 					break ;
 				case 'state':
+					gameStateRef.current = message;
 					setGameState(message);
 					break ;
 				default:
@@ -173,7 +170,7 @@ function GameWebSocket({ children }: { children: React.ReactNode }) {
 
 	function specialClose()
 	{
-		if (gameState?.phase === 'playing')
+		if (gameStateRef.current?.phase === 'playing')
 			return ;
 		forcedLeave();
 	}
@@ -189,7 +186,7 @@ function GameWebSocket({ children }: { children: React.ReactNode }) {
 
 	function handleErrorMessages({type, code, msg, room}: {type: string, code: string, msg:string, room: string | null})
 	{
-		// console.log(room, msg);
+		// console.log('ERROR CODE:', code, JSON.stringify(code));
 		switch(code)
 		{
 			case ("ALREADY_IN_ROOM"):
@@ -216,7 +213,6 @@ function GameWebSocket({ children }: { children: React.ReactNode }) {
 			HANDLE
 				ALREADY_IN_ROOM = "ALREADY_IN_ROOM"
 
-
 			JUST PROMPT
 				NOT_YOUR_TURN = "NOT_YOUR_TURN"
 				INVALID_CARD = "INVALID_CARD"
@@ -228,14 +224,12 @@ function GameWebSocket({ children }: { children: React.ReactNode }) {
 				INVALID_CHALLENGE = "INVALID_CHALLENGE"
 				GAME_NOT_STARTED = "GAME_NOT_STARTED"
 
-
-			HARD
+			SPECIAL
 				INVALID_MESSAGE = "INVALID_MESSAGE"
 				AUTH_REQUIRED = "AUTH_REQUIRED"
 
-				In game: Just Prompt
-				Outside: Close everything
-
+				In game: (JUST PROMPT)
+				Outside: (FULL CLEAR)
 
 			BACKEND CLOSE (FULL CLEAR)
 				KICKED = "KICKED"
@@ -247,6 +241,7 @@ function GameWebSocket({ children }: { children: React.ReactNode }) {
 
 	function resetGameState()
 	{
+		gameStateRef.current = null;
 		setGameState(null);
 	}
 
@@ -262,11 +257,6 @@ function GameWebSocket({ children }: { children: React.ReactNode }) {
 	// 		delete tmp[id];
 	// 		return tmp;
 	// 	})
-	// }
-
-	// function resetError()
-	// {
-	// 	setError(null);
 	// }
 
 	return (
