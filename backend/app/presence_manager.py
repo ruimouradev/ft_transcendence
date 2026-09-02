@@ -11,43 +11,51 @@ class InMemoryPresenceManager:
     def __init__(self):
         self.active_connections: Dict[str, WebSocket] = {}
         self.statuses: Dict[str, str] = {}
-        self.last_seen: Dict[str, float] = {}
-        self.cleanup_tasks: Dict[str, asyncio.Task] = {}
+        # self.last_seen: Dict[str, float] = {}
+        # self.cleanup_tasks: Dict[str, asyncio.Task] = {}
 
     async def connect(self, user_id: str, websocket: WebSocket):
         await websocket.accept()
-        if user_id in self.cleanup_tasks:
-            self.cleanup_tasks[user_id].cancel()
-            del self.cleanup_tasks[user_id]
-
+        # task = self.cleanup_tasks.pop(user_id, None)
+        # if task:
+        #     task.cancel()
+        
         self.active_connections[user_id] = websocket
         self.statuses[user_id] = "ONLINE"
-        self.last_seen[user_id] = time.time()
         logger.info(f"=======================> User {user_id} connected.")
 
-    def update_heartbeat(self, user_id: str):
-        self.last_seen[user_id] = time.time()
-        self.statuses[user_id] = "ONLINE"
+    # def update_heartbeat(self, user_id: str):
+    #     self.last_seen[user_id] = time.time()
+    #     self.statuses[user_id] = "ONLINE"
 
-    async def disconnect(self, user_id: str, grace_period: int = 15):
-        if user_id in self.active_connections:
+    async def disconnect(self, user_id: str, websocket: WebSocket | None=None, grace_period: int = 15):
+        # if user_id in self.active_connections:
+        #     del self.active_connections[user_id]
+        current_websocket = self.active_connections.get(user_id)
+        if websocket is not None and current_websocket is not websocket:
+            logger.warning(f"=======================> User {user_id} attempted to disconnect with a different websocket.")
+            return
+        if current_websocket is not None:
             del self.active_connections[user_id]
-
-        self.statuses[user_id] = "RECONNECTING"
-        task = asyncio.create_task(self._wait_and_mark_offline(user_id, grace_period))
-        self.cleanup_tasks[user_id] = task
+        
+        self.statuses[user_id] = "OFFLINE"
+        # old_task = self.cleanup_tasks.pop(user_id, None)
+        # if old_task:
+        #     old_task.cancel()
+        # task = asyncio.create_task(self._wait_and_mark_offline(user_id, grace_period))
+        # self.cleanup_tasks[user_id] = task
         logger.info(f"=======================> User {user_id} disconnected.")
 
-    async def _wait_and_mark_offline(self, user_id: str, delay: int):
-        try:
-            await asyncio.sleep(delay)
-            self.statuses[user_id] = "OFFLINE"
-            if user_id in self.last_seen:
-                del self.last_seen[user_id]
-        except asyncio.CancelledError:
-            pass
-        finally:
-            self.cleanup_tasks.pop(user_id, None)
+    # async def _wait_and_mark_offline(self, user_id: str, delay: int):
+    #     try:
+    #         await asyncio.sleep(delay)
+    #         self.statuses[user_id] = "OFFLINE"
+    #         if user_id in self.last_seen:
+    #             del self.last_seen[user_id]
+    #     except asyncio.CancelledError:
+    #         pass
+    #     finally:
+    #         self.cleanup_tasks.pop(user_id, None)
 
     def get_status(self, user_id: str) -> str:
         return self.statuses.get(user_id, "OFFLINE")
