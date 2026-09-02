@@ -106,13 +106,13 @@ function DeckArea()
 	return (
 		<Box sx={{ height: '80%', width: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center', position: 'relative', transform: 'translateY(10%)' }}>
 			<Box sx={{ width: '50%', height: '50%', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 1, top: 0, position: 'absolute' }}>
-				<img className="card" src={cardBacks[user?.card_back ?? ''] ?? defaultCardBack} alt="" draggable={false} onClick={() => DrawCard(sendMessage)}/>
-				<img className="card" src={images[getCardName({card})]} alt="" draggable={false}/>
+				<img className="card card_small" src={cardBacks[user?.card_back ?? ''] ?? defaultCardBack} alt="" draggable={false} onClick={() => DrawCard(sendMessage)}/>
+				<img className="card card_small" src={images[getCardName({card})]} alt="" draggable={false}/>
 			</Box>
 			<Box sx={{ bottom: 0, position: 'absolute', width: '50%', height: '50%', display: 'flex', justifyContent: 'center', alignItems: 'end' }}>
 				<img className="arrow" src={direction} alt="" draggable={false}/>
 			</Box>
-			<Box sx={{ width: '25%', height: '100%', right: 0, position: 'absolute', display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 2 }}>
+			<Box sx={{ width: '25%', height: '100%', right: 0, position: 'absolute', display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 2, transform: 'translateX(20%) translateY(-15%)' }}>
 				<Paper elevation={0} sx={{ width: '4vw', aspectRatio: '1 / 1', bgcolor: color, borderRadius: 1, ...box_shadow }}>
 					<img src={color} draggable={false} style={image_styles}/>
 				</Paper>
@@ -120,7 +120,7 @@ function DeckArea()
 					sx={{ width: '4vw',  aspectRatio: '1 / 1', minWidth: 0, p: 0, fontSize: 'clamp(0.2rem, 1.4vh, 1rem)', ...box_shadow }}>UNO!
 				</Button>
 			</Box>
-			<Box sx={{ width: '25%', height: '100%', left: 0, position: 'absolute', display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 2 }}>
+			<Box sx={{ width: '25%', height: '100%', left: 0, position: 'absolute', display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 2, transform: 'translateX(-20%) translateY(-15%)' }}>
 				<Button variant="contained" disabled={disable_challenge} onClick={() => sendMessage(challenge_click)}
 					sx={{ width: '4vw',  aspectRatio: '1 / 1', minWidth: 0, p: 0, fontSize: 'clamp(0.2rem, 1.4vh, 1rem)', ...box_shadow }}>DARE
 				</Button>

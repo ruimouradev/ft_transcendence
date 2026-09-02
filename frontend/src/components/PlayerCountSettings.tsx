@@ -9,7 +9,7 @@ function PlayerCountSettings({playerCount, setPlayerCount, defaultTooltip, setOp
 	defaultTooltip: string,
 	setOptionsTooltip: React.Dispatch<React.SetStateAction<string>>})
 {
-	const text = "Determines how many players will be in the game.\n\nRange from 2 to 4."
+	const text = "Determines how many players will be in the game.\nRange from 2 to 4."
 
 	return (
 		<Box sx={{...align_noJustify, height: '15%', width: '100%' }}>
@@ -20,7 +20,7 @@ function PlayerCountSettings({playerCount, setPlayerCount, defaultTooltip, setOp
 				<IconButton >
 					<RemoveSharpIcon onClick={() => setPlayerCount(prev => prev > 2 ? prev - 1 : prev)} sx={{ color: 'gray', border: 3, borderRadius: 1, ...buttons_text }}/>
 				</IconButton>
-				<Box sx={{ color: '#ececec', border: 3, borderRadius: 1, width: 'clamp(30px, 5vw, 60px)', aspectRatio: '1 / 1', flexShrink: 0, ...align_noJustify, justifyContent: 'center' }}>
+				<Box sx={{ color: '#ececec', border: 3, borderRadius: 1, width: 'clamp(1.3rem, 3.5vw, 2rem)', aspectRatio: '1 / 1', flexShrink: 0, ...align_noJustify, justifyContent: 'center' }}>
 					<Typography sx={{ textAlign: 'center', ...icons_text }}>{playerCount}</Typography>
 				</Box>
 				<IconButton >

@@ -24,6 +24,7 @@ export type PublicPlayer = {
 	connected: boolean,
 	uno: boolean,
 	bot: boolean,
+	bot_level: 'easy' | 'medium' | 'hard' | null
 	avatar: string,
 	points: number
 }

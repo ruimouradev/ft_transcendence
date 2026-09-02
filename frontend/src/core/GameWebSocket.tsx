@@ -134,7 +134,7 @@ function GameWebSocket({ children }: { children: React.ReactNode }) {
 			resetGameState();
 			resetNotice();
 			clearTimeout(timeout);
-			// if (gameState?.you.id)
+			// if (gameStateRef?.you.id)
 			// 	resetNotices(gameState.you.id)
  
 			console.log("connection closed by backend !!!")
@@ -142,8 +142,6 @@ function GameWebSocket({ children }: { children: React.ReactNode }) {
 			if (pendingRoomRef.current && user) {
 				const room = pendingRoomRef.current;
 				pendingRoomRef.current = null;
-
-//				console.log(room, {"type": "join", "name": user.nick_name});
 				joinRoom(room, {"type": "join", "name": user.nick_name})
 			}
 		}
@@ -170,7 +168,7 @@ function GameWebSocket({ children }: { children: React.ReactNode }) {
 
 	function specialClose()
 	{
-		if (gameStateRef.current?.phase === 'playing')
+		if (gameStateRef !== null)
 			return ;
 		forcedLeave();
 	}
@@ -193,16 +191,16 @@ function GameWebSocket({ children }: { children: React.ReactNode }) {
 				if (room && user) {
 					pendingRoomRef.current = room;
 					socketRef.current?.close();
-					msg = "redirected to room ";
+					msg = `redirected to Room ${room}`;
 				}
 				break ;
 			case ("KICKED"):
 			case ('ROOM_FULL'):
+			case ("AUTH_REQUIRED"):
 			case ('ROOM_NOT_FOUND'):
 			case ("GAME_ALREADY_STARTED"):
 				forcedLeave();
 				break ;
-			case ("AUTH_REQUIRED"):
 			case ("INVALID_MESSAGE"):
 				specialClose();
 				break ;
@@ -226,14 +224,13 @@ function GameWebSocket({ children }: { children: React.ReactNode }) {
 
 			SPECIAL
 				INVALID_MESSAGE = "INVALID_MESSAGE"
-				AUTH_REQUIRED = "AUTH_REQUIRED"
 
-				In game: (JUST PROMPT)
-				Outside: (FULL CLEAR)
+				GameState ? (JUST PROMPT) : (FULL CLEAR)
 
 			BACKEND CLOSE (FULL CLEAR)
 				KICKED = "KICKED"
 				ROOM_FULL = "ROOM_FULL"
+				AUTH_REQUIRED = "AUTH_REQUIRED"
 				ROOM_NOT_FOUND = "ROOM_NOT_FOUND"
 				GAME_ALREADY_STARTED = "GAME_ALREADY_STARTED"
 		*/

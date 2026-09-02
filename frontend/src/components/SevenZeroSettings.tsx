@@ -9,8 +9,7 @@ function SevenZeroSettings({sevenZero, setSevenZero, defaultTooltip, setOptionsT
 	defaultTooltip: string,
 	setOptionsTooltip: React.Dispatch<React.SetStateAction<string>>})
 {
-	const text = "When you play a 7 card, you must swap cards in your hand with another player hands.\n  \
-		When you play a 0 card, players pass their hands to the next player in play direction.";
+	const text = "With a 7 you swap your hand with another player.\nWith a 0 every hand passes to the next player in play direction.";
 
 	return (
 		<Box sx={{...align_noJustify, height: '15%', width: '100%' }}>

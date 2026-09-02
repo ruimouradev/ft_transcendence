@@ -1,9 +1,9 @@
 import { Box, Modal } from '@mui/material';
 import { getPopUpContext } from '../core/GamePopUps';
 import ErrorPopUp from '../components/ErrorPopUp';
-import Seven from '../components/Seven';
-import GameEnd from '../components/GameEnd';
-import WildCard from '../components/WildCard';
+import SevenPopUp from './SevenPopUp';
+import GameEndPopUp from '../components/GameEndPopUp';
+import WildCardPopUp from '../components/WildCardPopUp';
 
 function PopUp()
 {
@@ -16,9 +16,9 @@ function PopUp()
 	return (
 		<Modal open={true} >
 			<Box className="no-select" sx={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-				{popUp === 'wildcard' && <WildCard />}
-				{popUp === 'seven' && <Seven />}
-				{popUp === 'game_end' && <GameEnd />}
+				{popUp === 'wildcard' && <WildCardPopUp />}
+				{popUp === 'seven' && <SevenPopUp />}
+				{popUp === 'game_end' && <GameEndPopUp />}
 				{popUp === 'error' && <ErrorPopUp />}
 			</Box>
 		</Modal>

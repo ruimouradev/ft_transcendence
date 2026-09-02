@@ -28,8 +28,8 @@ function JoinCreateLobby({ rooms }: { rooms: Room[]})
 
 	return (
 		 <ThemeProvider theme={unoTheme}>
-			<Container sx={{ height: '75dvh', width: '80dvw', display: 'flex', flexDirection: 'column', my: 2, p: 0.5,
-				border: '1px solid', borderColor: 'divider', borderRadius: 2, bgcolor: 'background.paper' }}>
+			<Container sx={{ height: '75dvh', width: { xs: '96dvw', md: '80dvw' }, display: 'flex', flexDirection: 'column',
+				my: 2, p: 0.5, border: '1px solid', borderColor: 'divider', borderRadius: 2, bgcolor: 'background.paper' }}>
 				<Tabs value={value} onChange={handleChange} sx={{ height: '10%', width:'100%' }} >
 					<Tab sx={{ ...tab_text }} label="JOIN GAME" />
 					<Tab sx={{ ...tab_text }} label="CREATE GAME" />

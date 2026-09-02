@@ -4,7 +4,7 @@ import { getPopUpContext } from '../core/GamePopUps';
 import { unoTheme } from '../ui/unoTheme';
 import { winner_image } from '../ui/ImagesUtils';
 
-function GameEnd()
+function GameEndPopUp()
 {
 	const { gameState, leaveRoom, sendMessage, resetGameState } = getGameContext();
 	const { resetPopUpStates } = getPopUpContext();
@@ -51,4 +51,4 @@ function GameEnd()
 	)
 }
 
-export default GameEnd
+export default GameEndPopUp

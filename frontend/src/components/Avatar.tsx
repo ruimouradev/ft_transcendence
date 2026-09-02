@@ -3,7 +3,7 @@ import { Box, Card, CardMedia, Typography } from '@mui/material';
 import { getGameContext } from '../core/GameWebSocket';
 import type { PublicPlayer } from '../game/types.ts';
 import EmoticonsMenu from './EmoticonsMenu';
-import { avatar_bot } from '../ui/ImagesUtils.ts';
+import { bot_easy, bot_medium, bot_hard } from '../ui/ImagesUtils.ts';
 
 function Avatar({player, position}: {player: PublicPlayer, position: string})
 {
@@ -50,8 +50,11 @@ function Avatar({player, position}: {player: PublicPlayer, position: string})
 		?  () => catchPlayer(player) 
 		: handleEmoticon;
 
-	const avatar = player.bot ? avatar_bot : player.avatar;
-
+	const avatar = player.bot ? 
+		(player?.bot_level === 'easy' ? bot_easy
+			: player.bot_level === 'medium' ? bot_medium
+			: bot_hard) : player.avatar;
+	
 	return (
 		<Box sx={{ position: 'absolute', inset: 0, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
 			<EmoticonsMenu anchor={anchor} handleClose={handleClose} startCooldown={startCooldown}/>

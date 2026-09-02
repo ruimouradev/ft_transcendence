@@ -9,7 +9,7 @@ function HandCountSettings({handCount, setHandCount, defaultTooltip, setOptionsT
 	defaultTooltip: string,
 	setOptionsTooltip: React.Dispatch<React.SetStateAction<string>>})
 {
-	const text = "Determines the initial amount of cards in each player hands.\n\nRange from 3 to 10.";
+	const text = "Determines the initial amount of cards in each player hands.\nRange from 3 to 10.";
 
 	return (
 		<Box sx={{...align_noJustify, height: '15%', width: '100%'}}>
@@ -20,7 +20,7 @@ function HandCountSettings({handCount, setHandCount, defaultTooltip, setOptionsT
 				<IconButton >
 					<RemoveSharpIcon onClick={() => setHandCount(prev => prev > 3 ? prev - 1 : prev)} sx={{ color: 'gray', border: 3, borderRadius: 1, ...buttons_text }}/>
 				</IconButton>
-				<Box sx={{ color: '#ececec', border: 3, borderRadius: 1, width: 'clamp(30px, 5vw, 60px)', aspectRatio: '1 / 1', flexShrink: 0, ...align_noJustify, justifyContent: 'center' }}>
+				<Box sx={{ color: '#ececec', border: 3, borderRadius: 1, width: 'clamp(1.3rem, 3.5vw, 2rem)', aspectRatio: '1 / 1', flexShrink: 0, ...align_noJustify, justifyContent: 'center' }}>
 					<Typography sx={{ textAlign: 'center', ...icons_text }}>{handCount}</Typography>
 				</Box>
 				<IconButton >

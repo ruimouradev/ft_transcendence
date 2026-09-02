@@ -6,7 +6,7 @@ import { getPopUpContext } from '../core/GamePopUps';
 import { color_red, color_blue, color_green, color_yellow } from '../ui/ImagesUtils.ts';
 import ClearSharpIcon from '@mui/icons-material/ClearSharp';
 
-function WildCard()
+function WildCardPopUp()
 {
 	const { gameState, sendMessage } = getGameContext();
 	const { identifierID, resetPopUpStates } = getPopUpContext();
@@ -45,4 +45,4 @@ function WildCard()
 	)
 }
 
-export default WildCard
+export default WildCardPopUp

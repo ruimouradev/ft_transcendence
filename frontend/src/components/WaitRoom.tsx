@@ -7,7 +7,7 @@ import DisabledByDefaultOutlinedIcon from '@mui/icons-material/DisabledByDefault
 import { unoTheme } from '../ui/unoTheme';
 import { getGameContext } from '../core/GameWebSocket';
 import {easy_bot, medium_bot, hard_bot, start_game} from '../game/macrosConfig.ts';
-import { avatar_bot } from '../ui/ImagesUtils.ts'
+import { bot_easy, bot_medium, bot_hard } from '../ui/ImagesUtils.ts';
 
 function WaitRoom()
 {
@@ -17,14 +17,15 @@ function WaitRoom()
 	const room_full = gameState?.players.length !== gameState?.settings?.max_players;
 	const text = room_full ? `WAITING FOR PLAYERS ${gameState?.players.length} / ${gameState?.settings?.max_players}` : 'START';
 
-	const button_text = {fontSize: 'clamp(0.2rem, 1.6vh, 3rem)'}
+	const button_text = {fontSize: { xs: '1.6vh', md: '2vh' }}
 
 	return (
 		<ThemeProvider theme={unoTheme}>
-			<Container sx={{ height: '65dvh', width: '50%', display: 'flex', flexDirection: 'column', my: 2, p: 0.5,
+			<Container sx={{ height: '65dvh', width: { xs: '100%', md: '50%' }, display: 'flex', flexDirection: 'column', my: 2, p: 0.5,
 				position: 'relative', border: '1px solid', borderColor: 'divider', borderRadius: 2, bgcolor: 'background.paper' }}>
 				<Box sx={{height: '10%', width: '100%'}}>
-					<Typography variant="h5" sx={{  height: '100%', width: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>ROOM ID: {roomID}</Typography>
+					<Typography variant="h5" sx={{  height: '100%', width: '100%', display: 'flex', justifyContent: 'center',
+						alignItems: 'center', fontSize: { xs: '1.2rem', md: '1.5rem' }}}>ROOM ID: {roomID}</Typography>
 					<IconButton size="large" sx={{ position: 'absolute', top: 0, right: 0, zIndex: 1 }} onClick={() => leaveRoom()}>
 						<ExitToAppOutlinedIcon fontSize="inherit"/>
 					</IconButton>
@@ -33,7 +34,10 @@ function WaitRoom()
 					<Box sx={{ height: '85%', width: '100%', bgcolor: 'black' }}>
 						<List className="no-select" sx={{ height: '100%', width: '100%', display: 'flex', flexDirection: 'column', p: 0 }}>
 							{gameState?.players.map((player) => {
-								const avatar = player.bot ? avatar_bot : player.avatar;
+									const avatar = player.bot ? 
+										(player?.bot_level === 'easy' ? bot_easy
+											: player.bot_level === 'medium' ? bot_medium
+											: bot_hard) : player.avatar;
 								return (
 								<ListItem key={player.id} sx={{ height: '20%', width: '100%', p: 0.5 }}>
 									<Card sx={{ height: '100%', width: '100%', display: 'flex', position: 'relative' }}>
@@ -62,7 +66,7 @@ function WaitRoom()
 							)})}
 							<ListItem key={'bot_menu'} sx={{ height: '20%', width: '100%', p: 0.5 }}>
 								<Card sx={{ height: '100%', width: '100%', display: 'flex', position: 'relative', alignItems: 'center' }}>
-									<Typography sx={{ p: 3, ...button_text }}>ADD BOT</Typography>
+									<Typography sx={{ p: { xs: 1, md: 3 }, ...button_text }}>ADD BOT</Typography>
 									<CardContent sx={{ display: 'flex', position: 'absolute', alignItems: 'center', right: 0 }}>
 											<Button disabled={host || !room_full} variant="contained" sx={{ mx: '2%', bgcolor: '#708c08' }} onClick={() => sendMessage(easy_bot)}>
 												<Typography sx={{...button_text}}>EASY</Typography>
