@@ -77,3 +77,4 @@ async def send_password_reset_email(email: EmailStr, username: str, token: str, 
     )
     fm = FastMail(conf)
     await fm.send_message(message, template_name="password_reset.html")
+

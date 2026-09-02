@@ -1,3 +1,5 @@
+import secrets
+
 import jwt
 import httpx
 import logging
@@ -126,12 +128,15 @@ def recover_password(session: SessionDep, background_tasks: BackgroundTasks, ema
     return Message(status_code=200, code="success", message="Check your email and reset your password.")
 
 @router.post("/set-password", response_model=Message, responses={400: {"model": ErrorResponse}})
-def reset_password_me(*, session: SessionDep, password: str = Body(..., embed=True), token: str = Body(..., embed=True)) -> Any:
+async def reset_password_me(*, session: SessionDep, password: str = Body(..., embed=True), token: str = Body(..., embed=True)) -> Any:
     """
     Use a verification token to set a new password.
     """
     email = verify_token_in_email(token)
     current_user = userservice.get_user_by_email(session=session, email=email)
+    if not current_user:
+        raise APIError(status_code=400, code=APIErrorCode.BAD_REQUEST, msg="The user with this email does not exist in the system.")
+    await security.consume_verification_token(token, EmailVerificationType.PASSWORD_RESET)
     userservice.update_user(session=session, db_user=current_user, user_in=UserUpdate(password=password))
     return Message(status_code=200, code="success", message="Password reset successfully")
 
@@ -152,7 +157,9 @@ async def login_42():
     # Redirect the user to the 42 OAuth2 authorization URL
     client_id = settings.O42_CLIENT_ID
     redirect_uri = settings.O42_REDIRECT_URI
-    auth_url = f"https://api.intra.42.fr/oauth/authorize?client_id={client_id}&redirect_uri={redirect_uri}&response_type=code"
+    state = secrets.token_urlsafe(16)
+    await security.cache_state(state)
+    auth_url = f"https://api.intra.42.fr/oauth/authorize?client_id={client_id}&redirect_uri={redirect_uri}&response_type=code&state={state}"
     return RedirectResponse(auth_url)
 
 async def download_image(url: str, filename: str):
@@ -165,7 +172,13 @@ async def download_image(url: str, filename: str):
                     f.write(chunk)
 
 @authRouter.get("/auth/42/callback", tags=["auth"])
-async def callback_42(code: str, session: SessionDep):
+async def callback_42(code: str, session: SessionDep, state: str):
+    """
+    Handle the callback from 42 OAuth2 login. Exchange the authorization code for an access token, then use the access token to get user info. If the user does not exist, create a new user. Finally, return a redirect response with the access token set in a cookie.
+    """
+    # Verify the state parameter
+    await security.verify_state(state)
+
     # Exchange the authorization code for an access token
     client_id = settings.O42_CLIENT_ID
     client_secret = settings.O42_CLIENT_SECRET
@@ -183,32 +196,49 @@ async def callback_42(code: str, session: SessionDep):
             response=RedirectResponse(url="/login?error=oauth2_error", status_code=status.HTTP_307_TEMPORARY_REDIRECT,)
             return response;
         response_data = response.json()
-        access_token = response_data.get("access_token")
-        if not access_token:
+        access_token42 = response_data.get("access_token")
+        if not access_token42:
             response=RedirectResponse(url="/login?error=oauth2_error", status_code=status.HTTP_307_TEMPORARY_REDIRECT)
             return response;
         
         # Use the access token to get user info
         user_info_url = "https://api.intra.42.fr/v2/me"
-        headers = {"Authorization": f"Bearer {access_token}"}
+        headers = {"Authorization": f"Bearer {access_token42}"}
         user_response = await client.get(user_info_url, headers=headers)
         if user_response.status_code != 200:
             response=RedirectResponse(url="/login?error=oauth2_error", status_code=status.HTTP_307_TEMPORARY_REDIRECT)
             return response;
 
         user_info = user_response.json()
-        user=userservice.get_user_by_email(session=session, email=user_info.get("email"))
+        user42_email = user_info.get("email")
+        user42_id = user_info.get("id")
+        user42_login = user_info.get("login")
+        user42_image = user_info.get("image", {}).get("versions", {}).get("small", "")
+
+        if not user42_email or not user42_id or not user42_login:
+            response=RedirectResponse(url="/login?error=oauth2_error", status_code=status.HTTP_307_TEMPORARY_REDIRECT)
+            return response;
+
+        user = userservice.get_user_by_email(session=session, email=user42_email)
         if not user:
-            await download_image(user_info.get("image", {}).get("versions", {}).get("small", ""), f"app/static/{user_info['id']}-small.jpg")
+            # Download the user's avatar image and save it to the static folder
+            try:
+                if not user42_image:
+                    avatar_path = "/static/a00.jpeg"
+                else:
+                    avatar_path = f"/static/{user42_id}-small.jpg"
+                    await download_image(user42_image, f"app{avatar_path}")
+            except Exception as e:
+                logger.error(f"Failed to download avatar image for user {user42_login}: {e}")
+                avatar_path = "/static/a00.jpeg"
             user_create = UserCreate(
-                email=user_info.get("email"),
+                email=user42_email,
                 password=security.generate_password(8),
                 is_active=True,
-                nick_name=f"{user_info.get('login')}",
-                avatar=f"/static/{user_info['id']}-small.jpg"
+                nick_name=f"{user42_login}",
+                avatar=avatar_path
             )
-            userservice.create_user(session=session, user_create=user_create)
-            user=userservice.get_user_by_email(session=session, email=user_info.get("email"))
+            user = userservice.create_user(session=session, user_create=user_create)
 
         access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
         access_token=security.create_access_token(user.id, expires_delta=access_token_expires)
@@ -217,9 +247,9 @@ async def callback_42(code: str, session: SessionDep):
         if not oauth_account:
             oauth_account = userservice.create_oauth_account(session=session, oauth_account_create=OAuthAccountCreate(
                 provider=(ProviderType.t42.value),
-                provider_user_id=str(user_info.get("id")),
-                provider_user_email=user_info.get("email"),
-                access_token=access_token,
+                provider_user_id=str(user42_id),
+                provider_user_email=user42_email,
+                access_token=access_token42,
                 user_id=str(user.id)
             ))
         response = RedirectResponse(url=f"/dashboard", status_code=status.HTTP_307_TEMPORARY_REDIRECT)
@@ -230,7 +260,7 @@ async def callback_42(code: str, session: SessionDep):
             httponly=True,       # Prevents JS reading the token (XSS protection)
             secure=True,         # Set to True in production (HTTPS)
             samesite="lax",      # Crucial for OAuth redirects across domains
-            max_age=settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60         # 30 minutes in seconds
+            max_age=settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60
         )
         
         return response

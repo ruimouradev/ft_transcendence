@@ -2,12 +2,14 @@ from datetime import datetime, timedelta, timezone
 import secrets
 import string
 from typing import Any
+from redis.asyncio import Redis
+from app.platform.config import settings
 
 import jwt
 from pwdlib import PasswordHash
 from pwdlib.hashers.argon2 import Argon2Hasher
 from pwdlib.hashers.bcrypt import BcryptHasher
-from app.models.all import LoginTokenType, TokenPayload, TokenPayload
+from app.models.all import LoginTokenType, TokenPayload, TokenPayload, APIError, APIErrorCode, EmailVerificationType
 
 from app.platform.config import settings
 
@@ -19,6 +21,8 @@ password_hash = PasswordHash(
 )
 
 ALGORITHM = "HS256"
+
+redis = Redis.from_url(settings.REDIS_URL, decode_responses=True)
 
 def generate_password(length: int = 16) -> str:
     characters = string.ascii_letters + string.digits
@@ -42,3 +46,36 @@ def verify_password(plain_password: str, hashed_password: str) -> tuple[bool, st
 
 def get_password_hash(password: str) -> str:
     return password_hash.hash(password)
+
+async def consume_verification_token(token: str, verifyType: EmailVerificationType) -> None:
+    """Verify the token and return the email if valid, otherwise raise APIError."""
+    key = f"used:password_reset:{token}" if verifyType == EmailVerificationType.PASSWORD_RESET else f"used:account_activation:{token}"
+    expire = get_verify_token_expiration_time(token)
+    remaining_time = expire - datetime.now(timezone.utc)
+    remaining_seconds = int(remaining_time.total_seconds())
+    if remaining_seconds <= 0:
+        raise APIError(status_code=400, code=APIErrorCode.BAD_REQUEST, msg="Verification link has expired. Please request a new one.")
+    created = await redis.set(key, "true", ex=remaining_seconds, nx=True)
+    if not created:
+        raise APIError(status_code=400, code=APIErrorCode.BAD_REQUEST, msg="This verification link has already been used. Please request a new one.")
+
+def get_verify_token_expiration_time(token: str) -> datetime:
+    """Get the expiration time of a verification token."""
+    try:
+        payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
+        if payload.get("type") not in [EmailVerificationType.ACCOUNT_ACTIVATION.value, EmailVerificationType.PASSWORD_RESET.value]:
+            raise APIError(status_code=400, code=APIErrorCode.BAD_REQUEST, msg="Invalid Token Type")
+        return payload.get("exp")
+    except jwt.PyJWTError:
+        raise APIError(status_code=400, code=APIErrorCode.BAD_REQUEST, msg="Invalid verification link. Please check your email and try again.")
+
+async def cache_state(state: str, expires_in: int = 300) -> None:
+    """Cache the state parameter for CSRF protection."""
+    await redis.set(f"oauth_state:{state}", "42", ex=expires_in, nx=True)
+
+async def verify_state(state: str) -> None:
+    """Verify the state parameter for CSRF protection."""
+    key = f"oauth_state:{state}"
+    value = await redis.getdel(key)
+    if value is None:
+        raise APIError(status_code=400, code=APIErrorCode.BAD_REQUEST, msg="Invalid or expired state parameter. Please try logging in again.")
