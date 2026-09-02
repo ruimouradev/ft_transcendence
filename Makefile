@@ -16,6 +16,10 @@ dev: vinit
 	docker compose -f ./docker-compose.yml build
 	docker compose -f ./docker-compose.yml up db redis backend frontend adminer nginx
 
+prod: vinit
+	docker compose -f ./docker-compose.yml build
+	docker compose -f ./docker-compose.yml up -d db redis backend adminer nginx
+
 down:
 	docker compose -f ./docker-compose.yml down
 	@echo "[INFO] Docker containers stopped and removed."

@@ -1,10 +1,5 @@
-import { Box, Button, Card, CardContent , CardMedia, Container, Chip, IconButton,  List, ListItem, Paper, ThemeProvider, Typography } from '@mui/material';
-import { createContext, useState, useContext, Fragment, useEffect } from 'react';
-
-import StarOutlinedIcon from '@mui/icons-material/StarOutlined';
-import WifiOffOutlinedIcon from '@mui/icons-material/WifiOffOutlined';
-import ExitToAppOutlinedIcon from '@mui/icons-material/ExitToAppOutlined';
-import DisabledByDefaultOutlinedIcon from '@mui/icons-material/DisabledByDefaultOutlined';
+import { Box, Button, Container, List, ListItem, Paper, ThemeProvider, Typography } from '@mui/material';
+import { useEffect } from 'react';
 
 import { useAuth } from '../core/AuthContext';
 
@@ -22,7 +17,7 @@ import Avatar from '../components/Avatar'
 import Emoticons from '../components/Emoticons'
 import WaitRoom from '../components/WaitRoom'
 
-import type {Color, valueNum, valueAction, valueWild, GameCard, Notice, PublicPlayer, PrivatePlayer, LastAction, GameState} from './types.ts'
+import type {GameCard, Notice, PublicPlayer, GameState} from './types.ts'
 
 function getCardName({card}: {card: GameCard})
 {

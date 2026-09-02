@@ -1,7 +1,5 @@
-import { Box, Button, Card, CardMedia, Container, Typography } from '@mui/material'
-import { useState, useEffect, Fragment } from 'react'
+import { useEffect } from 'react'
 
-import { Navigate } from 'react-router';
 import GameRoom from './GameRoom'
 import Lobby from './Lobby'
 
