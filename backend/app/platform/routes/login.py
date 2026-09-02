@@ -1,10 +1,9 @@
 import secrets
 
-import jwt
 import httpx
 import logging
 
-from datetime import timedelta, datetime, timezone
+from datetime import timedelta
 from typing import Annotated, Any
 
 from fastapi import APIRouter, Depends, status, BackgroundTasks, Body
@@ -16,34 +15,12 @@ from app.platform import security
 from app.platform.config import settings
 
 from app.platform.service.mailservice import create_verification_token_used_in_mail, send_password_reset_email, verify_token_in_email
-from app.models.all import EmailVerificationType, ErrorResponse, Message, OAuthAccountCreate, ProviderType, TokenPayload, UserCreate, UserUpdate, User, LoginTokenType
-from app.models.all import APIError, APIErrorCode
+from app.models.all import EmailVerificationType, ErrorResponse, Message, OAuthAccountCreate, ProviderType, UserCreate, UserUpdate, User, APIError, APIErrorCode
 
 from fastapi.responses import RedirectResponse, Response
-from jwt.exceptions import InvalidTokenError
 
 router = APIRouter(tags=["login"], include_in_schema=False)
 logger = logging.getLogger("uvicorn.error")
-
-
-# def verify_password_reset_token(token: str) -> str | None:
-#     try:
-#         decoded_token = jwt.decode(token, settings.SECRET_KEY, algorithms=[security.ALGORITHM])
-#         return str(decoded_token["sub"])
-#     except InvalidTokenError:
-#         return None
-
-# def generate_password_reset_token(email: str) -> str:
-#     delta = timedelta(hours=settings.EMAIL_RESET_TOKEN_EXPIRE_HOURS)
-#     now = datetime.now(timezone.utc)
-#     expires = now + delta
-#     exp = expires.timestamp()
-#     encoded_jwt = jwt.encode(
-#         {"exp": exp, "nbf": now, "sub": email},
-#         settings.SECRET_KEY,
-#         algorithm=security.ALGORITHM,
-#     )
-#     return encoded_jwt
 
 
 @router.post("/login/access-token", response_model=Message, responses={401: {"model": ErrorResponse}})
@@ -190,7 +167,7 @@ async def callback_42(code: str, session: SessionDep, state: str):
         "code": code,
         "redirect_uri": f"{settings.O42_REDIRECT_URI}"
     }
-    async with httpx.AsyncClient() as client:
+    async with httpx.AsyncClient(timeout=10.0) as client:
         response = await client.post(token_url, data=data)
         if response.status_code != 200:
             response=RedirectResponse(url="/login?error=oauth2_error", status_code=status.HTTP_307_TEMPORARY_REDIRECT,)
@@ -252,7 +229,7 @@ async def callback_42(code: str, session: SessionDep, state: str):
                 access_token=access_token42,
                 user_id=str(user.id)
             ))
-        response = RedirectResponse(url=f"/dashboard", status_code=status.HTTP_307_TEMPORARY_REDIRECT)
+        response = RedirectResponse(url=f"/dashboard", status_code=status.HTTP_302_FOUND)
         
         response.set_cookie(
             key="access_token",
@@ -265,27 +242,3 @@ async def callback_42(code: str, session: SessionDep, state: str):
         
         return response
 
-# @router.post(
-#     "/password-recovery-html-content/{email}",
-#     dependencies=[Depends(get_current_active_superuser)],
-#     response_class=HTMLResponse,
-# )
-# def recover_password_html_content(email: str, session: SessionDep) -> Any:
-#     """
-#     HTML Content for Password Recovery
-#     """
-#     user = crud.get_user_by_email(session=session, email=email)
-
-#     if not user:
-#         raise HTTPException(
-#             status_code=404,
-#             detail="The user with this username does not exist in the system.",
-#         )
-#     password_reset_token = generate_password_reset_token(email=email)
-#     email_data = generate_reset_password_email(
-#         email_to=user.email, email=email, token=password_reset_token
-#     )
-
-#     return HTMLResponse(
-#         content=email_data.html_content, headers={"subject:": email_data.subject}
-#     )
