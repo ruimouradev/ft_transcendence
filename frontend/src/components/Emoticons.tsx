@@ -1,24 +1,25 @@
 import { useEffect } from 'react';
 import { Box, Card } from '@mui/material';
 import { getGameContext } from '../core/GameWebSocket';
-import { emoticon_catch, emoticon_sad, emoticon_angry, emoticon_happy, emoticon_confidence, emoticon_nervous, emoticon_surprised, emoticon_uno } from '../ui/ImagesUtils';
+import { emoticon_catch, emoticon_sad, emoticon_angry, emoticon_happy, emoticon_confidence,
+	emoticon_nervous, emoticon_surprised, emoticon_uno } from '../ui/ImagesUtils';
 
-function Emoticons({position}: {position: string})
+import type { Notice } from '../game/types.ts'
+
+function Emoticons({position, playerID, notice}: {position: string, playerID: string , notice: Notice})
 {
-	const { notice, resetNotice } = getGameContext();
+	const { resetNotices } = getGameContext();
 	const emoticons = [emoticon_sad, emoticon_angry, emoticon_happy, emoticon_confidence, emoticon_nervous, emoticon_surprised, emoticon_catch, emoticon_uno];
 
 	useEffect(() => {
-		if (notice === null)
-			return ;
 		const timer = setTimeout(() => {
-			resetNotice();
+			resetNotices(playerID);
 		}, 2000);
 		 return () => clearTimeout(timer);
-	}, [notice]);
+	}, [notice, playerID]);
 
 	let choosen_emoticon;
-	switch (notice?.kind)
+	switch (notice.kind)
 	{
 		case ('uno'):
 			choosen_emoticon = emoticon_uno;
@@ -27,7 +28,7 @@ function Emoticons({position}: {position: string})
 			choosen_emoticon = emoticon_catch;
 			break ;
 		case ('emote'):
-			choosen_emoticon = emoticons[notice?.icon - 1];
+			choosen_emoticon = emoticons[notice.icon - 1];
 			break ;
 		default:
 			return null;

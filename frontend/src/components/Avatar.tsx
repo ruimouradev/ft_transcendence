@@ -1,9 +1,9 @@
-import { useEffect, useState } from 'react'
-import { Box, Card, CardMedia, Typography } from '@mui/material'
-import { getGameContext } from '../core/GameWebSocket'
-import type { PublicPlayer } from '../game/types.ts'
-import EmoticonsMenu from './EmoticonsMenu'
-import { avatar_bot } from '../ui/ImagesUtils.ts'
+import { useEffect, useState } from 'react';
+import { Box, Card, CardMedia, Typography } from '@mui/material';
+import { getGameContext } from '../core/GameWebSocket';
+import type { PublicPlayer } from '../game/types.ts';
+import EmoticonsMenu from './EmoticonsMenu';
+import { bot_easy, bot_medium, bot_hard } from '../ui/ImagesUtils.ts';
 
 function Avatar({player, position}: {player: PublicPlayer, position: string})
 {
@@ -50,8 +50,11 @@ function Avatar({player, position}: {player: PublicPlayer, position: string})
 		?  () => catchPlayer(player) 
 		: handleEmoticon;
 
-	const avatar = player.bot ? avatar_bot : player.avatar;
-
+	const avatar = player.bot ? 
+		(player?.bot_level === 'easy' ? bot_easy
+			: player.bot_level === 'medium' ? bot_medium
+			: bot_hard) : player.avatar;
+	
 	return (
 		<Box sx={{ position: 'absolute', inset: 0, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
 			<EmoticonsMenu anchor={anchor} handleClose={handleClose} startCooldown={startCooldown}/>
@@ -62,7 +65,9 @@ function Avatar({player, position}: {player: PublicPlayer, position: string})
 				<CardMedia component="img" sx={{ border: 1, width: '100%', height: '100%', aspectRatio: '1 / 1',
 					borderRadius: '50%', objectFit: 'cover' }} image={avatar} draggable={false}/>
 				<Typography sx={{ color: 'black', bgcolor: 'orange', border: 1, zIndex: '10', position: 'absolute', 
-					bottom: 0, transform: 'translateY(70%)', fontSize: 'clamp(0.5vh, 2vh, 3vh)', px: '5%' }}>{player.name}</Typography>
+					bottom: 0, transform: 'translateY(70%)', fontSize: 'clamp(0.5vh, 2vh, 3vh)', px: '5%', whiteSpace: 'nowrap' }}>
+						{ player.name.length > 12 ? player.name.slice(0, 10) + '..' : player.name }
+					</Typography>
 			</Card>
 		</Box>
 	)
