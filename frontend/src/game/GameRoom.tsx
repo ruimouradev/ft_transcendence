@@ -16,13 +16,13 @@ import type { PopUpTypes } from '../core/GamePopUps';
 
 import { bg_image, cardBacks, defaultCardBack, direction_plus, direction_minus } from '../ui/ImagesUtils.ts';
 
-import {easy_bot, medium_bot, hard_bot, start_game} from './messages.ts'
-import { avatar_bot, color_red, color_blue, color_green, color_yellow } from '../ui/ImagesUtils.ts'
+import { color_red, color_blue, color_green, color_yellow } from '../ui/ImagesUtils.ts'
 
 import Avatar from '../components/Avatar'
 import Emoticons from '../components/Emoticons'
+import WaitRoom from '../components/WaitRoom'
 
-import type {Color, valueNum, valueAction, valueWild, GameCard, PublicPlayer, PrivatePlayer, LastAction, GameState} from './types.ts'
+import type {Color, valueNum, valueAction, valueWild, GameCard, Notice, PublicPlayer, PrivatePlayer, LastAction, GameState} from './types.ts'
 
 function getCardName({card}: {card: GameCard})
 {
@@ -99,29 +99,36 @@ function DeckArea()
 		default:
 			color = 'black';
 	}
-	
+
 	const direction = gameState?.direction === 1 ? direction_plus : direction_minus;
 	const image_styles: React.CSSProperties = {width: '100%', aspectRatio: '1 / 1', objectFit: 'fill'};
 
 	return (
-		<Box sx={{ height: '80%', width: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center', position: 'relative' }}>
+		<Box sx={{ height: '80%', width: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center', position: 'relative', transform: 'translateY(10%)' }}>
 			<Box sx={{ width: '50%', height: '50%', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 1, top: 0, position: 'absolute' }}>
-				<img className="card" src={cardBacks[user?.card_back ?? ''] ?? defaultCardBack} alt="" draggable={false} onClick={() => DrawCard(sendMessage)}/>
-				<img className="card" src={images[getCardName({card})]} alt="" draggable={false}/>
+				<img className="card card_small" src={cardBacks[user?.card_back ?? ''] ?? defaultCardBack} alt="" draggable={false} onClick={() => DrawCard(sendMessage)}/>
+				<img className="card card_small" src={images[getCardName({card})]} alt="" draggable={false}/>
 			</Box>
-			<Box sx={{ bottom: 0, position: 'absolute', width: '50%', height: '50%', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+			<Box sx={{ bottom: 0, position: 'absolute', width: '50%', height: '50%', display: 'flex', justifyContent: 'center', alignItems: 'end' }}>
 				<img className="arrow" src={direction} alt="" draggable={false}/>
 			</Box>
-			<Box sx={{ width: '25%', height: '100%', right: 0, position: 'absolute', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
+			<Box sx={{ width: '25%', height: '100%', right: 0, position: 'absolute', display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 2, transform: 'translateX(20%) translateY(-15%)' }}>
 				<Paper elevation={0} sx={{ width: '4vw', aspectRatio: '1 / 1', bgcolor: color, borderRadius: 1, ...box_shadow }}>
 					<img src={color} draggable={false} style={image_styles}/>
 				</Paper>
-				<Button className="rainbow-button" variant="contained" onClick={() => sendMessage(uno_click)} sx={{ width: '4vw',  aspectRatio: '1 / 1', minWidth: 0, p: 0, fontSize: 'clamp(0.2rem, 0.8rem, 1rem)', ...box_shadow }}>UNO!</Button>
+				<Button className="rainbow-button" variant="contained" onClick={() => sendMessage(uno_click)} 
+					sx={{ width: '4vw',  aspectRatio: '1 / 1', minWidth: 0, p: 0, fontSize: 'clamp(0.2rem, 1.4vh, 1rem)', ...box_shadow }}>UNO!
+				</Button>
 			</Box>
-			<Box sx={{ width: '25%', height: '100%', left: 0, position: 'absolute', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
-				<Button variant="contained" disabled={disable_challenge} onClick={() => sendMessage(challenge_click)}sx={{ width: '4vw',  aspectRatio: '1 / 1', minWidth: 0, p: 0, fontSize: 'clamp(0.2rem, 0.8rem, 1rem)', ...box_shadow }}>DARE</Button>
+			<Box sx={{ width: '25%', height: '100%', left: 0, position: 'absolute', display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 2, transform: 'translateX(-20%) translateY(-15%)' }}>
+				<Button variant="contained" disabled={disable_challenge} onClick={() => sendMessage(challenge_click)}
+					sx={{ width: '4vw',  aspectRatio: '1 / 1', minWidth: 0, p: 0, fontSize: 'clamp(0.2rem, 1.4vh, 1rem)', ...box_shadow }}>DARE
+				</Button>
 				{gameState?.stack !== 0 && <Paper elevation={0} sx={{ width: '4vw', aspectRatio: '1 / 1', bgcolor: color, borderRadius: 1, ...box_shadow }}>
-					<Typography>Stack {gameState?.stack}</Typography>
+					<Typography sx={{ width: '100%', height: '100%', color: 'backgorund.paper', fontSize: 'clamp(0.2rem, 1.4vh, 1rem)',
+						display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column' }}>
+						<span>STACK</span> <span>{gameState?.stack}</span>
+					</Typography>
 				</Paper>}
 			</Box>
 		</Box>
@@ -148,7 +155,7 @@ function DrawHands({deck, amount, card_class}:
 	)
 
 	const horizontal = card_class === 'card-north' || card_class === 'card-south';
-	const offset_multiplyer = amount > 20 ? 35 : amount > 15 ? 40 : 60;
+	const offset_multiplyer = amount > 20 ? 25 : amount > 15 ? 35 : amount > 10 ? 50 : 60;
 
 	return (
 		<List sx={{ width: '100%', height: '100%', display: 'grid', placeItems: 'center', p: 0 }}>
@@ -175,7 +182,7 @@ function DrawHidden({amount, card_class}: {amount: number, card_class: string})
 
 	const arr = Array.from({ length: amount });
 	const horizontal = card_class === 'card-north' || card_class === 'card-south';
-	const offset_multiplyer = amount > 20 ? 20 : amount > 15 ? 35 : 60;
+	const offset_multiplyer = amount > 20 ? 25 : amount > 15 ? 35 : amount > 10 ? 50 : 60;
 
 	return (
 		<List sx={{ width: '100%', height: '100%', display: 'grid', placeItems: 'center', p: 0 }}>
@@ -192,14 +199,17 @@ function DrawHidden({amount, card_class}: {amount: number, card_class: string})
 	)
 }
 
-function PlayerOneHand({player}: {player: PublicPlayer})
+function PlayerOneHand({player, notice}: {player: PublicPlayer, notice: Notice | undefined})
 {
-	const { notice, gameState } = getGameContext();
-	const private_player = gameState?.you !== undefined ? gameState?.you : {id: 0, hand: [], platable: [], drawn: null};
+	const { gameState } = getGameContext();
+
+	if (!gameState)
+		return null;
+	const private_player = gameState.you;
 
 	return (
 		<Box className="board-south" sx={{ position: 'relative' }}>
-			{(notice !== null && notice.sender === player.id) && <Emoticons position={'south'}/>}
+			{(notice !== undefined  && notice.sender === player.id) && <Emoticons position={'south'} playerID={player.id} notice={notice}/>}
 			<Avatar player={player} position={'south'} />
 			<Box sx={{ position: 'absolute', inset: 0 }}>
 				<DrawHands deck={private_player.hand} amount={private_player.hand.length} card_class="card-south" />
@@ -210,7 +220,11 @@ function PlayerOneHand({player}: {player: PublicPlayer})
 
 function PlayersUI({players}: {players: PublicPlayer[]})
 {
-	const { notice } = getGameContext();
+	const { notices, gameState } = getGameContext();
+
+	if (!gameState)
+		return null;
+
 	let player_pos: string[];
 
 	if (players.length == 2) {
@@ -224,13 +238,14 @@ function PlayersUI({players}: {players: PublicPlayer[]})
 	}
 
 	return (players.map((player, i) => {
+		const notice = notices[player.id];
 		if (i == 0) {
-			return (<PlayerOneHand key={player.id} player={player}/>)
+			return (<PlayerOneHand key={player.id} player={player} notice={notice}/>)
 		}
 		else {
 			return (
 				<Box key={player.id} className={`board-${player_pos[i]}`} sx={{ position: 'relative' }}>
-					{(notice !== null && notice.sender === player.id) && <Emoticons position={player_pos[i]}/>}
+					{(notice !== undefined  && notice.sender === player.id) && <Emoticons position={player_pos[i]} playerID={player.id} notice={notice}/>}
 					<Avatar player={player} position={player_pos[i]} />
 					<Box sx={{position: 'absolute', inset: 0, }}>
 						<DrawHidden amount={player.cards} card_class={`card-${player_pos[i]}`} />
@@ -248,7 +263,7 @@ function RotatePlayers(): PublicPlayer[]
 
 	let players: PublicPlayer[] = [];
 
-	if (gameState !== null)
+	if (gameState)
 		players = gameState.players;
 
 	let i = 0;
@@ -258,79 +273,6 @@ function RotatePlayers(): PublicPlayer[]
 	let new_players: PublicPlayer[] = players.slice(i);
 	new_players.push(...players.slice(0, i));
 	return (new_players);
-}
-
-function WaitRoom()
-{
-	const { roomID, gameState, sendMessage, leaveRoom } = getGameContext();
-
-	const host = gameState?.you.id !== gameState?.host_id;
-	const room_full = gameState?.players.length !== gameState?.settings?.max_players;
-	const text = room_full ? `WAITING FOR PLAYERS ${gameState?.players.length} / ${gameState?.settings?.max_players}` : 'START';
-
-	return (
-		<ThemeProvider theme={unoTheme}>
-			<Container sx={{ height: '65vh', width: '50%', display: 'flex', flexDirection: 'column', my: 2, p: 0.5,
-				position: 'relative', border: '1px solid', borderColor: 'divider', borderRadius: 2, bgcolor: 'background.paper' }}>
-				<Box sx={{height: '10%', width: '100%'}}>
-					<Typography variant="h5" sx={{  height: '100%', width: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>ROOM ID: {roomID}</Typography>
-					<IconButton size="large" sx={{ position: 'absolute', top: 0, right: 0, zIndex: 1 }} onClick={() => leaveRoom()}>
-						<ExitToAppOutlinedIcon fontSize="inherit"/>
-					</IconButton>
-				</Box>
-				<Box sx={{ height: '90%', width: '100%' }}>
-					<Box sx={{ height: '85%', width: '100%', bgcolor: 'black' }}>
-						<List className="no-select"  sx={{ height: '100%', width: '100%', display: 'flex', flexDirection: 'column', p: 0 }}>
-							{gameState?.players.map((player) => {
-								const avatar = player.bot ? avatar_bot : player.avatar;
-								return (
-								<ListItem key={player.id} sx={{ height: '20%', width: '100%', p: 0.5 }}>
-									<Card sx={{ height: '100%', width: '100%', display: 'flex', position: 'relative' }}>
-										<CardMedia draggable={false} component="img" sx={{ width: '12%', height: 'auto', display: 'flex', alignItems: 'center' }} image={avatar}/>
-										<CardContent sx={{display: 'flex', gap: 2}}>
-											<Typography variant="h6">{player.name}</Typography>
-											{player.connected 
-												? <></> 
-												: <Chip icon={<WifiOffOutlinedIcon />} label="Reconnecting" sx={{ backgroundColor: 'transparent',
-													color: 'text.secondary', border: '1px dashed', borderColor: 'text.secondary', opacity: 0.55,
-													fontSize: '0.95rem', py: 2.2, px: 0.5, '& .MuiChip-icon': { color: 'text.secondary' },}}/>}
-										</CardContent>
-										<CardContent>
-											{
-												(player.id !== gameState?.host_id)
-												?	<IconButton hidden={host} size="large" sx={{ position: 'absolute', right: 2, zIndex: 1, color: 'primary.main' }}
-												onClick={() => sendMessage({"type": "kick", "target": `${player.id}`})} >
-														<DisabledByDefaultOutlinedIcon fontSize="inherit"/>
-													</IconButton>
-												: <Chip icon={<StarOutlinedIcon />} label="HOST" sx={{ position: 'absolute', right: 15, backgroundColor: 'lightgreen',
-													color: '#0f172a', fontWeight: 'bold', fontSize: '0.95rem', py: 2.2, px: 0.5, '& .MuiChip-icon': { color: '#0f172a' },}}/>
-											}
-										</CardContent>
-									</Card>
-								</ListItem>
-							)})}
-							<ListItem key={'bot_menu'} sx={{ height: '20%', width: '100%', p: 0.5 }}>
-								<Card sx={{ height: '100%', width: '100%', display: 'flex', position: 'relative', alignItems: 'center' }}>
-									<Typography sx={{ p: 3 }}>ADD BOT</Typography>
-									<CardContent sx={{ display: 'flex', position: 'absolute', alignItems: 'center', right: 0 }}>
-										<Button disabled={host || !room_full} variant="contained" sx={{ mx: 2, bgcolor: '#708c08' }} onClick={() => sendMessage(easy_bot)}>EASY</Button>
-										<Button disabled={host || !room_full} variant="contained" sx={{ mx: 2, bgcolor: '#c7950e' }} onClick={() => sendMessage(medium_bot)}>MEDIUM</Button>
-										<Button disabled={host || !room_full} variant="contained" sx={{ mx: 2, bgcolor: '#cf5900' }} onClick={() => sendMessage(hard_bot)}>HARD</Button>
-									</CardContent> 
-								</Card>
-							</ListItem>
-						</List>
-					</Box>
-					<Box sx={{ height: '15%', width: '100%' }}>
-						<Button variant="contained" disabled={room_full || host} onClick={() => sendMessage(start_game)}
-						sx={{ height: '100%', width: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-							<Typography>{text}</Typography>
-						</Button>
-					</Box>
-				</Box>
-			</Container>
-		</ThemeProvider>
-	)
 }
 
 function GameRoom()
@@ -349,14 +291,16 @@ function GameRoom()
 
 	return ( gameState === null || gameState.phase === 'lobby' ? <WaitRoom /> :
 		<ThemeProvider theme={unoTheme}>
-			<Box className="no-select" sx={{ height: '85dvh', maxWidth: '90vw', aspectRatio: {sm: '1.1 / 1', md: '1.4 / 1'} , position: 'relative', mx: 'auto', my: '1%' }}>
+			<Box className="no-select" sx={{  height: { xs: 'auto', sm: '85dvh' },
+				width: { xs: '90vw', sm: 'auto' }, maxWidth: '90vw', aspectRatio: {xs: '1 / 1', sm: '1.1 / 1', md: '1.4 / 1' },
+				position: 'relative', mx: 'auto', my: '1%' }}>
 			<Container sx={{ width: '100%', height: '100%', display: 'grid',
 				gridTemplateColumns: 'repeat(10, 1fr)', gridTemplateRows: 'repeat(12, 1fr)',
 				backgroundImage: `url(${bg_image})`, backgroundSize: 'cover',
 				backgroundPosition: 'center', backgroundRepeat: 'no-repeat', border: '2px solid black' }}>
 				<PlayersUI players={new_players} />
 				<Box sx={{ gridColumn: '4/8', gridRow: '5/9' }}>
-						<DeckArea />
+					<DeckArea />
 				</Box>
 			</Container>
 			</Box>

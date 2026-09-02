@@ -45,6 +45,12 @@ async def get_pending_friends(session: SessionDep, current_user: CurrentUser, sk
 async def add_friend(friend_id: str, session: SessionDep, current_user: CurrentUser):
     '''
     Send a friend request to another user.
+    the logic is as follows:
+    1. Check if the friend_id is a valid UUID.
+    2. Check if the friend_id is the same as the current user's id. If so, raise an error.
+    3. Check if there is an existing friendship requested by the current user. If so, raise an error.
+    4. Check if there is an existing friendship requested by the other user. If not, create a new friendship with status pending. If yes, accept the friendship and set the status to accepted.
+    5. Return the friendship object.
     '''
     try:
         uuid_friend_id = UUID(friend_id)
@@ -59,8 +65,20 @@ async def add_friend(friend_id: str, session: SessionDep, current_user: CurrentU
 async def accept_friend(friend_id: str, status: FriendshipStatus, session: SessionDep, current_user: CurrentUser):
     '''
     Accept, block, or reject a friend request from another user.
+    the logic is as follows:
+    1. Check if the friend_id is a valid UUID.
+    2. Check if the status is one of the valid statuses (ACCEPTED, BLOCKED, REJECTED). If not, raise an error.
+    3. Call the friendservice.accept_friend function to update the friendship status.
+    4. Return the updated friendship object
     '''
+    try:
+        uuid_friend_id = UUID(friend_id)
+    except ValueError:
+        raise APIError(status_code=400, code=APIErrorCode.BAD_REQUEST, msg="Invalid friend ID format. Must be a valid UUID.")
     
-    friendship = friendservice.accept_friend(friend_id=friend_id, status=status, session=session, current_user=current_user)
+    if status not in [FriendshipStatus.ACCEPTED, FriendshipStatus.BLOCKED, FriendshipStatus.REJECTED]:
+        raise APIError(status_code=400, code=APIErrorCode.BAD_REQUEST, msg="Invalid friendship status.")
+
+    friendship = friendservice.accept_friend(friend_id=uuid_friend_id, status=status, session=session, current_user=current_user)
     
     return friendship

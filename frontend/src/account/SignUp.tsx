@@ -30,7 +30,7 @@ export default function SignUp() {
 
     useEffect(() => {
         if (user) {
-            navigate('/dashboard', { replace: true });
+            navigate('/', { replace: true });
         }
     }, [user, navigate]);
 

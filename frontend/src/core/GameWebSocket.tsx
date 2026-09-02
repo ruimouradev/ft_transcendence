@@ -12,23 +12,18 @@ sessionStorage.setItem = function (key, value) {
 
 import type { GameState } from '../game/types.ts'
 
-type ConnectionState = 'online' | 'offline' | 'retry'
-
 type GameContextType = {
 	roomID: string | null,
 	connected: boolean,
-	// error: string | null,
-	// lastMessage: string | null,
 	gameState: GameState | null,
-//	notices: Notices,
-	notice: Notice | null,
+	notices: Notices,
+	// notice: Notice | null,
 
 	leaveRoom: () => void,
-	// resetError: () => void,
 	resetGameState: () => void,
 	closeRoomConnection: () => void,
-	resetNotice: () => void,
-	// resetNotices: (id: string) => void,
+	// resetNotice: () => void,
+	resetNotices: (id: string) => void,
 	sendMessage: (message: object) => void,
 	joinRoom: (roomID: string, message: object) => void
 }
@@ -55,24 +50,22 @@ export function getGameContext()
 }
 
 function GameWebSocket({ children }: { children: React.ReactNode }) {
-	// const [lastMessage, setLastMessage] = useState<string | null>(null);
-	// const [error, setError] = useState<string | null>(null);
-
-
 	const [roomID, setRoomID] = useState<string | null>(null);
 	const [gameState, setGameState] = useState<GameState | null>(null);
 	const [connected, setConnected] = useState<boolean>(false);
-//	const [notices, setNotices] = useState<Notices>({});
-	const [notice, setNotice] = useState<Notice | null>(null);
+	const [notices, setNotices] = useState<Notices>({});
+	// const [notice, setNotice] = useState<Notice | null>(null);
 
 	const socketRef = useRef<WebSocket | null>(null);
 	const pendingRoomRef = useRef<string | null>(null);
+	const gameStateRef = useRef<GameState | null>(null);
 
 	const { user } = useAuth();
 	const { handleNewError } = getPopUpContext();
 
 	function joinRoom(roomID: string, message: object)
 	{
+		// DEL
 		console.log("connected: ", connected);
 		console.log("roomID: ", roomID);
 		console.log("socketRef: ", socketRef);
@@ -82,21 +75,19 @@ function GameWebSocket({ children }: { children: React.ReactNode }) {
 		// Dont accept two connections from same user if it already has one
 		if (socketRef.current)
 			return ;
-		// setError(null);
 
 		// Create new socket
 		const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws';
 		const socket = new WebSocket(`${protocol}://${window.location.host}/ws/game/${roomID}`)
 		socketRef.current = socket;
 
-		// Not final, maybe there is a better way ? Browser complains
+		// Determines a connection failed after 5s without server response
 		const timeout = setTimeout(() => {
 			if (socket.readyState === WebSocket.CONNECTING) {
 				socket.close();
 			}
 		}, 5000);
 
-		// Wait to connect
 		socket.onopen = () => {
 			clearTimeout(timeout);
 			socket.send(JSON.stringify(message));
@@ -109,19 +100,19 @@ function GameWebSocket({ children }: { children: React.ReactNode }) {
 
 			switch (type) {
 				case 'welcome':
-					// const { token } = message;
 					setRoomID(roomID);
 					setConnected(true);
 					sessionStorage.setItem('roomID', roomID);
-					// sessionStorage.setItem('reconnectToken', token);
 					break ;
 				case 'notice':
-					setNotice(message);
+//					setNotice(message);
+					newNotice(message);
 					break ;
 				case 'error':
 					handleErrorMessages(message);
 					break ;
 				case 'state':
+					gameStateRef.current = message;
 					setGameState(message);
 					break ;
 				default:
@@ -129,35 +120,25 @@ function GameWebSocket({ children }: { children: React.ReactNode }) {
 			}
 
 			// DEL !
-			// console.log("game engine: ", message);
-			// setLastMessage(message);
+			console.log("game engine: ", message);
 		}
 
 		socket.onerror = () => {
-			// Create close function
-			// setError("Connection failed");
 			handleNewError("Connection failed");
-			// create a popup to notify user.
 		}
 
 		socket.onclose = () => {
 			// Need to check error messages, to determine if retry or not
+			resetAllNotices();
 			socketRef.current = null;
-			setConnected(false);
-			setRoomID(null);
-			resetGameState();
-			resetNotice();
 			clearTimeout(timeout);
-			// if (gameState?.you.id)
-			// 	resetNotices(gameState.you.id)
- 
-			console.log("connection closed by backend !!!")
+			setConnected(false);
+			resetGameState();
+			setRoomID(null);
 
 			if (pendingRoomRef.current && user) {
 				const room = pendingRoomRef.current;
 				pendingRoomRef.current = null;
-
-//				console.log(room, {"type": "join", "name": user.nick_name});
 				joinRoom(room, {"type": "join", "name": user.nick_name})
 			}
 		}
@@ -175,6 +156,20 @@ function GameWebSocket({ children }: { children: React.ReactNode }) {
 		sendMessage({"type": "leave"});
 	}
 
+	function forcedLeave()
+	{
+		socketRef.current?.close();
+		pendingRoomRef.current = null;
+		sessionStorage.removeItem('roomID');
+	}
+
+	function specialClose()
+	{
+		if (gameStateRef.current !== null)
+			return ;
+		forcedLeave();
+	}
+
 	function sendMessage(message: object)
 	{
 		if (socketRef.current?.readyState  === WebSocket.OPEN)
@@ -186,84 +181,93 @@ function GameWebSocket({ children }: { children: React.ReactNode }) {
 
 	function handleErrorMessages({type, code, msg, room}: {type: string, code: string, msg:string, room: string | null})
 	{
+		// console.log('ERROR CODE:', code, JSON.stringify(code));
+		if (type !== 'error')
+			return ;
 		switch(code)
 		{
 			case ("ALREADY_IN_ROOM"):
 				if (room && user) {
 					pendingRoomRef.current = room;
 					socketRef.current?.close();
+					msg = `redirected to Room ${room}`;
 				}
-				return ;
-			case ("KICKED"):
-				pendingRoomRef.current = null;
-				sessionStorage.removeItem('roomID');
-				closeRoomConnection();			
 				break ;
+			case ("KICKED"):
 			case ('ROOM_FULL'):
 			case ("AUTH_REQUIRED"):
 			case ('ROOM_NOT_FOUND'):
 			case ("GAME_ALREADY_STARTED"):
-			// AUTH_REQUIRED = "AUTH_REQUIRED"
-				console.log("connection closed by me !!!")
-				closeRoomConnection();			
+				forcedLeave();
 				break ;
-			// case("GAME_NOT_STARTED"):
-			// 	return ;
+			case ("INVALID_MESSAGE"):
+				specialClose();
+				break ;
 		}
 		handleNewError(msg);
-		/* ALERT
-		{
-			// INVALID_MESSAGE = "INVALID_MESSAGE"
-			// GAME_NOT_STARTED = "GAME_NOT_STARTED"
-			// CARD_NOT_IN_HAND = "CARD_NOT_IN_HAND"
-			// COLOR_REQUIRED = "COLOR_REQUIRED"
-			// TARGET_REQUIRED = "TARGET_REQUIRED"
- 
-			// IGNORE ?? //
-				// NOT_YOUR_TURN = "NOT_YOUR_TURN"
-				// INVALID_CARD = "INVALID_CARD"
-				// INVALID_CHALLENGE = "INVALID_CHALLENGE"
-				// INVALID_UNO = "INVALID_UNO"
-				// INVALID_CATCH = "INVALID_CATCH"
 
-			// CLOSE CONNECTION  //
-				// KICKED = "KICKED"
-				// ROOM_FULL = "ROOM_FULL"
-				// AUTH_REQUIRED = "AUTH_REQUIRED"
-				// ROOM_NOT_FOUND = "ROOM_NOT_FOUND"
-				// GAME_ALREADY_STARTED = "GAME_ALREADY_STARTED"
-		} 
-		// HANDLE //
-			// ALREADY_IN_ROOM = "ALREADY_IN_ROOM"
+		/*
+			HANDLE
+				ALREADY_IN_ROOM = "ALREADY_IN_ROOM"
+
+			JUST PROMPT
+				NOT_YOUR_TURN = "NOT_YOUR_TURN"
+				INVALID_CARD = "INVALID_CARD"
+				COLOR_REQUIRED = "COLOR_REQUIRED"
+				TARGET_REQUIRED = "TARGET_REQUIRED"
+				CARD_NOT_IN_HAND = "CARD_NOT_IN_HAND"
+				INVALID_CATCH = "INVALID_CATCH"
+				INVALID_UNO = "INVALID_UNO"
+				INVALID_CHALLENGE = "INVALID_CHALLENGE"
+				GAME_NOT_STARTED = "GAME_NOT_STARTED"
+
+			SPECIAL
+				INVALID_MESSAGE = "INVALID_MESSAGE"
+
+				GameState ? (JUST PROMPT) : (FULL CLEAR)
+
+			BACKEND CLOSE (FULL CLEAR)
+				KICKED = "KICKED"
+				ROOM_FULL = "ROOM_FULL"
+				AUTH_REQUIRED = "AUTH_REQUIRED"
+				ROOM_NOT_FOUND = "ROOM_NOT_FOUND"
+				GAME_ALREADY_STARTED = "GAME_ALREADY_STARTED"
 		*/
 	}
 
 	function resetGameState()
 	{
+		gameStateRef.current = null;
 		setGameState(null);
 	}
 
-	function resetNotice()
+	function newNotice(message: Notice)
 	{
-		setNotice(null);
+		if (!gameStateRef.current)
+			return ;
+
+		setNotices(prev => ({
+			...prev,
+			[message.sender]: message
+		}))
 	}
 
-	// function resetNotices(id: string)
-	// {
-	// 	setNotices(prev => {
-	// 		const tmp = {...prev};
-	// 		delete tmp[id];
-	// 		return tmp;
-	// 	})
-	// }
+	function resetNotices(id: string)
+	{
+		setNotices(prev => {
+			const tmp = {...prev};
+			delete tmp[id];
+			return tmp;
+		})
+	}
 
-	// function resetError()
-	// {
-	// 	setError(null);
-	// }
+	function resetAllNotices()
+	{
+		setNotices({});
+	}
 
 	return (
-		<GameContext.Provider value={{ roomID, connected, gameState, notice, leaveRoom, resetNotice, resetGameState, joinRoom, closeRoomConnection, sendMessage }}>
+		<GameContext.Provider value={{ roomID, connected, gameState, notices, leaveRoom, resetNotices, resetGameState, joinRoom, closeRoomConnection, sendMessage }}>
 			{ children }
 		</GameContext.Provider>
 	)

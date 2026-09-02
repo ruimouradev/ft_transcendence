@@ -14,7 +14,7 @@ vinit:
 
 dev: vinit
 	docker compose -f ./docker-compose.yml build
-	docker compose -f ./docker-compose.yml up db backend frontend adminer nginx
+	docker compose -f ./docker-compose.yml up db redis backend frontend adminer nginx
 
 down:
 	docker compose -f ./docker-compose.yml down

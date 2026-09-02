@@ -64,8 +64,11 @@ services:
       - O42_CLIENT_SECRET=${O42_CLIENT_SECRET}
       - O42_REDIRECT_URI=${O42_REDIRECT_URI}
       - O42_TOKEN_URL=${O42_TOKEN_URL}
+      - REDIS_URL=${REDIS_URL}
     depends_on:
       db:
+        condition: service_healthy
+      redis:
         condition: service_healthy
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000')"]
@@ -76,6 +79,20 @@ services:
     networks:
       - ft_network
 
+  redis:
+    image: redis:8.8.2-alpine
+    container_name: redis
+    restart: unless-stopped
+    command: redis-server --save "" --appendonly no
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
+    networks:
+      - ft_network
+  
   frontend:
     build:
       context: ./frontend
@@ -167,3 +184,4 @@ volumes:
       device: ${DBDATAPATH}
   prometheus_data:
   grafana_data:
+  redis_data:

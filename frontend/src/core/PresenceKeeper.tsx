@@ -8,102 +8,114 @@ import { useAuth } from './AuthContext';
 // protocolo. Não desenha nada nem expõe nada: se um dia precisares
 // do estado da ligação no ecrã, é aqui que ele nasce.
 
-const MAX_RECONNECT_ATTEMPTS = 5;
+const MAX_RECONNECT_ATTEMPTS = 50;
 const BASE_RECONNECT_DELAY = 1000; // primeiro reencontro ao fim de 1s
-const HEARTBEAT_INTERVAL = 10000; // uma batida a cada 10s
+// const HEARTBEAT_INTERVAL = 10000; // uma batida a cada 10s
 
 export default function PresenceKeeper() {
-  const { user, isLoading } = useAuth();
+    const { user, isLoading } = useAuth();
 
-  // refs porque nada disto deve redesenhar o ecrã: o socket, os
-  // temporizadores e o contador de tentativas
-  const socketRef = useRef<WebSocket | null>(null);
-  const heartbeatRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const reconnectRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const attemptsRef = useRef(0);
-  // distingue "fechámos nós" (logout, sair da app) de "caiu a ligação"
-  const closedByUsRef = useRef(false);
+    // refs porque nada disto deve redesenhar o ecrã: o socket, os
+    // temporizadores e o contador de tentativas
+    const socketRef = useRef<WebSocket | null>(null);
+    //   const heartbeatRef = useRef<ReturnType<typeof setInterval> | null>(null);
+    const reconnectRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const attemptsRef = useRef(0);
+    // distingue "fechámos nós" (logout, sair da app) de "caiu a ligação"
+    const closedByUsRef = useRef(false);
 
-  useEffect(() => {
-    const cleanup = () => {
-      if (heartbeatRef.current) {
-        clearInterval(heartbeatRef.current);
-        heartbeatRef.current = null;
-      }
-      if (reconnectRef.current) {
-        clearTimeout(reconnectRef.current);
-        reconnectRef.current = null;
-      }
-    };
+    useEffect(() => {
+        const cleanup = () => {
+            console.log('Presence: cleaning up');
+            if (reconnectRef.current) {
+                clearTimeout(reconnectRef.current);
+                reconnectRef.current = null;
+            }
+        };
 
-    function connect() {
-      if (!user?.id) return;
+        const handleVisibilityChange = () => {
+            if (document.visibilityState === "visible") {
+                console.log("Presence: tab is visible, checking websocket connection");
+                const ws = socketRef.current;
+                if (!ws || ws.readyState !== WebSocket.OPEN) {
+                    scheduleReconnect();
+                }
+            }
+        };
 
-      cleanup();
+        document.addEventListener("visibilitychange", handleVisibilityChange);
 
-      // O cookie de sessão segue sozinho no handshake, o servidor
-      // confirma que o id do caminho é mesmo o da sessão
-	  const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws';
-      const wsUrl = `${protocol}://${window.location.host}/ws/presence/${user.id}`;
-      const ws = new WebSocket(wsUrl);
-      socketRef.current = ws;
+        const scheduleReconnect = () => {
+            if (closedByUsRef.current) { return; }
+            if (attemptsRef.current >= MAX_RECONNECT_ATTEMPTS) {
+                console.error('Presence: maximum reconnect attempts reached');
+                return;
+            }
+            attemptsRef.current += 1;
+            const delay = BASE_RECONNECT_DELAY * Math.pow(2, attemptsRef.current - 1);
+            console.log(`Presence: reconnecting in ${delay}ms ` + `(attempt ${attemptsRef.current}/${MAX_RECONNECT_ATTEMPTS})`);
+            reconnectRef.current = setTimeout(connect, delay);
+        };
 
-      ws.onopen = () => {
+        function connect() {
+            if (closedByUsRef.current || !user?.id) return;
+            cleanup();
+            // O cookie de sessão segue sozinho no handshake, o servidor
+            // confirma que o id do caminho é mesmo o da sessão
+            const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws';
+            const wsUrl = `${protocol}://${window.location.host}/ws/presence`;
+            // const wsUrl = `${protocol}://${window.location.host}/ws/presence/${user.id}`;
+            const ws = new WebSocket(wsUrl);
+            socketRef.current = ws;
+
+            ws.onopen = () => {
+                console.log('Presence: connected');
+                attemptsRef.current = 0;
+            };
+
+            ws.onclose = (event) => {
+                console.log(`Presence: disconnected (code ${event.code}, reason: ${event.reason})`);
+                if (socketRef.current === ws) {
+                    socketRef.current = null;
+                }
+                if (closedByUsRef.current) {
+                    console.log('Presence: closed by us');
+                    return;
+                }
+                scheduleReconnect();
+            };
+
+            ws.onerror = () => {
+                // o onclose que se segue trata do resto
+                console.warn('Presence: websocket error');
+            };
+        }
+
+        // sem sessão (ou ainda a verificar) a presença fica desligada
+        if (isLoading || !user?.id) {
+            closedByUsRef.current = true;
+            cleanup();
+            if (socketRef.current) {
+                socketRef.current.close(1000, 'no session');
+                socketRef.current = null;
+            }
+            return;
+        }
+
+        closedByUsRef.current = false;
         attemptsRef.current = 0;
+        connect();
 
-        // enquanto as batidas chegarem, o servidor mostra-nos online
-        heartbeatRef.current = setInterval(() => {
-          if (ws.readyState === WebSocket.OPEN) {
-            ws.send(JSON.stringify({ type: 'PING' }));
-          }
-        }, HEARTBEAT_INTERVAL);
-      };
+        return () => {
+            document.removeEventListener("visibilitychange", handleVisibilityChange);
+            closedByUsRef.current = true;
+            cleanup();
+            if (socketRef.current) {
+                socketRef.current.close(1000, 'presence closed');
+            }
+            socketRef.current = null;
+        };
+    }, [user?.id, isLoading]);
 
-      ws.onclose = (event) => {
-        cleanup();
-
-        // fecho pedido por nós, ou fecho limpo do servidor: fica fechado
-        if (closedByUsRef.current || event.code === 1000 || event.code === 1001) {
-          return;
-        }
-
-        // queda a meio: tenta voltar, esperando o dobro de cada vez
-        // (1s, 2s, 4s, 8s, 16s) para não martelar um servidor em apuros
-        if (attemptsRef.current < MAX_RECONNECT_ATTEMPTS) {
-          attemptsRef.current += 1;
-		  const steps = Math.min(attemptsRef.current, MAX_RECONNECT_ATTEMPTS);
-          const delay = BASE_RECONNECT_DELAY * Math.pow(2, steps - 1);
-          reconnectRef.current = setTimeout(connect, delay);
-        }
-      };
-
-      ws.onerror = () => {
-        // o onclose que se segue trata do resto
-      };
-    }
-
-    // sem sessão (ou ainda a verificar) a presença fica desligada
-    if (isLoading || !user?.id) {
-      closedByUsRef.current = true;
-      cleanup();
-      if (socketRef.current) {
-        socketRef.current.close(1000, 'no session');
-        socketRef.current = null;
-      }
-      return;
-    }
-
-    closedByUsRef.current = false;
-    connect();
-
-    return () => {
-      closedByUsRef.current = true;
-      cleanup();
-      if (socketRef.current) {
-        socketRef.current.close(1000, 'presence closed');
-      }
-    };
-  }, [user?.id, isLoading]);
-
-  return null;
+    return null;
 }

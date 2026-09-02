@@ -41,7 +41,7 @@ export default function Login() {
 
     useEffect(() => {
         if (!loading && user) {
-            navigate('/dashboard', { replace: true });
+            navigate('/', { replace: true });
         }
     }, [user, loading, navigate]);
 
@@ -80,7 +80,7 @@ export default function Login() {
             if (response.data.code === 'success') {
                 const userResponse = await api.get('/users/me');
                 login(userResponse.data);
-                navigate('/dashboard', { replace: true });
+                navigate('/', { replace: true });
             } else if (response.data.code === '2fa_required') {
                 navigate('/login/2fa', { replace: true });
             }

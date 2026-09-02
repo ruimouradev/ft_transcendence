@@ -1,8 +1,9 @@
-import jwt
+import secrets
+
 import httpx
 import logging
 
-from datetime import timedelta, datetime, timezone
+from datetime import timedelta
 from typing import Annotated, Any
 
 from fastapi import APIRouter, Depends, status, BackgroundTasks, Body
@@ -13,35 +14,13 @@ from app.platform.deps import SessionDep, TokenDep
 from app.platform import security
 from app.platform.config import settings
 
-from app.platform.service.mailservice import create_verification_token, send_password_reset_email, verify_token
-from app.models.all import EmailVerificationType, ErrorResponse, Message, OAuthAccountCreate, ProviderType, TokenPayload, UserCreate, UserUpdate, User
-from app.models.all import APIError, APIErrorCode
+from app.platform.service.mailservice import create_verification_token_used_in_mail, send_password_reset_email, verify_token_in_email
+from app.models.all import EmailVerificationType, ErrorResponse, Message, OAuthAccountCreate, ProviderType, UserCreate, UserUpdate, User, APIError, APIErrorCode
 
 from fastapi.responses import RedirectResponse, Response
-from jwt.exceptions import InvalidTokenError
 
 router = APIRouter(tags=["login"], include_in_schema=False)
 logger = logging.getLogger("uvicorn.error")
-
-
-def verify_password_reset_token(token: str) -> str | None:
-    try:
-        decoded_token = jwt.decode(token, settings.SECRET_KEY, algorithms=[security.ALGORITHM])
-        return str(decoded_token["sub"])
-    except InvalidTokenError:
-        return None
-
-def generate_password_reset_token(email: str) -> str:
-    delta = timedelta(hours=settings.EMAIL_RESET_TOKEN_EXPIRE_HOURS)
-    now = datetime.now(timezone.utc)
-    expires = now + delta
-    exp = expires.timestamp()
-    encoded_jwt = jwt.encode(
-        {"exp": exp, "nbf": now, "sub": email},
-        settings.SECRET_KEY,
-        algorithm=security.ALGORITHM,
-    )
-    return encoded_jwt
 
 
 @router.post("/login/access-token", response_model=Message, responses={401: {"model": ErrorResponse}})
@@ -87,17 +66,13 @@ def validate_2fa(session: SessionDep, token: TokenDep, response: Response, code:
     """
     Validate 2FA and return access token
     """
-    try:
-        payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[security.ALGORITHM])
-        token_data = TokenPayload(**payload)
-    except (InvalidTokenError, ValidationError):
-        raise APIError(status_code=403, code=APIErrorCode.INVALID_TOKEN, msg="Could not validate credentials.")
-    if token_data.type != "2fa":
-        raise APIError(status_code=403, code=APIErrorCode.INVALID_TOKEN, msg="Invalid token type.")
-    user = userservice.get_user_by_id(session=session, user_id=token_data.sub)
+    user = twofa_service.get_user_from_tfa_token(session=session, token=token)
+
     if user.use2fa is False:
         raise APIError(status_code=400, code=APIErrorCode.BAD_REQUEST, msg="Two-factor authentication is not enabled for this user")
     else:
+        if user.two_factor_secret is None:
+            raise APIError(status_code=400, code=APIErrorCode.BAD_REQUEST, msg="Two-factor authentication secret is not set for this user")
         if not twofa_service.verify_totp(secret=user.two_factor_secret, code=code):
             raise APIError(status_code=400, code=APIErrorCode.UNAUTHORIZED, msg="Invalid two-factor authentication code")
     
@@ -124,18 +99,21 @@ def recover_password(session: SessionDep, background_tasks: BackgroundTasks, ema
     if user:
         if settings.EMAILS_ENABLED and user.is_active:
             expire_minutes = 10
-            token = create_verification_token(email, EmailVerificationType.PASSWORD_RESET, expire_minutes=expire_minutes)
+            token = create_verification_token_used_in_mail(email, EmailVerificationType.PASSWORD_RESET, expire_minutes=expire_minutes)
             background_tasks.add_task(send_password_reset_email, email=email, username=user.nick_name, token=token, expire_minutes=expire_minutes)
 
     return Message(status_code=200, code="success", message="Check your email and reset your password.")
 
 @router.post("/set-password", response_model=Message, responses={400: {"model": ErrorResponse}})
-def reset_password_me(*, session: SessionDep, password: str = Body(..., embed=True), token: str = Body(..., embed=True)) -> Any:
+async def reset_password_me(*, session: SessionDep, password: str = Body(..., embed=True), token: str = Body(..., embed=True)) -> Any:
     """
     Use a verification token to set a new password.
     """
-    email = verify_token(token)
+    email = verify_token_in_email(token)
     current_user = userservice.get_user_by_email(session=session, email=email)
+    if not current_user:
+        raise APIError(status_code=400, code=APIErrorCode.BAD_REQUEST, msg="The user with this email does not exist in the system.")
+    await security.consume_verification_token(token, EmailVerificationType.PASSWORD_RESET)
     userservice.update_user(session=session, db_user=current_user, user_in=UserUpdate(password=password))
     return Message(status_code=200, code="success", message="Password reset successfully")
 
@@ -156,7 +134,9 @@ async def login_42():
     # Redirect the user to the 42 OAuth2 authorization URL
     client_id = settings.O42_CLIENT_ID
     redirect_uri = settings.O42_REDIRECT_URI
-    auth_url = f"https://api.intra.42.fr/oauth/authorize?client_id={client_id}&redirect_uri={redirect_uri}&response_type=code"
+    state = secrets.token_urlsafe(16)
+    await security.cache_state(state)
+    auth_url = f"https://api.intra.42.fr/oauth/authorize?client_id={client_id}&redirect_uri={redirect_uri}&response_type=code&state={state}"
     return RedirectResponse(auth_url)
 
 async def download_image(url: str, filename: str):
@@ -169,7 +149,13 @@ async def download_image(url: str, filename: str):
                     f.write(chunk)
 
 @authRouter.get("/auth/42/callback", tags=["auth"])
-async def callback_42(code: str, session: SessionDep):
+async def callback_42(code: str, session: SessionDep, state: str):
+    """
+    Handle the callback from 42 OAuth2 login. Exchange the authorization code for an access token, then use the access token to get user info. If the user does not exist, create a new user. Finally, return a redirect response with the access token set in a cookie.
+    """
+    # Verify the state parameter
+    await security.verify_state(state)
+
     # Exchange the authorization code for an access token
     client_id = settings.O42_CLIENT_ID
     client_secret = settings.O42_CLIENT_SECRET
@@ -181,38 +167,55 @@ async def callback_42(code: str, session: SessionDep):
         "code": code,
         "redirect_uri": f"{settings.O42_REDIRECT_URI}"
     }
-    async with httpx.AsyncClient() as client:
+    async with httpx.AsyncClient(timeout=10.0) as client:
         response = await client.post(token_url, data=data)
         if response.status_code != 200:
             response=RedirectResponse(url="/login?error=oauth2_error", status_code=status.HTTP_307_TEMPORARY_REDIRECT,)
             return response;
         response_data = response.json()
-        access_token = response_data.get("access_token")
-        if not access_token:
+        access_token42 = response_data.get("access_token")
+        if not access_token42:
             response=RedirectResponse(url="/login?error=oauth2_error", status_code=status.HTTP_307_TEMPORARY_REDIRECT)
             return response;
         
         # Use the access token to get user info
         user_info_url = "https://api.intra.42.fr/v2/me"
-        headers = {"Authorization": f"Bearer {access_token}"}
+        headers = {"Authorization": f"Bearer {access_token42}"}
         user_response = await client.get(user_info_url, headers=headers)
         if user_response.status_code != 200:
             response=RedirectResponse(url="/login?error=oauth2_error", status_code=status.HTTP_307_TEMPORARY_REDIRECT)
             return response;
 
         user_info = user_response.json()
-        user=userservice.get_user_by_email(session=session, email=user_info.get("email"))
+        user42_email = user_info.get("email")
+        user42_id = user_info.get("id")
+        user42_login = user_info.get("login")
+        user42_image = user_info.get("image", {}).get("versions", {}).get("small", "")
+
+        if not user42_email or not user42_id or not user42_login:
+            response=RedirectResponse(url="/login?error=oauth2_error", status_code=status.HTTP_307_TEMPORARY_REDIRECT)
+            return response;
+
+        user = userservice.get_user_by_email(session=session, email=user42_email)
         if not user:
-            await download_image(user_info.get("image", {}).get("versions", {}).get("small", ""), f"app/static/{user_info['id']}-small.jpg")
+            # Download the user's avatar image and save it to the static folder
+            try:
+                if not user42_image:
+                    avatar_path = "/static/a00.jpeg"
+                else:
+                    avatar_path = f"/static/{user42_id}-small.jpg"
+                    await download_image(user42_image, f"app{avatar_path}")
+            except Exception as e:
+                logger.error(f"Failed to download avatar image for user {user42_login}: {e}")
+                avatar_path = "/static/a00.jpeg"
             user_create = UserCreate(
-                email=user_info.get("email"),
+                email=user42_email,
                 password=security.generate_password(8),
                 is_active=True,
-                nick_name=f"{user_info.get('login')}",
-                avatar=f"/static/{user_info['id']}-small.jpg"
+                nick_name=f"{user42_login}",
+                avatar=avatar_path
             )
-            userservice.create_user(session=session, user_create=user_create)
-            user=userservice.get_user_by_email(session=session, email=user_info.get("email"))
+            user = userservice.create_user(session=session, user_create=user_create)
 
         access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
         access_token=security.create_access_token(user.id, expires_delta=access_token_expires)
@@ -221,12 +224,12 @@ async def callback_42(code: str, session: SessionDep):
         if not oauth_account:
             oauth_account = userservice.create_oauth_account(session=session, oauth_account_create=OAuthAccountCreate(
                 provider=(ProviderType.t42.value),
-                provider_user_id=str(user_info.get("id")),
-                provider_user_email=user_info.get("email"),
-                access_token=access_token,
+                provider_user_id=str(user42_id),
+                provider_user_email=user42_email,
+                access_token=access_token42,
                 user_id=str(user.id)
             ))
-        response = RedirectResponse(url=f"/dashboard", status_code=status.HTTP_307_TEMPORARY_REDIRECT)
+        response = RedirectResponse(url=f"/dashboard", status_code=status.HTTP_302_FOUND)
         
         response.set_cookie(
             key="access_token",
@@ -234,32 +237,8 @@ async def callback_42(code: str, session: SessionDep):
             httponly=True,       # Prevents JS reading the token (XSS protection)
             secure=True,         # Set to True in production (HTTPS)
             samesite="lax",      # Crucial for OAuth redirects across domains
-            max_age=settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60         # 30 minutes in seconds
+            max_age=settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60
         )
         
         return response
 
-# @router.post(
-#     "/password-recovery-html-content/{email}",
-#     dependencies=[Depends(get_current_active_superuser)],
-#     response_class=HTMLResponse,
-# )
-# def recover_password_html_content(email: str, session: SessionDep) -> Any:
-#     """
-#     HTML Content for Password Recovery
-#     """
-#     user = crud.get_user_by_email(session=session, email=email)
-
-#     if not user:
-#         raise HTTPException(
-#             status_code=404,
-#             detail="The user with this username does not exist in the system.",
-#         )
-#     password_reset_token = generate_password_reset_token(email=email)
-#     email_data = generate_reset_password_email(
-#         email_to=user.email, email=email, token=password_reset_token
-#     )
-
-#     return HTMLResponse(
-#         content=email_data.html_content, headers={"subject:": email_data.subject}
-#     )

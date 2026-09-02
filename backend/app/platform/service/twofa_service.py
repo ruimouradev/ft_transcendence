@@ -1,9 +1,14 @@
 import secrets
 
-from app.platform import security
-from sqlmodel import delete, select
+import jwt
 
-from app.models.all import RecoveryCode, get_datetime_utc
+from pydantic import ValidationError
+from app.platform import security
+from app.platform.service import userservice
+from sqlmodel import delete, select, Session
+
+from app.models.all import APIError, APIErrorCode, RecoveryCode, TokenPayload, User, get_datetime_utc, LoginTokenType
+from app.platform.config import settings
 import pyotp
 
 
@@ -13,7 +18,7 @@ def generate_secret() -> str:
     """
     return pyotp.random_base32()
 
-def get_otpauth_url(secret: str, username: str, issuer_name: str = "UNOpposed") -> str:
+def get_otpauth_url(secret: str, username: str, issuer_name: str = settings.PROJECT_NAME) -> str:
     """
     Generate the otpauth URL for two-factor authentication.
     """
@@ -65,3 +70,30 @@ def check_recovery_code(session, user, recovery_code: str) -> bool:
             session.commit()
             return True
     return False
+
+
+def get_user_from_tfa_token(session: Session, token: str) -> User:
+    """
+    Get the user associated with the provided two-factor authentication token.
+    """
+    try:
+        payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[security.ALGORITHM])
+        token_data = TokenPayload(**payload)
+    except (jwt.InvalidTokenError, ValidationError):
+        raise APIError(status_code=403, code=APIErrorCode.INVALID_TOKEN, msg="Could not validate credentials.")
+    
+    if token_data.type != LoginTokenType.TFA.value:
+        raise APIError(status_code=403, code=APIErrorCode.INVALID_TOKEN, msg="Invalid token type.")
+
+    current_user = userservice.get_user_by_id(session=session, user_id=token_data.sub)
+    if current_user is None:
+        raise APIError(status_code=404, code=APIErrorCode.NOT_FOUND, msg="User not found.")
+    
+    return current_user
+
+def check_user_password(user: User, password: str) -> bool:
+    """
+    Check if the provided password matches the user's password.
+    """
+    verified, _ = userservice.verify_password(password, user.hashed_password)
+    return verified
