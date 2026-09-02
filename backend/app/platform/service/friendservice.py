@@ -42,16 +42,20 @@ def get_all_friends(session: Session, current_user: CurrentUser, skip: int = 0, 
     statement = select(User, Friendship, UserStatistic).join(Friendship, or_(
         (Friendship.requester_id == current_user.id) & (Friendship.addressee_id == User.id),
         (Friendship.addressee_id == current_user.id) & (Friendship.requester_id == User.id)
-    )).join(UserStatistic, User.id == UserStatistic.user_id, isouter=True).where(Friendship.status == FriendshipStatus.ACCEPTED).offset(skip).limit(limit)
+        )).join(UserStatistic, User.id == UserStatistic.user_id, isouter=True
+            ).where(or_(Friendship.status == FriendshipStatus.ACCEPTED, Friendship.status == FriendshipStatus.BLOCKED)).offset(skip).limit(limit)
     result = session.exec(statement).all()
     friends = []
     if result:
         for user, friendship, user_statistic in result:
             blocked = False
-            if friendship.requester_id == current_user.id:
-                blocked = bool(friendship.blocked_by_req)
-            elif friendship.addressee_id == current_user.id:
-                blocked = bool(friendship.blocked_by_add)
+            if friendship.status == FriendshipStatus.BLOCKED:
+                if friendship.requester_id == current_user.id and friendship.blocked_by_req:
+                    blocked = True
+                elif friendship.addressee_id == current_user.id and friendship.blocked_by_add:
+                    blocked = True
+                # else:
+                #     continue  # Skip this friend if the current user is not the one who blocked the friendship
             friends.append(Friend(id=user.id, nick_name=user.nick_name, handle=user.nick_name, avatar=user.avatar, level=calculate_level_data(user_statistic.total_score if user_statistic and user_statistic.total_score is not None else 0).current_level, title=calculate_level_data(user_statistic.total_score if user_statistic and user_statistic.total_score is not None else 0).title, status=(FriendshipStatus.BLOCKED if blocked else FriendshipStatus.ACCEPTED), online=presence_manager.is_online(str(user.id))))
 
     return friends
@@ -83,6 +87,7 @@ def add_friend(friend_id: UUID, session: Session, current_user: CurrentUser)-> F
         select(Friendship).where((Friendship.addressee_id == friend_id) , (Friendship.requester_id == current_user.id))
     ).first()
 
+    # if there is an existing friendship requested by the current user, cannot send another friend request
     if friendship:
         if friendship.status == FriendshipStatus.PENDING or friendship.status == FriendshipStatus.ACCEPTED:
             raise APIError(status_code=400, code=APIErrorCode.INVALID_OPERATION, msg="Friend request already sent or you are already friends.")
@@ -92,7 +97,7 @@ def add_friend(friend_id: UUID, session: Session, current_user: CurrentUser)-> F
     friendship= session.exec(
         select(Friendship).where(Friendship.addressee_id == current_user.id , Friendship.requester_id == friend_id)
     ).first()
-
+    # check if there is an existing friendship requested by the other user: if not, create a new friendship with status pending;
     if friendship is None:
         new_friend = Friendship(
             requester_id=current_user.id,
@@ -103,7 +108,10 @@ def add_friend(friend_id: UUID, session: Session, current_user: CurrentUser)-> F
         session.commit()
         session.refresh(new_friend)
         return new_friend
+    # if yes, accept the friendship and set the status to accepted
     elif friendship.status in [FriendshipStatus.PENDING, FriendshipStatus.REJECTED, FriendshipStatus.BLOCKED]:
+        if friendship.status==FriendshipStatus.BLOCKED and friendship.blocked_by_req:
+            raise APIError(status_code=400, code=APIErrorCode.INVALID_OPERATION, msg="Cannot accept friend request. The user has blocked you.")
         friendship.status = FriendshipStatus.ACCEPTED
         session.add(friendship)
         session.commit()
@@ -115,31 +123,52 @@ def add_friend(friend_id: UUID, session: Session, current_user: CurrentUser)-> F
 def accept_friend(friend_id: str, status: FriendshipStatus, session: Session, current_user: CurrentUser)-> Friendship:
     '''
     Accept block/reject a friend request from another user.
+    The logic is as follows:
+    1. Only the accepted status can be blocked by the requester or addressee. If the status is not accepted, the block operation will not be allowed.
+    2. If the status is accepted, the requester or addressee can block the friendship by setting the blocked_by_req or blocked_by_add flag to True.
+    3. If want to set another status(ACCEPTED, REJECTED), the addressee can only set the status to ACCEPTED or REJECTED. The requester cannot set the status to ACCEPTED or REJECTED.
+    4. If the status is ACCEPTED, the accepted_at field will be set to the current datetime in UTC.
+    5. If the status is REJECTED, the friendship will be deleted from the database.
+    6. If the status is BLOCKED, the friendship will remain in the database, but the blocked_by_req or blocked_by_add flag will be set to True.
+    7. The function will return the updated friendship object.
     '''
+    friendship = session.exec(select(Friendship).where(or_(
+                                (Friendship.addressee_id == current_user.id) & (Friendship.requester_id == friend_id),
+                                (Friendship.requester_id == current_user.id) & (Friendship.addressee_id == friend_id)
+                            ))
+                        ).first()
+    if not friendship:
+        raise APIError(status_code=404, code=APIErrorCode.FRIEND_REQUEST_NOT_FOUND, msg="No friendship request found.")
+    new_status = None
     if status == FriendshipStatus.BLOCKED:
-        friendship = session.exec(
-                select(Friendship).where(or_(
-                    (Friendship.addressee_id == current_user.id) & (Friendship.requester_id == friend_id),
-                    (Friendship.requester_id == current_user.id) & (Friendship.addressee_id == friend_id)
-                ),Friendship.status == FriendshipStatus.ACCEPTED)
-            ).first()
-        if not friendship:
-            raise APIError(status_code=404, code=APIErrorCode.FRIEND_REQUEST_NOT_FOUND, msg="No friendship request found.")
+        if friendship.status == FriendshipStatus.REJECTED:
+            raise APIError(status_code=400, code=APIErrorCode.INVALID_OPERATION, msg="Cannot block a rejected friendship.")
         if friendship.requester_id == current_user.id:
-            friendship.blocked_by_req = not friendship.blocked_by_req
+            friendship.blocked_by_req = True
         elif friendship.addressee_id == current_user.id:
-            friendship.blocked_by_add = not friendship.blocked_by_add
-    else:
-        friendship = session.exec(
-                select(Friendship).where(
-                    (Friendship.addressee_id == current_user.id) & (Friendship.requester_id == friend_id)
-                )
-            ).first()
-        if not friendship:
-            raise APIError(status_code=404, code=APIErrorCode.FRIEND_REQUEST_NOT_FOUND, msg="No friendship request found.")
-        friendship.status = status
-        if status == FriendshipStatus.ACCEPTED:
-            friendship.accepted_at = datetime.now(timezone.utc)
+            friendship.blocked_by_add = True
+    else:   #status is ACCEPTED or REJECTED
+        if friendship.status == FriendshipStatus.BLOCKED:
+            if status != FriendshipStatus.ACCEPTED:
+                raise APIError(status_code=400, code=APIErrorCode.INVALID_OPERATION, msg="Only accepted status can be applied to a blocked friendship.")            
+            if friendship.requester_id == current_user.id and friendship.blocked_by_req:
+                friendship.blocked_by_req = False
+            elif friendship.addressee_id == current_user.id and friendship.blocked_by_add:
+                friendship.blocked_by_add = False
+            if friendship.blocked_by_req or friendship.blocked_by_add:
+                new_status = FriendshipStatus.BLOCKED
+        elif friendship.status == FriendshipStatus.PENDING:
+            if friendship.addressee_id != current_user.id:
+                raise APIError(status_code=400, code=APIErrorCode.INVALID_OPERATION, msg="Only the addressee can accept or reject a pending friend request.")
+        elif friendship.status == FriendshipStatus.ACCEPTED:
+            if friendship.addressee_id != current_user.id:
+                raise APIError(status_code=400, code=APIErrorCode.INVALID_OPERATION, msg="Only the addressee can change the status of an accepted friendship.")
+        elif friendship.status == FriendshipStatus.REJECTED:
+            if friendship.addressee_id != current_user.id:
+                raise APIError(status_code=400, code=APIErrorCode.INVALID_OPERATION, msg="Only the addressee can change the status of a rejected friendship.")
+    friendship.status = new_status if new_status else status
+    if friendship.status == FriendshipStatus.ACCEPTED:
+        friendship.accepted_at = datetime.now(timezone.utc)
     session.add(friendship)
     session.commit()
     session.refresh(friendship)
