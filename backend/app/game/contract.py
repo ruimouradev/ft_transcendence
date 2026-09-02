@@ -216,6 +216,8 @@ class PublicPlayer(BaseModel):
     avatar: str = ""
     # What the cards still in this hand are worth, 0 until the game ends
     points: int = 0
+    # False while still on the result screen, the host deals when all are back
+    ready: bool = True
 
 
 class LastAction(BaseModel):
