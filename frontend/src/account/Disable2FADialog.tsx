@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
-import { Alert, Box, Button, Checkbox, CircularProgress, Dialog, DialogActions, DialogContent, DialogTitle, Divider, FormControlLabel, IconButton, InputAdornment, Paper, Step, StepLabel, Stepper, TextField, Typography, } from '@mui/material';
-import { CheckCircle, Close, ContentCopy, Download, Visibility, VisibilityOff, } from '@mui/icons-material';
-import {QRCodeSVG} from 'qrcode.react';
+import { Alert, Box, Button, CircularProgress, Dialog, DialogActions, DialogContent, DialogTitle, IconButton, InputAdornment, Step, StepLabel, Stepper, TextField, Typography, } from '@mui/material';
+import { Close, Visibility, VisibilityOff, } from '@mui/icons-material';
+
 import {api} from '../core/client';
 import { useAuth } from '../core/AuthContext';
 
@@ -10,11 +10,6 @@ interface Disable2FADialogProps {
     open: boolean;
     onClose: () => void;
     onSuccess: () => void;
-}
-
-interface Setup2FAResponse {
-    otpauth_url: string;
-    secret: string;
 }
 
 interface Message {
@@ -55,7 +50,8 @@ export default function Disable2FADialog({
 
     useEffect(() => { if (open) { resetWizard(); } }, [open]);
 
-    const handleClose = (event, reason) => {
+    const handleClose = (event: React.MouseEvent<HTMLButtonElement>, reason: 'backdropClick' | 'escapeKeyDown') => {
+        event.preventDefault();
         if (loading) { return; }
         if (reason === 'backdropClick' || reason === 'escapeKeyDown') { return; }
         resetWizard();
@@ -86,6 +82,7 @@ export default function Disable2FADialog({
         setError(null);
         try {
             await api.post<Message>('/2fa/disable', { password, code },);
+            if (!user) return;
             login({ ...user, use2fa: false });
             onSuccess();
             resetWizard();
@@ -105,10 +102,10 @@ export default function Disable2FADialog({
         <Dialog open={open} onClose={handleClose} fullWidth maxWidth="sm" aria-labelledby="enable-2fa-dialog-title" aria-describedby="enable-2fa-dialog-description" slotProps={{ transition: { unmountOnExit: true, }, }}>
 
             <DialogTitle id="enable-2fa-dialog-title" sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', pb: 1, }}>
-                <Typography variant="h6" component="span" fontWeight={600}>
+                <Typography variant="h6" component="span" sx={{ fontWeight: 600 }}>
                     Disable Two-Factor Authentication
                 </Typography>
-                <IconButton onClick={handleClose} disabled={loading} aria-label="Close" >
+                <IconButton onClick={() => { resetWizard(); onClose(); }} disabled={loading} aria-label="Close" >
                     <Close />
                 </IconButton>
             </DialogTitle>
@@ -176,7 +173,7 @@ export default function Disable2FADialog({
             <DialogActions sx={{ px: 3, py: 2, }} >
                 {activeStep === 0 && (
                     <>
-                        <Button onClick={handleClose}>
+                        <Button onClick={() => { resetWizard(); onClose(); }} >
                             Cancel
                         </Button>
                         <Button variant="contained" onClick={handleConfirm} >

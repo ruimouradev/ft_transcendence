@@ -91,7 +91,7 @@ export default function Login() {
         }
     };
 
-    const handlePasswordReset = async (e) => {
+    const handlePasswordReset = async ( e: React.MouseEvent<HTMLAnchorElement> ) => {
         e.preventDefault();
         if (!formData.email) {
             setError('Please enter your email to reset your password.');
@@ -100,7 +100,7 @@ export default function Login() {
         try {
             const response = await api.post('/request-password-reset', { email: formData.email });
             navigate(`/login?info=${encodeURIComponent(response.data.message)}`, { replace: true });
-        } catch (err) {
+        } catch (err: any) {
             if(err.response?.status === 429) {
                 setError('Requests are limited to 1 per minute. Please try again later.');
             } else {

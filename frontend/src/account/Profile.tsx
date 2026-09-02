@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { Container, Card, CardContent, Box, Avatar, Typography, Stack, Chip, Tooltip, TextField, Button, } from '@mui/material';
-import { Email as EmailIcon, SupervisorAccount as AdminIcon, Person as UserIcon, CheckCircle as ActiveIcon, Cancel as InactiveIcon, } from '@mui/icons-material';
+import { Email as EmailIcon, CheckCircle as ActiveIcon, Cancel as InactiveIcon, } from '@mui/icons-material';
 
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../core/AuthContext';
@@ -70,7 +70,7 @@ export default function ProfileCard() {
             const uploadedUrl = response.data?.url || tempPreviewUrl;
             login({ ...user, avatar: uploadedUrl + `?v=${Date.now()}` });
             setNotification({ open: true, message: 'Avatar updated successfully.', severity: 'success', });
-        } catch (error) {
+        } catch (error: any) {
             if (axiosStatus(error) === 403) {
                 navigate('/login');
             } else {
@@ -88,7 +88,7 @@ export default function ProfileCard() {
         const newNickName = nickName.trim();
         try {
             await api.patch('/users/me', { nick_name: newNickName });
-        } catch {
+        } catch (error: any) {
             setNotification({ open: true, message: 'Failed to update the nick name. Please try again.', severity: 'error', });
             return;
         }
@@ -196,9 +196,9 @@ export default function ProfileCard() {
                             
                             <Tooltip title="Click to manage 2FA settings" arrow>
                                 {user.use2fa ? (
-                                        <Chip icon={<ActiveIcon />} label="2FA Enabled" color="primary" onClick={handle2FAClick} variant="soft" size="small" />
+                                        <Chip icon={<ActiveIcon />} label="2FA Enabled" color="primary" onClick={handle2FAClick} variant="outlined" size="small" />
                                     ) : (
-                                        <Chip icon={<InactiveIcon />} label="2FA Disabled" color="warning" onClick={handle2FAClick} variant="soft" size="small" />
+                                        <Chip icon={<InactiveIcon />} label="2FA Disabled" color="warning" onClick={handle2FAClick} variant="outlined" size="small" />
                                     )}
                             </Tooltip>
                             <Enable2FADialog open={enable2FADialogOpen} onClose={() => setEnable2FADialogOpen(false)} onSuccess={handle2FAEnabled} />

@@ -13,7 +13,7 @@ export default function ChangePasswordCard() {
     const [currentPassword, setCurrentPassword] = useState('');
     const [newPassword, setNewPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
-    const { logout, login, user } = useAuth();
+    const { logout } = useAuth();
 
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -63,9 +63,9 @@ export default function ChangePasswordCard() {
         <Container maxWidth="sm" sx={{ mt: 4, mb: 4 }}>
             <Card elevation={3} sx={{ borderRadius: 3, p: 2 }}>
                 <CardContent>
-                    <Box display="flex" sx={{ alignItems: "center" }} gap={1.5} mb={2}>
+                    <Box sx={{ display: "flex", gap: 1.5, mb: 2, alignItems: "center" }}>
                         <LockIcon color="primary" fontSize="large" />
-                        <Typography variant="h5" component="h1" fontWeight="bold">
+                        <Typography variant="h5" component="h1" sx={{ fontWeight: "bold" }}>
                             Change Password
                         </Typography>
                     </Box>

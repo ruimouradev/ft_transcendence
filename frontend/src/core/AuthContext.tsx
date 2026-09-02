@@ -9,6 +9,7 @@ export interface User {
   nick_name: string;
   avatar: string;
   card_back: string | null;
+  use2fa: boolean;
 }
 
 interface AuthContextType {

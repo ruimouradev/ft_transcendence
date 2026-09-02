@@ -66,7 +66,8 @@ export default function Reset2FA({
 
     useEffect(() => { if (open) { resetWizard(); } }, [open]);
 
-    const handleClose = (event, reason) => {
+    const handleClose = (event: React.MouseEvent<HTMLButtonElement>, reason: 'backdropClick' | 'escapeKeyDown') => {
+        event.preventDefault();
         if (loading) { return; }
         if (reason === 'backdropClick' || reason === 'escapeKeyDown') { return; }
         resetWizard();
@@ -110,6 +111,7 @@ export default function Reset2FA({
     };
 
     const handleVerifyCode = async () => {
+        if (!user) { return; }
         if (code.length !== 6) {
             setError('Please enter the 6-digit verification code.');
             return;
@@ -162,19 +164,14 @@ export default function Reset2FA({
         onClose();
     };
 
-    const handleBack = () => {
-        setError(null);
-        setActiveStep( (currentStep) => currentStep - 1, );
-    };
-
     return (
         <Dialog open={open} onClose={handleClose} fullWidth maxWidth="sm" aria-labelledby="enable-2fa-dialog-title" aria-describedby="enable-2fa-dialog-description" slotProps={{ transition: { unmountOnExit: true, }, }}>
 
             <DialogTitle id="enable-2fa-dialog-title" sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', pb: 1, }}>
-                <Typography variant="h6" component="span" fontWeight={600}>
+                <Typography variant="h6" component="span" sx={{ fontWeight: 600 }}>
                     Reset Two-Factor Authentication
                 </Typography>
-                <IconButton onClick={handleClose} disabled={loading} aria-label="Close" >
+                <IconButton onClick={() => { resetWizard(); onClose(); }} disabled={loading} aria-label="Close" >
                     <Close />
                 </IconButton>
             </DialogTitle>
@@ -250,7 +247,7 @@ export default function Reset2FA({
                         </Typography>
                         <Box sx={{ display: 'flex', justifyContent: 'center', mb: 3, }}>
                             <Paper elevation={2} sx={{ p: 2, display: 'inline-flex', }}>
-                                <Box display="flex" justifyContent="center" alignItems="center" alt="Two-factor authentication QR code" >
+                                <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', alt: "Two-factor authentication QR code" }}>
                                     <QRCodeSVG value={otpauthUrl} size={220} level="M" />
                                 </Box>
                             </Paper>
@@ -318,7 +315,7 @@ export default function Reset2FA({
             <DialogActions sx={{ px: 3, py: 2, }} >
                 {activeStep === 0 && (
                     <>
-                        <Button onClick={handleClose}>
+                        <Button onClick={() => { resetWizard(); onClose(); }} >
                             Cancel
                         </Button>
                         <Button variant="contained" onClick={handleConfirm} >

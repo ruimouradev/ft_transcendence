@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
 import { Container, Card, CardContent, Typography, TextField, Button, Alert, Stack, Box, CircularProgress, } from '@mui/material';
 import LockIcon from '@mui/icons-material/Lock';
 import { api, getErrorMessage } from '../core/client.ts';
@@ -34,10 +33,10 @@ export default function ResetPassword() {
         setLoading(true);
 
         api.post('/set-password', { password: newPassword, token: new URLSearchParams(window.location.search).get('token'), })
-            .then((response) => {
+            .then(() => {
                 navigate('/login?info=Password reset successfully');
             })
-            .catch((err) => {
+            .catch((err: unknown) => {
                 setError(getErrorMessage(err));
             }).finally(() => {
                 setLoading(false);
@@ -48,9 +47,9 @@ export default function ResetPassword() {
         <Container maxWidth="sm" sx={{ mt: 4, mb: 4 }}>
             <Card elevation={3} sx={{ borderRadius: 3, p: 2 }}>
                 <CardContent>
-                    <Box display="flex" sx={{ alignItems: "center" }} gap={1.5} mb={2}>
+                    <Box sx={{ alignItems: "center", display: "flex",gap: 1.5,mb: 2 }}>
                         <LockIcon color="primary" fontSize="large" />
-                        <Typography variant="h5" component="h1" fontWeight="bold">
+                        <Typography variant="h5" component="h1" sx={{ fontWeight: "bold" }}>
                             Reset Password
                         </Typography>
                     </Box>

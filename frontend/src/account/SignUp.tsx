@@ -48,7 +48,7 @@ export default function SignUp() {
         }));
     };
 
-    const handleSubmit = async (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         if (!e.currentTarget.checkValidity()) {
             e.currentTarget.reportValidity();
@@ -92,7 +92,7 @@ export default function SignUp() {
     const handleResendActivationEmail = async (e: React.MouseEvent) => {
         e.preventDefault();
         setError('');
-        setErrors((prev) => {
+        setErrors(() => {
             const next = {};
             return next;
         });
