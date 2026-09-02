@@ -136,6 +136,8 @@ function GameWebSocket({ children }: { children: React.ReactNode }) {
 			resetGameState();
 			setRoomID(null);
 
+			console.log('socket closed')
+
 			if (pendingRoomRef.current && user) {
 				const room = pendingRoomRef.current;
 				pendingRoomRef.current = null;
@@ -165,6 +167,9 @@ function GameWebSocket({ children }: { children: React.ReactNode }) {
 
 	function specialClose()
 	{
+		console.log('ref: ');
+		console.log(gameStateRef.current)
+
 		if (gameStateRef.current !== null)
 			return ;
 		forcedLeave();

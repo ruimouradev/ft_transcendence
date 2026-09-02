@@ -1,6 +1,6 @@
 import Section from './Section';
 
-export default function Rules() {
+function Rules() {
     return (
         <div className="max-w-3xl mx-auto px-6 py-12">
             <h1 className="text-3xl font-black text-white mb-2">Game Rules</h1>
@@ -100,3 +100,5 @@ export default function Rules() {
         </div>
     );
 }
+
+export default Rules

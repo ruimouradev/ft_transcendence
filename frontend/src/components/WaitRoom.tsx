@@ -21,7 +21,7 @@ function WaitRoom()
 
 	return (
 		<ThemeProvider theme={unoTheme}>
-			<Container sx={{ height: '65dvh', width: { xs: '100%', md: '50%' }, display: 'flex', flexDirection: 'column', my: 2, p: 0.5,
+			<Container sx={{ height: '65dvh', width: { xs: '95%', md: '80%' }, display: 'flex', flexDirection: 'column', my: 2, p: 0.5,
 				position: 'relative', border: '1px solid', borderColor: 'divider', borderRadius: 2, bgcolor: 'background.paper' }}>
 				<Box sx={{height: '10%', width: '100%'}}>
 					<Typography variant="h5" sx={{  height: '100%', width: '100%', display: 'flex', justifyContent: 'center',

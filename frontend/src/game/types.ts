@@ -88,3 +88,14 @@ export type Notice = {
 	sender: string,
 	icon: number
 }
+
+export type FriendEntry = {
+    id: string;
+    nick_name: string;
+    handle: string;
+    avatar: string | null;
+    status: string | null;
+    online?: boolean;
+    level: number;
+    title: string;
+}

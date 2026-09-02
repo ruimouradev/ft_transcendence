@@ -4,7 +4,7 @@ import Section from './Section';
 // o que ele realmente é, um projeto de estudantes. O texto é teu para
 // ajustar.
 
-export default function Terms() {
+function Terms() {
     return (
         <div className="max-w-3xl mx-auto px-6 py-12">
             <h1 className="text-3xl font-black text-white mb-2">Terms of Service</h1>
@@ -62,3 +62,5 @@ export default function Terms() {
         </div>
     );
 }
+
+export default Terms

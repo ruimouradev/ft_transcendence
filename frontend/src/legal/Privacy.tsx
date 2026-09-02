@@ -4,7 +4,7 @@ import Section from './Section';
 // Se algum comportamento mudar (dados novos, partilhas novas), esta
 // página tem de acompanhar. O texto é teu para ajustar.
 
-export default function Privacy() {
+function Privacy() {
     return (
         <div className="max-w-3xl mx-auto px-6 py-12">
             <h1 className="text-3xl font-black text-white mb-2">Privacy Policy</h1>
@@ -78,3 +78,5 @@ export default function Privacy() {
         </div>
     );
 }
+
+export default Privacy

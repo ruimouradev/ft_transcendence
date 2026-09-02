@@ -9,7 +9,8 @@ import defaultAvatar from '../assets/avatar/a_default.svg';
 
 // O canto direito da navbar: sem sessão mostra os dois botões de
 // entrada, com sessão mostra o avatar com o menu da conta.
-export default function UserMenu() {
+function UserMenu()
+{
     const { user, isAuthenticated, logout } = useAuth();
     const id = React.useId();
     const buttonId = `${id}-button`;
@@ -72,3 +73,5 @@ export default function UserMenu() {
         </div>
     );
 }
+
+export default UserMenu
