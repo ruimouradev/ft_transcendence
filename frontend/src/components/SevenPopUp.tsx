@@ -1,13 +1,12 @@
-import { useEffect } from 'react'
-import { Box, Card, CardMedia, IconButton, ThemeProvider, Typography } from '@mui/material'
-import { unoTheme } from '../ui/unoTheme';
-import { getGameContext } from '../core/GameWebSocket';
-import { getPopUpContext } from '../core/GamePopUps';
+import { useEffect } from 'react';
+import { Box, Card, CardMedia, IconButton, ThemeProvider, Typography } from '@mui/material';
+import { unoTheme } from '../ui/unoTheme.ts';
+import { getGameContext } from '../core/GameWebSocket.tsx';
+import { getPopUpContext } from '../core/GamePopUps.tsx';
 import ClearSharpIcon from '@mui/icons-material/ClearSharp';
-import { avatar_bot } from '../ui/ImagesUtils.ts'
+import { bot_easy, bot_medium, bot_hard } from '../ui/ImagesUtils.ts';
 
-
-function Seven()
+function SevenPopUp()
 {
 	const { gameState, sendMessage } = getGameContext();
 	const { identifierID, resetPopUpStates } = getPopUpContext();
@@ -27,13 +26,16 @@ function Seven()
 			<Box sx={{ width: '40vw', aspectRatio: '3 / 1', ...align, border: '0.1vw solid', borderColor: 'divider', 
 				borderRadius: 2, bgcolor: 'background.default', gap: '5vw', position: 'relative' }}>
 				{players?.map((player) => {
-					const avatar = player.bot ? avatar_bot : player.avatar;
+						const avatar = player.bot ? 
+							(player?.bot_level === 'easy' ? bot_easy
+								: player.bot_level === 'medium' ? bot_medium
+								: bot_hard) : player.avatar;
 					if (player.id === gameState?.you.id)
 						return (null)
 					else {
 						return (
 							<Box key={player.id} sx={{ width: '5vw', aspectRatio: '1 / 1', position: 'relative', ...align }}>
-								<Card className="no-select" elevation={0} onClick={() => sendMessage({...message, "target": player.id})} sx={{ width: '100%', aspectRatio: '1 / 1',
+								<Card elevation={0} onClick={() => sendMessage({...message, "target": player.id})} sx={{ width: '100%', aspectRatio: '1 / 1',
 								overflow: 'visible', bgcolor: 'rgba(255, 255, 255, 0)', display: 'flex', justifyContent: 'center', border: 0, position: 'relative', zIndex: 5 }}>
 									<CardMedia component="img" sx={{ border: 1, width: '100%', height: '100%', aspectRatio: '1 / 1',
 										borderRadius: '50%', objectFit: 'cover' }} image={avatar} draggable={false}/>
@@ -53,4 +55,4 @@ function Seven()
 	)
 }
 
-export default Seven
+export default SevenPopUp
