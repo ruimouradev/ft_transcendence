@@ -16,14 +16,14 @@ type GameContextType = {
 	roomID: string | null,
 	connected: boolean,
 	gameState: GameState | null,
-//	notices: Notices,
-	notice: Notice | null,
+	notices: Notices,
+	// notice: Notice | null,
 
 	leaveRoom: () => void,
 	resetGameState: () => void,
 	closeRoomConnection: () => void,
-	resetNotice: () => void,
-	// resetNotices: (id: string) => void,
+	// resetNotice: () => void,
+	resetNotices: (id: string) => void,
 	sendMessage: (message: object) => void,
 	joinRoom: (roomID: string, message: object) => void
 }
@@ -53,8 +53,8 @@ function GameWebSocket({ children }: { children: React.ReactNode }) {
 	const [roomID, setRoomID] = useState<string | null>(null);
 	const [gameState, setGameState] = useState<GameState | null>(null);
 	const [connected, setConnected] = useState<boolean>(false);
-//	const [notices, setNotices] = useState<Notices>({});
-	const [notice, setNotice] = useState<Notice | null>(null);
+	const [notices, setNotices] = useState<Notices>({});
+	// const [notice, setNotice] = useState<Notice | null>(null);
 
 	const socketRef = useRef<WebSocket | null>(null);
 	const pendingRoomRef = useRef<string | null>(null);
@@ -105,7 +105,8 @@ function GameWebSocket({ children }: { children: React.ReactNode }) {
 					sessionStorage.setItem('roomID', roomID);
 					break ;
 				case 'notice':
-					setNotice(message);
+//					setNotice(message);
+					newNotice(message);
 					break ;
 				case 'error':
 					handleErrorMessages(message);
@@ -128,16 +129,12 @@ function GameWebSocket({ children }: { children: React.ReactNode }) {
 
 		socket.onclose = () => {
 			// Need to check error messages, to determine if retry or not
+			resetAllNotices();
 			socketRef.current = null;
-			setConnected(false);
-			setRoomID(null);
-			resetGameState();
-			resetNotice();
 			clearTimeout(timeout);
-			// if (gameStateRef?.you.id)
-			// 	resetNotices(gameState.you.id)
- 
-			console.log("connection closed by backend !!!")
+			setConnected(false);
+			resetGameState();
+			setRoomID(null);
 
 			if (pendingRoomRef.current && user) {
 				const room = pendingRoomRef.current;
@@ -168,7 +165,7 @@ function GameWebSocket({ children }: { children: React.ReactNode }) {
 
 	function specialClose()
 	{
-		if (gameStateRef !== null)
+		if (gameStateRef.current !== null)
 			return ;
 		forcedLeave();
 	}
@@ -185,6 +182,8 @@ function GameWebSocket({ children }: { children: React.ReactNode }) {
 	function handleErrorMessages({type, code, msg, room}: {type: string, code: string, msg:string, room: string | null})
 	{
 		// console.log('ERROR CODE:', code, JSON.stringify(code));
+		if (type !== 'error')
+			return ;
 		switch(code)
 		{
 			case ("ALREADY_IN_ROOM"):
@@ -242,22 +241,33 @@ function GameWebSocket({ children }: { children: React.ReactNode }) {
 		setGameState(null);
 	}
 
-	function resetNotice()
+	function newNotice(message: Notice)
 	{
-		setNotice(null);
+		if (!gameStateRef.current)
+			return ;
+
+		setNotices(prev => ({
+			...prev,
+			[message.sender]: message
+		}))
 	}
 
-	// function resetNotices(id: string)
-	// {
-	// 	setNotices(prev => {
-	// 		const tmp = {...prev};
-	// 		delete tmp[id];
-	// 		return tmp;
-	// 	})
-	// }
+	function resetNotices(id: string)
+	{
+		setNotices(prev => {
+			const tmp = {...prev};
+			delete tmp[id];
+			return tmp;
+		})
+	}
+
+	function resetAllNotices()
+	{
+		setNotices({});
+	}
 
 	return (
-		<GameContext.Provider value={{ roomID, connected, gameState, notice, leaveRoom, resetNotice, resetGameState, joinRoom, closeRoomConnection, sendMessage }}>
+		<GameContext.Provider value={{ roomID, connected, gameState, notices, leaveRoom, resetNotices, resetGameState, joinRoom, closeRoomConnection, sendMessage }}>
 			{ children }
 		</GameContext.Provider>
 	)

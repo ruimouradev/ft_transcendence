@@ -22,7 +22,7 @@ import Avatar from '../components/Avatar'
 import Emoticons from '../components/Emoticons'
 import WaitRoom from '../components/WaitRoom'
 
-import type {Color, valueNum, valueAction, valueWild, GameCard, PublicPlayer, PrivatePlayer, LastAction, GameState} from './types.ts'
+import type {Color, valueNum, valueAction, valueWild, GameCard, Notice, PublicPlayer, PrivatePlayer, LastAction, GameState} from './types.ts'
 
 function getCardName({card}: {card: GameCard})
 {
@@ -199,14 +199,17 @@ function DrawHidden({amount, card_class}: {amount: number, card_class: string})
 	)
 }
 
-function PlayerOneHand({player}: {player: PublicPlayer})
+function PlayerOneHand({player, notice}: {player: PublicPlayer, notice: Notice | undefined})
 {
-	const { notice, gameState } = getGameContext();
-	const private_player = gameState?.you !== undefined ? gameState?.you : {id: 0, hand: [], platable: [], drawn: null};
+	const { gameState } = getGameContext();
+
+	if (!gameState)
+		return null;
+	const private_player = gameState.you;
 
 	return (
 		<Box className="board-south" sx={{ position: 'relative' }}>
-			{(notice !== null && notice.sender === player.id) && <Emoticons position={'south'}/>}
+			{(notice !== undefined  && notice.sender === player.id) && <Emoticons position={'south'} playerID={player.id} notice={notice}/>}
 			<Avatar player={player} position={'south'} />
 			<Box sx={{ position: 'absolute', inset: 0 }}>
 				<DrawHands deck={private_player.hand} amount={private_player.hand.length} card_class="card-south" />
@@ -217,7 +220,11 @@ function PlayerOneHand({player}: {player: PublicPlayer})
 
 function PlayersUI({players}: {players: PublicPlayer[]})
 {
-	const { notice } = getGameContext();
+	const { notices, gameState } = getGameContext();
+
+	if (!gameState)
+		return null;
+
 	let player_pos: string[];
 
 	if (players.length == 2) {
@@ -231,13 +238,14 @@ function PlayersUI({players}: {players: PublicPlayer[]})
 	}
 
 	return (players.map((player, i) => {
+		const notice = notices[player.id];
 		if (i == 0) {
-			return (<PlayerOneHand key={player.id} player={player}/>)
+			return (<PlayerOneHand key={player.id} player={player} notice={notice}/>)
 		}
 		else {
 			return (
 				<Box key={player.id} className={`board-${player_pos[i]}`} sx={{ position: 'relative' }}>
-					{(notice !== null && notice.sender === player.id) && <Emoticons position={player_pos[i]}/>}
+					{(notice !== undefined  && notice.sender === player.id) && <Emoticons position={player_pos[i]} playerID={player.id} notice={notice}/>}
 					<Avatar player={player} position={player_pos[i]} />
 					<Box sx={{position: 'absolute', inset: 0, }}>
 						<DrawHidden amount={player.cards} card_class={`card-${player_pos[i]}`} />
@@ -255,7 +263,7 @@ function RotatePlayers(): PublicPlayer[]
 
 	let players: PublicPlayer[] = [];
 
-	if (gameState !== null)
+	if (gameState)
 		players = gameState.players;
 
 	let i = 0;

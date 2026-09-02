@@ -82,3 +82,9 @@ export type Room = {
 		stacking: boolean,
 	}
 }
+
+export type Notice = {
+	kind: 'emote' | 'uno' | 'catch',
+	sender: string,
+	icon: number
+}
