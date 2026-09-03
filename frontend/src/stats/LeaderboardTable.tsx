@@ -25,7 +25,7 @@ function LeaderboardTable({ title, rows, currentUserId, currentUserAvatar, tag }
                         {rows.map((row) => {
                             const isMe = row.user_id === currentUserId;
                             return (
-                                <TableRow key={row.rank} sx={{ position: 'relative', backgroundColor: isMe ? 'rgba(255, 193, 7, 0.10)' : 'transparent',
+                                <TableRow key={row.user_id} sx={{ position: 'relative', backgroundColor: isMe ? 'rgba(255, 193, 7, 0.10)' : 'transparent',
 									boxShadow: isMe ? 'inset 4px 0 0 #ffc107, 0 0 12px rgba(255, 193, 7, 0.12)' : 'none',
 									transition: 'all 0.2s ease', '&:hover': { backgroundColor: isMe ? 'rgba(255, 193, 7, 0.16)' : 'action.hover' } }}>
                                     <TableCell component="th" scope="row">

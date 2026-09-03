@@ -152,6 +152,7 @@ export type User = {
   nick_name: string;
   avatar: string;
   card_back: string | null;
+  use2fa: boolean
 }
 
 export type AuthContextType = {
@@ -242,3 +243,67 @@ export type LeaderboardTableProps = {
     currentUserAvatar: string;
     tag?: string;
 }
+
+
+// API
+export type ApiKeyStatus = {
+  has_api_key: boolean;
+  client_id?: string;
+}
+
+export type ApiKeyResponse = {
+  api_key: string;
+  client_id: string;
+}
+
+
+// Signup
+export type  ValidationError = {
+    loc: (string | number)[];
+    msg: string;
+    type: string;
+    input?: unknown;
+}
+
+
+// 2FA
+export type Enable2FADialogProps = {
+    open: boolean;
+    onClose: () => void;
+    onSuccess: () => void;
+}
+
+export type Verify2FAResponse = {
+    recovery_codes: string[];
+}
+
+export type Reset2FADialogProps = {
+    open: boolean;
+    onClose: () => void;
+    onSuccess: () => void;
+}
+
+export type Disable2FADialogProps = {
+    open: boolean;
+    onClose: () => void;
+    onSuccess: () => void;
+}
+
+export type Setup2FAResponse = {
+    otpauth_url: string;
+    secret: string;
+}
+
+export type Message = {
+    code: string;
+    status_code: string;
+    message: string;
+}
+
+
+// Profile
+export type NotificationState = {
+    open: boolean;
+    message: string;
+    severity: 'success' | 'error' | 'info' | 'warning';
+};

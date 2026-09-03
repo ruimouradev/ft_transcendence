@@ -1,31 +1,21 @@
 import React, { useState, useRef } from 'react';
 import { Container, Card, CardContent, Box, Avatar, Typography, Stack, Chip, Tooltip, TextField, Button, } from '@mui/material';
-import { Email as EmailIcon, SupervisorAccount as AdminIcon, Person as UserIcon, CheckCircle as ActiveIcon, Cancel as InactiveIcon, } from '@mui/icons-material';
-
+import { Email as EmailIcon, CheckCircle as ActiveIcon, Cancel as InactiveIcon, } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../core/AuthContext';
 import { api } from '../core/client';
+import axios from 'axios';
 import NotificationSnackbar from '../ui/NotificationSnackbar';
 import CardBackSelector from './CardBackSelector';
 import { cardBacks, defaultCardBack } from '../ui/ImagesUtils';
 import Enable2FADialog from './Enable2FADialog';
 import Disable2FADialog from './Disable2FADialog';
+import type { NotificationState } from '../core/types.ts';
 
-type NotificationState = {
-    open: boolean;
-    message: string;
-    severity: 'success' | 'error' | 'info' | 'warning';
-};
-
-// O seletor mostra imagens, por isso recebe os caminhos; a base de
-// dados guarda só o nome de código de cada verso (ver ui/cardBacks.ts)
 const cardBackUrls = Object.values(cardBacks);
 
-// O perfil: avatar (clicar troca, com upload real para o backend),
-// nome (duplo clique edita), verso das cartas, e os dados da conta.
-// Todas as alterações passam pelo backend e só depois pelo estado
-// local, para o ecrã nunca mentir.
-export default function ProfileCard() {
+function ProfileCard()
+{
     const [notification, setNotification] = useState<NotificationState>({
         open: false,
         message: '',
@@ -34,12 +24,13 @@ export default function ProfileCard() {
     const navigate = useNavigate();
     const { user, login } = useAuth();
 
+    const [nickName, setNickName] = useState('');
     const [uploading, setUploading] = useState(false);
     const [isEditingName, setIsEditingName] = useState(false);
-    const [nickName, setNickName] = useState('');
-    const fileInputRef = useRef<HTMLInputElement | null>(null);
     const [enable2FADialogOpen, setEnable2FADialogOpen] = useState(false);
     const [disable2FADialogOpen, setDisable2FADialogOpen] = useState(false);
+	
+    const fileInputRef = useRef<HTMLInputElement | null>(null);
 
     const handleAvatarClick = () => {
         fileInputRef.current?.click();
@@ -71,12 +62,14 @@ export default function ProfileCard() {
             login({ ...user, avatar: uploadedUrl + `?v=${Date.now()}` });
             setNotification({ open: true, message: 'Avatar updated successfully.', severity: 'success', });
         } catch (error) {
-            if (axiosStatus(error) === 403) {
-                navigate('/login');
-            } else {
-                login({ ...user, avatar: oldAvatarUrl });
-                setNotification({ open: true, message: error.response?.data?.detail || 'Failed to upload avatar. Please try again.', severity: 'error', });
-            }
+			if (axios.isAxiosError(error)) {
+				if (axiosStatus(error) === 403) {
+					navigate('/login');
+				} else {
+					login({ ...user, avatar: oldAvatarUrl });
+					setNotification({ open: true, message: error.response?.data?.detail || 'Failed to upload avatar. Please try again.', severity: 'error', });
+				}
+			}
         } finally {
             setUploading(false);
         }
@@ -159,7 +152,9 @@ export default function ProfileCard() {
 
                     <Box sx={{ display: 'flex', justifyContent: 'center', mt: -7, mb: 2 }}>
                         <Tooltip title={uploading ? "Uploading..." : "Click to change avatar"} arrow>
-                            <Avatar src={user.avatar} alt={user.nick_name} onClick={handleAvatarClick} sx={{ width: 100, height: 100, border: '4px solid white', boxShadow: 2, fontSize: 36, bgcolor: 'secondary.main', cursor: 'pointer', opacity: uploading ? 0.6 : 1, transition: 'all 0.2s ease-in-out', '&:hover': { transform: 'scale(1.04)', boxShadow: 4, }, }}>
+                            <Avatar src={user.avatar} alt={user.nick_name} onClick={handleAvatarClick} sx={{ width: 100, height: 100,
+								border: '4px solid white', boxShadow: 2, fontSize: 36, bgcolor: 'secondary.main', cursor: 'pointer',
+								opacity: uploading ? 0.6 : 1, transition: 'all 0.2s ease-in-out', '&:hover': { transform: 'scale(1.04)', boxShadow: 4, }, }}>
                                 {user.nick_name ? user.nick_name.charAt(0).toUpperCase() : 'U'}
                             </Avatar>
                         </Tooltip>
@@ -169,7 +164,8 @@ export default function ProfileCard() {
                     <Stack spacing={1} sx={{ alignItems: 'center', textAlign: 'center' }}>
                         {isEditingName ? (
                             <Stack spacing={1} sx={{ width: '100%', alignItems: 'center' }}>
-                                <TextField label="Nick name" size="small" value={nickName} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNickName(e.target.value)} sx={{ minWidth: 140 }} />
+                                <TextField label="Nick name" size="small" value={nickName}
+									onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNickName(e.target.value)} sx={{ minWidth: 140 }} />
                                 <Stack direction="row" spacing={1}>
                                     <Button variant="contained" size="small" onClick={handleNameSave}>
                                         Save
@@ -196,9 +192,9 @@ export default function ProfileCard() {
                             
                             <Tooltip title="Click to manage 2FA settings" arrow>
                                 {user.use2fa ? (
-                                        <Chip icon={<ActiveIcon />} label="2FA Enabled" color="primary" onClick={handle2FAClick} variant="soft" size="small" />
+                                        <Chip icon={<ActiveIcon />} label="2FA Enabled" color="success" onClick={handle2FAClick} variant="filled" size="small" />
                                     ) : (
-                                        <Chip icon={<InactiveIcon />} label="2FA Disabled" color="warning" onClick={handle2FAClick} variant="soft" size="small" />
+                                        <Chip icon={<InactiveIcon />} label="2FA Disabled" color="warning" onClick={handle2FAClick} variant="outlined" size="small" />
                                     )}
                             </Tooltip>
                             <Enable2FADialog open={enable2FADialogOpen} onClose={() => setEnable2FADialogOpen(false)} onSuccess={handle2FAEnabled} />
@@ -219,3 +215,5 @@ function axiosStatus(error: unknown): number | undefined {
     }
     return undefined;
 }
+
+export default ProfileCard

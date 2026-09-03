@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Box, Button, Container, Divider, IconButton, InputAdornment, Link, Paper, TextField, Typography, Alert, Avatar, } from '@mui/material';
 import { Visibility, VisibilityOff } from '@mui/icons-material';
-
+import axios from 'axios';
 import icon42 from '../assets/i42.ico';
 import avatarUno from '../assets/avatar/a_default.svg';
 import { useNavigate, useSearchParams } from 'react-router-dom';
@@ -91,7 +91,7 @@ export default function Login() {
         }
     };
 
-    const handlePasswordReset = async (e) => {
+    const handlePasswordReset = async (e: React.MouseEvent<HTMLAnchorElement>) => {
         e.preventDefault();
         if (!formData.email) {
             setError('Please enter your email to reset your password.');
@@ -101,11 +101,13 @@ export default function Login() {
             const response = await api.post('/request-password-reset', { email: formData.email });
             navigate(`/login?info=${encodeURIComponent(response.data.message)}`, { replace: true });
         } catch (err) {
-            if(err.response?.status === 429) {
-                setError('Requests are limited to 1 per minute. Please try again later.');
-            } else {
-                setError(getErrorMessage(err));
-            }
+			if (axios.isAxiosError(err)) {
+				if(err.response?.status === 429) {
+					setError('Requests are limited to 1 per minute. Please try again later.');
+				} else {
+					setError(getErrorMessage(err));
+				}
+			}
         }
     };
     

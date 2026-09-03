@@ -6,7 +6,7 @@ import { winner_image } from '../ui/ImagesUtils';
 
 function GameEndPopUp()
 {
-	const { gameState, leaveRoom, sendMessage, resetGameState } = useGameContext();
+	const { gameState, leaveRoom, sendMessage } = useGameContext();
 	const { resetPopUpStates } = usePopUpContext();
 
 	if (gameState === null)
