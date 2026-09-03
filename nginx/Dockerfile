@@ -1,7 +1,6 @@
-
-
-
 FROM nginx:alpine
+
+ARG BUILD_TARGET=dev
 
 RUN apk add --no-cache openssl
 
@@ -15,6 +14,6 @@ RUN openssl req -x509 -nodes -days 365 \
 
 COPY /dist /usr/share/nginx/html
 
-COPY nginx.conf /etc/nginx/conf.d/default.conf
+COPY nginx_${BUILD_TARGET}.conf /etc/nginx/conf.d/default.conf
 
 EXPOSE 80 443

@@ -93,6 +93,29 @@ services:
     networks:
       - ft_network
   
+  frontend_prod:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    image: frontend_prod
+    pull_policy: never
+    container_name: frontend_prod
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+      - ./nginx/dist:/output
+    environment:
+      - WATCHPACK_POLLING=${WATCHPACK_POLLING}
+    command:
+      - sh
+      - -c
+      - |
+        rm -rf /output/*
+        npm run build
+        cp -r /app/dist/* /output/
+    networks:
+      - ft_network
+
   frontend:
     build:
       context: ./frontend
@@ -129,8 +152,26 @@ services:
     depends_on:
       backend:
         condition: service_healthy
-      # frontend:
-      #   condition: service_healthy
+      frontend:
+        condition: service_healthy
+    networks:
+      - ft_network
+
+  nginx_prod:
+    build:
+      context: ./nginx
+      args:
+        BUILD_TARGET: prod
+      dockerfile: Dockerfile
+    image: nginx_prod
+    pull_policy: never
+    container_name: nginx_prod   
+    ports:
+      - "8080:80"
+      - "8443:443"
+    depends_on:
+      backend:
+        condition: service_healthy
     networks:
       - ft_network
 

@@ -229,7 +229,7 @@ async def callback_42(code: str, session: SessionDep, state: str):
                 access_token=access_token42,
                 user_id=str(user.id)
             ))
-        response = RedirectResponse(url=f"/dashboard", status_code=status.HTTP_302_FOUND)
+        response = RedirectResponse(url=f"/", status_code=status.HTTP_302_FOUND)
         
         response.set_cookie(
             key="access_token",

@@ -1,8 +1,11 @@
 include ./.env
 
 all: vinit
-	docker compose -f ./docker-compose.yml build
-	docker compose -f ./docker-compose.yml up -d
+	docker compose -f ./docker-compose.yml build frontend_prod
+	docker compose -f ./docker-compose.yml run --rm frontend_prod
+	docker compose -f ./docker-compose.yml build nginx_prod backend
+	docker compose -f ./docker-compose.yml up -d db redis backend nginx_prod postgres-exporter prometheus grafana
+
 
 build:
 	docker compose -f ./docker-compose.yml build --no-cache
@@ -13,12 +16,15 @@ vinit:
 	@mkdir -p ${DBDATAPATH}
 
 dev: vinit
-	docker compose -f ./docker-compose.yml build
+	docker compose -f ./docker-compose.yml build frontend backend nginx
 	docker compose -f ./docker-compose.yml up db redis backend frontend adminer nginx
 
 prod: vinit
-	docker compose -f ./docker-compose.yml build
-	docker compose -f ./docker-compose.yml up -d db redis backend adminer nginx
+	docker compose -f ./docker-compose.yml build frontend_prod
+	docker compose -f ./docker-compose.yml run --rm frontend_prod
+	docker image rm frontend_prod:latest
+	docker compose -f ./docker-compose.yml build nginx_prod backend
+	docker compose -f ./docker-compose.yml up db redis backend nginx_prod
 
 down:
 	docker compose -f ./docker-compose.yml down
