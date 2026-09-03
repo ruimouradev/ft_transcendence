@@ -315,3 +315,7 @@
 .play-button:active {
     transform: scale(0.95);
 }
+
+.player_turn {
+    box-shadow: 0 0 15px 8px rgba(196, 181, 15, 0.8);
+}

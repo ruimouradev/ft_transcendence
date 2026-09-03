@@ -24,6 +24,7 @@ import confidence from '../assets/utils/confidence.png';
 import bot_ez from '../assets/avatar/bot_easy.png';
 import bot_md from '../assets/avatar/bot_medium.png';
 import bot_hd from '../assets/avatar/bot_hard.png';
+import offline from '../assets/avatar/offline.png';
 
 // A tabela dos versos de carta. Na base de dados guarda-se o nome de
 // código (back00, back01...), nunca o caminho do ficheiro: caminhos
@@ -66,3 +67,4 @@ export const emoticon_confidence = confidence;
 export const bot_easy = bot_ez;
 export const bot_medium = bot_md;
 export const bot_hard = bot_hd;
+export const avatar_offline = offline;

@@ -296,7 +296,7 @@ export default function UnoDashboard() {
                                                                 {match.score}
                                                             </TableCell>
                                                             <TableCell>
-                                                                {match.opponents}
+                                                                {match.opponents || '-'}
                                                                 {/* {match.opponents?.length ? match.opponents.join(', ') : '-'} */}
                                                             </TableCell>
                                                             {/* a base guarda em UTC, o browser mostra na hora local */}

@@ -143,7 +143,6 @@ export type Notice = {
 export type Notices = {
 	[id: string]: Notice;
 }
-<<<<<<< HEAD
 
 
 // AuthContext
@@ -209,7 +208,7 @@ export type MatchRecord = {
     is_winner: boolean;
     score: number;
     finished_at: string;
-    opponents: string[];
+    opponents: string;
 }
 
 export type BadgeKind = 'wins' | 'games' | 'score' | 'level';
@@ -308,5 +307,3 @@ export type NotificationState = {
     message: string;
     severity: 'success' | 'error' | 'info' | 'warning';
 };
-=======
->>>>>>> origin/main

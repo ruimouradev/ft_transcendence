@@ -3,7 +3,7 @@ import { Box, Card, CardMedia, Typography } from '@mui/material';
 import { useGameContext } from '../core/GameWebSocketContext';
 import type { PublicPlayer } from '../core/types.ts';
 import EmoticonsMenu from './EmoticonsMenu';
-import { bot_easy, bot_medium, bot_hard } from '../ui/ImagesUtils.ts';
+import { avatar_offline, bot_easy, bot_medium, bot_hard } from '../ui/ImagesUtils.ts';
 
 function Avatar({player, position}: {player: PublicPlayer, position: string})
 {
@@ -14,7 +14,6 @@ function Avatar({player, position}: {player: PublicPlayer, position: string})
 	useEffect(() => {
 		if (cooldown === false)
 			return ;
-		// setAnchor(null);
 		const timer = setTimeout(() => {
 			setCooldown(false);
 		}, 2000)
@@ -50,24 +49,38 @@ function Avatar({player, position}: {player: PublicPlayer, position: string})
 		?  () => catchPlayer(player) 
 		: handleEmoticon;
 
-	const avatar = player.bot ? 
-		(player?.bot_level === 'easy' ? bot_easy
-			: player.bot_level === 'medium' ? bot_medium
-			: bot_hard) : player.avatar;
-	
+
+	function getPlayerInfo() {
+
+		if (!player.connected)
+			return ({nickname: 'OFFLINE', avatar: avatar_offline});
+		if (!player.bot)
+			return ({nickname: player.name, avatar: player.avatar});
+		if (player.bot_level === 'easy')
+			return ({nickname: player.name, avatar: bot_easy});
+		if (player.bot_level === 'medium')
+			return ({nickname: player.name, avatar: bot_medium});
+		return ({nickname: player.name, avatar: bot_hard});
+	}
+
+	const turn_class = player.id === gameState?.turn ? 'player_turn' : ''
+	const { nickname, avatar } = getPlayerInfo();
+	const bg_color = !player.connected ? 'black' : player.id === gameState?.turn ? 'none' : 'grayscale(100%)';
+	const letter_color = !player.connected ? 'white' : 'black'
+
 	return (
 		<Box sx={{ position: 'absolute', inset: 0, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
 			<EmoticonsMenu anchor={anchor} handleClose={handleClose} startCooldown={startCooldown}/>
-			<Card className={`avatar-${position}`} elevation={0} onClick={function_call}
+			<Card className={`avatar-${position} `} elevation={0} onClick={function_call}
 				sx={{ width: '4vw', aspectRatio: '1 / 1', overflow: 'visible', bgcolor: 'rgba(255, 255, 255, 0)', display: 'flex',
 				justifyContent: 'center', border: 0, position: 'relative', zIndex: 5,
-				filter: player.id === gameState?.turn ? 'none' : 'grayscale(100%)', pointerEvents: position === 'south' && cooldown ? 'none' : 'auto' }}>
-				<CardMedia component="img" sx={{ border: 1, width: '100%', height: '100%', aspectRatio: '1 / 1',
+				filter: bg_color, pointerEvents: position === 'south' && cooldown ? 'none' : 'auto' }}>
+				<CardMedia className={turn_class} component="img" sx={{ border: 1, width: '100%', height: '100%', aspectRatio: '1 / 1',
 					borderRadius: '50%', objectFit: 'cover' }} image={avatar} draggable={false}/>
-				<Typography sx={{ color: 'black', bgcolor: 'orange', border: 1, zIndex: '10', position: 'absolute', 
+				<Typography sx={{ color: letter_color, bgcolor: !player.connected ? 'black' : 'orange', border: 1, zIndex: '10', position: 'absolute', 
 					bottom: 0, transform: 'translateY(70%)', fontSize: 'clamp(0.5vh, 2vh, 3vh)', px: '5%', whiteSpace: 'nowrap' }}>
-						{ player.name.length > 12 ? player.name.slice(0, 10) + '..' : player.name }
-					</Typography>
+						{ nickname }
+				</Typography>
 			</Card>
 		</Box>
 	)

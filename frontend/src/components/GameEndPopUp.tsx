@@ -1,7 +1,6 @@
-import { Box, Button, ThemeProvider, Typography } from '@mui/material';
+import { Box, Button, Typography } from '@mui/material';
 import { useGameContext } from '../core/GameWebSocketContext';
 import { usePopUpContext } from '../core/GamePopUpsContext';
-import { unoTheme } from '../ui/unoTheme';
 import { winner_image } from '../ui/ImagesUtils';
 
 function GameEndPopUp()
@@ -31,7 +30,7 @@ function GameEndPopUp()
 	}
 
 	return (
-		<ThemeProvider theme={unoTheme}>
+		<>
 			<Box sx={{ width: 'clamp(260px, 40vw, 52rem)', aspectRatio: '2 / 1', border: '0.1vw solid', borderColor: 'divider', borderRadius: 2,
 					bgcolor: 'background.default', gap: 'clamp(1rem, 5vw, 6.5rem)' }}>
 				<Box sx={{ height: '85%', width: '100%', ...align, position: 'relative', flexDirection: 'column' }}>
@@ -49,7 +48,7 @@ function GameEndPopUp()
 						</Button>
 				</Box>
 			</Box>
-		</ThemeProvider>
+		</>
 	)
 }
 
