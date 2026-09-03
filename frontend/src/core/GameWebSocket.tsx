@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useAuth } from './AuthContext';
 import { usePopUpContext } from '../core/GamePopUpsContext';
 import { GameContext } from './GameWebSocketContext'
@@ -22,17 +22,19 @@ function GameWebSocket({ children }: { children: React.ReactNode }) {
 	const pendingRoomRef = useRef<string | null>(null);
 	const gameStateRef = useRef<GameState | null>(null);
 
-	const { user } = useAuth();
+	const { user, isAuthenticated  } = useAuth();
 	const { handleNewError } = usePopUpContext();
 
 	function joinRoom(roomID: string, message: object)
 	{
-		// DEL
-		console.log("connected: ", connected);
-		console.log("roomID: ", roomID);
-		console.log("socketRef: ", socketRef);
-		console.log("pendingRoomRef: ", pendingRoomRef);
-		console.log("sessionStorage: ", sessionStorage);
+		useEffect(() => {
+			if (!isAuthenticated && socketRef.current)
+			{
+				pendingRoomRef.current = null;
+				sessionStorage.removeItem('roomID');
+				socketRef.current.close();
+			}
+		}, [isAuthenticated])
 
 		// Don't create another socket while this provider already has one
 		if (socketRef.current)
