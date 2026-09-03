@@ -143,3 +143,102 @@ export type Notice = {
 export type Notices = {
 	[id: string]: Notice;
 }
+
+
+// AuthContext
+export type User = {
+  id: string;
+  email: string;
+  nick_name: string;
+  avatar: string;
+  card_back: string | null;
+}
+
+export type AuthContextType = {
+  user: User | null;
+  isAuthenticated: boolean;
+  isLoading: boolean;
+  logout: () => void;
+  login: (userData: User) => void;
+}
+
+export type NotificationSeverity = 'success' | 'error' | 'info' | 'warning';
+
+export type NotificationSnackbarProps = {
+    open: boolean;
+    message: string;
+    severity: NotificationSeverity;
+    onClose: (event?: React.SyntheticEvent | Event, reason?: string) => void;
+    autoHideDuration?: number;
+}
+
+export type NotificationItem = {
+  id: string;
+  message: string;
+  severity: NotificationSeverity;
+}
+
+
+// DashBoard
+export type PlayerData = {
+    user: {
+        id: string;
+        email: string;
+        nick_name: string;
+        avatar: string;
+    };
+    total_games: number;
+    wins: number;
+    losses: number;
+    total_score: number;
+    level_info: {
+        current_level: number;
+        total_xp: number;
+        xp_in_current_level: number;
+        xp_required_for_next_level: number;
+        progress_percentage: number;
+        total_xp_for_next_level: number;
+        title: string;
+    };
+}
+
+export type MatchRecord = {
+    game_id: string;
+    is_winner: boolean;
+    score: number;
+    finished_at: string;
+    opponents: string[];
+}
+
+export type BadgeKind = 'wins' | 'games' | 'score' | 'level';
+
+
+export type CardBackSelectorProps = {
+    cardBacks: string[];
+    value: string;
+    onChange: (cardBack: string) => void;
+    cardWidth?: number;
+    cardHeight?: number;
+    optionWidth?: number;
+    columns?: number;
+}
+
+
+// Leaderboard
+export type LeaderboardRow = {
+    rank: number;
+    user_id: string;
+    nick_name: string;
+    level: number;
+    total_wins: number;
+    win_rate: number;
+}
+
+export type LeaderboardTableProps = {
+    // texto simples ou um nó (as tabs do ecrã das estatísticas)
+    title: React.ReactNode;
+    rows: LeaderboardRow[];
+    currentUserId: string;
+    currentUserAvatar: string;
+    tag?: string;
+}

@@ -24,7 +24,6 @@ function GameEndPopUp()
 	function endGame(str: string)
 	{
 		resetPopUpStates();
-		resetGameState();
 		if (str === 'start')
 			sendMessage({"type": str})
 		else

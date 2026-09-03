@@ -1,4 +1,4 @@
-import Shell from './layout/MainLayout'
+import MainLayout from './layout/MainLayout'
 import { Routes, Route } from 'react-router-dom'
 import Login from './account/Login'
 import SignUp from './account/SignUp'
@@ -13,18 +13,15 @@ import Terms from './legal/Terms'
 import Rules from './legal/Rules'
 import Play from './game/Play'
 import Lobby from './game/Lobby'
-import Error from './pages/ErrorPage'
+import ErrorPage from './pages/ErrorPage'
 import { ProtectedRoute } from './core/ProtectedRoute'
 import Verify2fa from './account/Verify2fa'
 import ResetPassword from './account/ResetPassword'
 
-// O mapa do site. O Shell é a moldura (navbar, fundo, footer) e as
-// páginas desenham-se dentro dele, no Outlet. O que está sob
-// ProtectedRoute exige sessão aberta.
 function App() {
     return (
         <Routes>
-            <Route path="/" element={<Shell />}>
+            <Route path="/" element={<MainLayout />}>
                 <Route index element={<HomePage />} />
                 <Route path="login" element={<Login />} />
                 <Route path="signup" element={<SignUp />} />
@@ -34,7 +31,7 @@ function App() {
                 <Route path="login/2fa" element={<Verify2fa />} />
                 <Route path="reset-password" element={<ResetPassword />} />
 
-				<Route path='*' element={<Error />}/>
+				<Route path='*' element={<ErrorPage />}/>
                 <Route element={<ProtectedRoute />}>
 					<Route path='/lobby' element={<Lobby />}/>
                     <Route path="profile" element={<ProfilePage />} />

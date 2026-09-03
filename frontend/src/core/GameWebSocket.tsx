@@ -36,7 +36,6 @@ function GameWebSocket({ children }: { children: React.ReactNode }) {
 
 	function joinRoom(roomID: string, message: object)
 	{
-
 		// Don't create another socket while this provider already has one
 		if (socketRef.current)
 			return ;
@@ -60,27 +59,32 @@ function GameWebSocket({ children }: { children: React.ReactNode }) {
 
 		socket.onmessage = (event) => {
 			// Handle backend message
-			const message = JSON.parse(event.data);
-			const { type } = message;
+			try {
+				const message = JSON.parse(event.data);
+				const { type } = message;
 
-			switch (type) {
-				case 'welcome':
-					setRoomID(roomID);
-					setConnected(true);
-					sessionStorage.setItem('roomID', roomID);
-					break ;
-				case 'notice':
-					newNotice(message);
-					break ;
-				case 'error':
-					handleErrorMessages(message);
-					break ;
-				case 'state':
-					gameStateRef.current = message;
-					setGameState(message);
-					break ;
-				default:
-					alert('undefined error');
+				switch (type) {
+					case 'welcome':
+						setRoomID(roomID);
+						setConnected(true);
+						sessionStorage.setItem('roomID', roomID);
+						break ;
+					case 'notice':
+						newNotice(message);
+						break ;
+					case 'error':
+						handleErrorMessages(message);
+						break ;
+					case 'state':
+						gameStateRef.current = message;
+						setGameState(message);
+						break ;
+					default:
+						alert('undefined error');
+				}
+			}
+			catch(e) {
+				handleNewError(`invalid message format ${e}`);
 			}
 		}
 
