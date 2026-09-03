@@ -43,16 +43,14 @@ class GameSettings(BaseModel):
 
 class Create(BaseModel):
     # opens a new room and takes the first seat, the settings are fixed
-    # here for the whole game, omitted means the official rules
+    # here for the whole game, omitted means the official rules, the
+    # seat carries the nick of the logged in account, no name travels
     type: Literal["create"] = "create"
-    # same ceiling as the account nick, the seat shows what the profile shows
-    name: str = Field(min_length=1, max_length=20)
     settings: GameSettings = GameSettings()
 
 
 class Join(BaseModel):
     type: Literal["join"] = "join"
-    name: str = Field(min_length=1, max_length=20)
     # present when reclaiming a seat after a disconnect, from Welcome
     token: str | None = None
 
@@ -154,6 +152,9 @@ class ErrorCode(str, Enum):
     AUTH_REQUIRED = "AUTH_REQUIRED"
     ALREADY_IN_ROOM = "ALREADY_IN_ROOM"
     KICKED = "KICKED"
+    # a newer window of the same account took the chair, the old one
+    # is told before its socket closes so it does not look like a drop
+    SEAT_TAKEN = "SEAT_TAKEN"
     ROOM_FULL = "ROOM_FULL"
     ROOM_NOT_FOUND = "ROOM_NOT_FOUND"
     GAME_NOT_STARTED = "GAME_NOT_STARTED"
