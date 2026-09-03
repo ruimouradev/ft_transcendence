@@ -65,7 +65,10 @@ def get_verify_token_expiration_time(token: str) -> datetime:
         payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
         if payload.get("type") not in [EmailVerificationType.ACCOUNT_ACTIVATION.value, EmailVerificationType.PASSWORD_RESET.value]:
             raise APIError(status_code=400, code=APIErrorCode.BAD_REQUEST, msg="Invalid Token Type")
-        return payload.get("exp")
+        expiretime = payload.get("exp")
+        if expiretime is None:
+            raise APIError(status_code=400, code=APIErrorCode.BAD_REQUEST, msg="Invalid Token: Missing expiration time")
+        return datetime.fromtimestamp(expiretime, tz=timezone.utc)
     except jwt.PyJWTError:
         raise APIError(status_code=400, code=APIErrorCode.BAD_REQUEST, msg="Invalid verification link. Please check your email and try again.")
 

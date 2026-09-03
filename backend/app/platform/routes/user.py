@@ -120,7 +120,7 @@ def verify_email(session: SessionDep, token: str):
     If the token is valid, the user's account will be activated.
     """
     try:
-        email = verify_token_in_email(token)
+        email = verify_token_in_email(token, EmailVerificationType.ACCOUNT_ACTIVATION)
     except APIError as e:
         return RedirectResponse(
                 url=f"/login?error={e.message}",

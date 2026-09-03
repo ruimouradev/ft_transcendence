@@ -31,11 +31,11 @@ def create_verification_token_used_in_mail(email: str, verifyType: EmailVerifica
     payload = {"sub": email, "exp": expire, "type": verifyType.value}
     return jwt.encode(payload, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
 
-def verify_token_in_email(token: str) -> str:
+def verify_token_in_email(token: str, verifyType: EmailVerificationType) -> str:
     """ verify JWT Token for email verification and return the email if valid, otherwise raise APIError """
     try:
         payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
-        if payload.get("type") not in [EmailVerificationType.ACCOUNT_ACTIVATION.value, EmailVerificationType.PASSWORD_RESET.value]:
+        if payload.get("type") != verifyType.value:
             raise APIError(status_code=400, code=APIErrorCode.BAD_REQUEST, msg="Invalid Token Type")
         return payload.get("sub")
     except jwt.ExpiredSignatureError:

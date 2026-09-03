@@ -109,7 +109,7 @@ async def reset_password_me(*, session: SessionDep, password: str = Body(..., em
     """
     Use a verification token to set a new password.
     """
-    email = verify_token_in_email(token)
+    email = verify_token_in_email(token, EmailVerificationType.PASSWORD_RESET)
     current_user = userservice.get_user_by_email(session=session, email=email)
     if not current_user:
         raise APIError(status_code=400, code=APIErrorCode.BAD_REQUEST, msg="The user with this email does not exist in the system.")
