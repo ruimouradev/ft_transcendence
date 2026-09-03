@@ -1,16 +1,8 @@
 import { useEffect, useState } from 'react';
-<<<<<<< HEAD
 import { Badge, Box, Container, InputAdornment, Tab, Tabs, TextField, Typography } from '@mui/material';
 import SearchIcon from '@mui/icons-material/Search';
 import { useAuth } from '../core/AuthContext';
 import { useNotification } from '../ui/useNotification';
-=======
-import { ThemeProvider, Badge, Box, Container, InputAdornment, Tab, Tabs, TextField, Typography, } from '@mui/material';
-import SearchIcon from '@mui/icons-material/Search';
-import { useAuth } from '../core/AuthContext';
-import { useNotification } from '../ui/useNotification';
-import { unoTheme } from '../ui/unoTheme';
->>>>>>> origin/main
 import { api } from '../core/client';
 import defaultAvatar from '../assets/avatar/a_default.svg';
 import FriendsTab from '../components/FriendsTab'
@@ -20,11 +12,7 @@ import type { FriendEntry } from '../core/types.ts'
 
 const avatarVersion = Date.now();
 
-<<<<<<< HEAD
 function FriendsPage() {
-=======
-export default function FriendsPage() {
->>>>>>> origin/main
     const { showNotification, notificationNode } = useNotification();
     const [activeTab, setActiveTab] = useState<'all' | 'pending' | 'suggested'>('all');
     const [searchQuery, setSearchQuery] = useState('');
@@ -154,14 +142,8 @@ export default function FriendsPage() {
                 {activeTab === 'suggested' && <SuggestedTab filteredSuggestions={filteredSuggestions}
 					freshAvatar={freshAvatar} handleSendRequest={handleSendRequest} />}
             </Container>
-<<<<<<< HEAD
         </>
     );
 }
 
 export default FriendsPage
-=======
-        </ThemeProvider>
-    );
-}
->>>>>>> origin/main

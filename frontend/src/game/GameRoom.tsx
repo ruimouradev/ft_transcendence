@@ -107,6 +107,7 @@ function DeckArea()
 		sendMessage(message);
 	}
 
+	const box_width = 'clamp(2.2rem, 4vw, 5.5rem)';
 	const direction = gameState?.direction === 1 ? direction_plus : direction_minus;
 	const image_styles: React.CSSProperties = {width: '100%', aspectRatio: '1 / 1', objectFit: 'fill'};
 
@@ -120,18 +121,18 @@ function DeckArea()
 				<img className="arrow" src={direction} alt="" draggable={false}/>
 			</Box>
 			<Box sx={{ width: '25%', height: '100%', right: 0, position: 'absolute', display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 2, transform: 'translateX(20%) translateY(-15%)' }}>
-				<Paper elevation={0} sx={{ width: '4vw', aspectRatio: '1 / 1', bgcolor: color, borderRadius: 1, ...box_shadow }}>
+				<Paper elevation={0} sx={{ width: box_width, aspectRatio: '1 / 1', bgcolor: color, borderRadius: 1, ...box_shadow }}>
 					<img src={color} draggable={false} style={image_styles}/>
 				</Paper>
 				<Button className="rainbow-button" variant="contained" onClick={handleUno} 
-					sx={{ width: '4vw',  aspectRatio: '1 / 1', minWidth: 0, p: 0, fontSize: 'clamp(0.2rem, 1.4vh, 1rem)', ...box_shadow }}>UNO!
+					sx={{ width: box_width,  aspectRatio: '1 / 1', minWidth: 0, p: 0, fontSize: 'clamp(0.2rem, 1.4vh, 1rem)', ...box_shadow }}>UNO!
 				</Button>
 			</Box>
 			<Box sx={{ width: '25%', height: '100%', left: 0, position: 'absolute', display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 2, transform: 'translateX(-20%) translateY(-15%)' }}>
 				<Button variant="contained" disabled={disable_challenge} onClick={() => sendMessage(challenge_click)}
-					sx={{ width: '4vw',  aspectRatio: '1 / 1', minWidth: 0, p: 0, fontSize: 'clamp(0.2rem, 1.4vh, 1rem)', ...box_shadow }}>DARE
+					sx={{ width: box_width,  aspectRatio: '1 / 1', minWidth: 0, p: 0, fontSize: 'clamp(0.2rem, 1.4vh, 1rem)', ...box_shadow }}>DARE
 				</Button>
-				{gameState?.stack !== 0 && <Paper elevation={0} sx={{ width: '4vw', aspectRatio: '1 / 1', bgcolor: color, borderRadius: 1, ...box_shadow }}>
+				{gameState?.stack !== 0 && <Paper elevation={0} sx={{ width: box_width, aspectRatio: '1 / 1', bgcolor: color, borderRadius: 1, ...box_shadow }}>
 					<Typography sx={{ width: '100%', height: '100%', color: 'backgorund.paper', fontSize: 'clamp(0.2rem, 1.4vh, 1rem)',
 						display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column' }}>
 						<span>STACK</span> <span>{gameState?.stack}</span>
