@@ -1,7 +1,7 @@
 from prometheus_client import Counter, Gauge
 
-# Game metrics for the uno dashboard.
-# Anything done in this file shows up there automatically.
+# game metrics for the uno dashboard, anything done in this file
+# shows up there automatically
 
 rooms_active = Gauge(
     "uno_rooms_active", "Rooms currently open"

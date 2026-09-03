@@ -1,4 +1,4 @@
-# Read once at startup, connects grafana to prometheus.
+# read once at startup, connects grafana to prometheus
 
 apiVersion: 1
 

@@ -1,4 +1,4 @@
-# What prometheus watches and how often.
+# what prometheus watches and how often
 
 global:
   scrape_interval: 15s

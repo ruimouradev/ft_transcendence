@@ -327,7 +327,7 @@ class Game:
     def say_uno(self, player_id: str) -> None:
         """Register a player's Uno call, sent as its own message.
 
-        Two moments make it valid: holding two cards on player own turn,
+        Two moments make it valid: holding two cards on the player's own turn,
         calling before the play, or holding one undeclared card, the
         late call that races the opponents' catch. Ties are settled by
         whichever message reached the server first.

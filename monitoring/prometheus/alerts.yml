@@ -1,5 +1,5 @@
-# Alert rules in two groups, service and game. The thresholds are
-# first guesses, adjust them after some real games.
+# alert rules in two groups, service and game, the thresholds are
+# first guesses, adjust them after some real games
 
 groups:
   - name: service
