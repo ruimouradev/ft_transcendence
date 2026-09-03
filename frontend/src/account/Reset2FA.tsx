@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Alert, Box, Button, Checkbox, CircularProgress, Dialog, DialogActions, DialogContent, DialogTitle, Divider, FormControlLabel,
 	IconButton, InputAdornment, Paper, Step, StepLabel, Stepper, TextField, Typography, } from '@mui/material';
 import { CheckCircle, Close, ContentCopy, Download, Visibility, VisibilityOff, } from '@mui/icons-material';
@@ -44,10 +44,9 @@ function Reset2FA({ open, onClose, onSuccess }: Reset2FADialogProps)
         setError(null);
     };
 
-    useEffect(() => {
-		if (open)
-			resetWizard();
-	}, [open]);
+	const handleOpen = () => {
+		resetWizard();
+	}
 
     const handleClose = (_event?: object, reason?: 'backdropClick' |'escapeKeyDown') => {
         if (loading)
@@ -110,12 +109,14 @@ function Reset2FA({ open, onClose, onSuccess }: Reset2FADialogProps)
             setRecoveryCodes(response.data.recovery_codes,);
             login({ ...user, use2fa: true });
             setActiveStep(4);
-        } catch (error: any) {
-            if (error.response?.status === 400) {
-                setError('The verification code is invalid or expired.',);
-            } else {
-                setError(error.response?.data?.message ?? 'Failed to verify the authentication code.',);
-            }
+        } catch (error) {
+			if (axios.isAxiosError(error)) {
+				if (error.response?.status === 400) {
+					setError('The verification code is invalid or expired.',);
+				} else {
+					setError(error.response?.data?.message ?? 'Failed to verify the authentication code.',);
+				}
+			}
         } finally {
             setLoading(false);
         }
@@ -152,8 +153,8 @@ function Reset2FA({ open, onClose, onSuccess }: Reset2FADialogProps)
     };
 
     return (
-        <Dialog open={open} onClose={handleClose} fullWidth maxWidth="sm" aria-labelledby="enable-2fa-dialog-title" aria-describedby="enable-2fa-dialog-description" slotProps={{ transition: { unmountOnExit: true, }, }}>
-
+        <Dialog open={open} onClose={handleClose} fullWidth maxWidth="sm" aria-labelledby="enable-2fa-dialog-title" aria-describedby="enable-2fa-dialog-description"
+			slotProps={{ transition: { unmountOnExit: true, onEnter: handleOpen} }}>
             <DialogTitle id="enable-2fa-dialog-title" sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', pb: 1, }}>
                 <Typography variant="h6" component="span" sx={{ fontWeight: 600 }}>
                     Reset Two-Factor Authentication

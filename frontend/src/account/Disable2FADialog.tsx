@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Alert, Box, Button, CircularProgress, Dialog, DialogActions, DialogContent, DialogTitle, IconButton,
 	InputAdornment, Step, StepLabel, Stepper, TextField, Typography } from '@mui/material';
 import { Close, Visibility, VisibilityOff, } from '@mui/icons-material';
@@ -25,20 +25,16 @@ function Disable2FADialog({ open, onClose, onSuccess }: Disable2FADialogProps)
 
     const resetWizard = () => {
         setActiveStep(0);
-
         setPassword('');
         setShowPassword(false);
-
         setCode('');
-
         setLoading(false);
         setError(null);
     };
 
-    useEffect(() => { 
-		if (open)
-			resetWizard();
-	}, [open]);
+	const handleOpen = () => {
+		resetWizard();
+	}
 
     const handleClose = (_event?: object, reason?: 'backdropClick' |'escapeKeyDown') => {
         if (loading) { return; }
@@ -91,10 +87,11 @@ function Disable2FADialog({ open, onClose, onSuccess }: Disable2FADialogProps)
     };
 
     return (
-        <Dialog open={open} onClose={handleClose} fullWidth maxWidth="sm" aria-labelledby="enable-2fa-dialog-title" aria-describedby="enable-2fa-dialog-description" slotProps={{ transition: { unmountOnExit: true, }, }}>
+        <Dialog open={open} onClose={handleClose} fullWidth maxWidth="sm" aria-labelledby="enable-2fa-dialog-title" aria-describedby="enable-2fa-dialog-description"
+			slotProps={{ transition: { unmountOnExit: true, onEnter: handleOpen }}}>
 
             <DialogTitle id="enable-2fa-dialog-title" sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', pb: 1, }}>
-                <Typography variant="h6" component="span" sx={{ fonstWeight: 600}}>
+                <Typography variant="h6" component="span" sx={{ fontWeight: 600}}>
                     Disable Two-Factor Authentication
                 </Typography>
                 <IconButton onClick={handleClose} disabled={loading} aria-label="Close" >

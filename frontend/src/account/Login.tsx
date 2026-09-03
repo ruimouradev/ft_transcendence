@@ -8,28 +8,30 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { api, getErrorMessage } from '../core/client';
 import { useAuth } from '../core/AuthContext';
 
-// O ecrã de entrada. Duas portas: email e password contra o backend,
-// ou a conta 42 por OAuth. O token de sessão volta num cookie httponly,
-// por isso aqui não se guarda token nenhum.
-export default function Login() {
+function Login()
+{
     const [formData, setFormData] = useState({
         email: '',
         password: '',
     });
     const [showPassword, setShowPassword] = useState(false);
-    const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
     const { user, login } = useAuth();
 
-    const navigate = useNavigate();
-    const [searchParams] = useSearchParams();
 
-    // O backend comunica connosco por parâmetros no endereço: a
-    // verificação de email e o OAuth redirecionam para /login com
-    // ?info= ou ?error=. Derivam-se aqui na renderização, sem estado
-    // à parte, e o erro do formulário tem prioridade sobre o do URL.
-    const info = searchParams.get('info') || '';
-    const errorParam = searchParams.get('error');
+	const [searchParams] = useSearchParams();
+	const info = searchParams.get('info') || '';
+	const errorParam = searchParams.get('error');
+
+	const [error, setError] = useState(() => {
+		const errorParameter = searchParams.get('error');
+
+		if (errorParameter === 'oauth2_error')
+			return ('Login failed: OAuth2 error.');
+		return errorParam || '';
+	});
+
+    const navigate = useNavigate();
     const urlError = errorParam === 'oauth2_error' ? 'Login failed: OAuth2 error.' : (errorParam || '');
     const shownError = error || urlError;
 
@@ -46,17 +48,6 @@ export default function Login() {
     }, [user, loading, navigate]);
 
     useEffect(() => {
-        setError('');
-        const errorParam = searchParams.get('error');
-        // const infoParam = searchParams.get('info');
-        // if (infoParam) {
-        // 	setInfo(infoParam);
-        // }
-        if (errorParam === 'oauth2_error') {
-            setError('Login failed: OAuth2 error.');
-        } else {
-            setError(errorParam || '');
-        }
         window.history.replaceState({}, document.title, window.location.pathname);
     }, [searchParams]);
 
@@ -192,3 +183,5 @@ export default function Login() {
         </Box>
     );
 }
+
+export default Login
