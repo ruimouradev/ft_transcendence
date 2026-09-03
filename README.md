@@ -71,7 +71,7 @@ responsibility each one also holds.
 
 | Member | Role | Area | Responsibilities |
 | --- | --- | --- | --- |
-| Vinicius | Product Owner | Frontend | Lobby, game room, card rendering, WebSocket client, settings panel, themes, design system |
+| Vinicius | Product Owner | Frontend | Lobby, game room, card rendering, WebSocket client, settings panel, card backs, design system |
 | Rui | Project Manager | Game core and monitoring | Rules engine (official rules, +4 challenge), game customization, engine-realtime contract, Prometheus and Grafana monitoring, testing across the project |
 | Bin | Tech Lead | Platform | Repo skeleton, one-command Docker, DB schema and ORM, auth, OAuth, 2FA, public API, stats and match history |
 | Alexandre | Developer | Real-time and AI | WebSocket layer, per-client views, reconnection, remote players, AI opponent |
@@ -96,9 +96,10 @@ running stack and sent back short reports of what broke and why.
 - **Backend: FastAPI (Python).** Async-friendly, first-class WebSocket
   support and pydantic validation on every message, which is the
   backbone of the game protocol.
-- **Frontend: React with Tailwind CSS.** A component model that suits a
-  live game board, with Tailwind for a consistent look kept close to
-  the markup. <!-- TODO(Vinicius): confirm wording and reasons -->
+- **Frontend: React with Material UI, plus Tailwind utility classes.**
+  A component model that suits a live game board, MUI for accessible
+  ready-made components under one shared theme, and Tailwind utilities
+  where a small layout tweak beats a styled component.
 - **Database: PostgreSQL with SQLModel/SQLAlchemy (ORM).** Relational
   data (users, games, participations) with real constraints, inspected
   via Adminer.
@@ -127,14 +128,20 @@ the SQLModel ORM. The tables:
   and score, that feed the leaderboards.
 - **RecoveryCode**: the single-use codes handed out when 2FA is armed.
 
-<!-- TODO(Bin): review, and a diagram would be nice for the defense -->
-
 A user has many games through GamePlayer, one UserStatistic row, many
-friendships, and its OAuth and recovery links.
+friendships, and its OAuth and recovery links:
+
+```mermaid
+erDiagram
+    User ||--o{ OAuthAccount : "42 login and API key"
+    User ||--|| UserStatistic : "running totals"
+    User ||--o{ RecoveryCode : "2FA backup codes"
+    User ||--o{ GamePlayer : "one per seat taken"
+    Game ||--o{ GamePlayer : "one row per seat"
+    User ||--o{ Friendship : "as requester or addressee"
+```
 
 ## Features List
-
-<!-- TODO(team): review, this is the working list -->
 
 | Feature | Who | What it does |
 | --- | --- | --- |
@@ -150,7 +157,7 @@ friendships, and its OAuth and recovery links.
 | Public API | Bin | Documented endpoints with API key and rate limiting |
 | Stats and match history | Bin | Every finished game recorded, per-user stats |
 | Game UI | Vinicius | Lobby, table, cards, turn indicators, wild color pick |
-| Design system | Vinicius | Reusable components and themes |
+| Design system | Vinicius | Reusable MUI components, shared palette and typography, card back selection |
 
 ## Modules
 
@@ -171,7 +178,7 @@ friendships, and its OAuth and recovery links.
 | Game customization options | minor | 1 | Rui, Vinicius |
 | Stats and match history | minor | 1 | Bin |
 | Design system (10 components) | minor | 1 | Vinicius |
-| OAuth (42 / Google) | minor | 1 | Bin |
+| OAuth (42) | minor | 1 | Bin |
 | Two-factor authentication | minor | 1 | Bin |
 
 **Total: 24 points** (9 majors, 6 minors).
@@ -194,12 +201,9 @@ One line each, for the defense:
 - **OAuth**: sign in with your 42 account.
 - **Two-factor**: TOTP codes with single-use recovery codes.
 
-<!-- TODO(team): confirm the owners column -->
 
 
 ## Individual Contributions
-
-<!-- TODO(each member): detailed breakdown, challenges and how they were overcome. Rui's draft below as the example -->
 
 **Rui, game core and monitoring.** Wrote the rules engine
 (`backend/app/game/engine.py`): every Uno rule in one pure, seedable,
@@ -216,7 +220,7 @@ legality had to be frozen at play time so later draws could not change
 the verdict, and the Uno call was redesigned as its own message racing
 the catch, with a server-side grace window.
 
-**Bin, platform.** <!-- TODO(Bin): review and complete, especially the challenges -->
+**Bin, platform.**
 Built the platform the game stands on: the repo skeleton, the
 one-command Docker Compose setup, the database models and the SQLModel
 ORM layer. Authentication with hashed and salted passwords and JWT
@@ -226,18 +230,25 @@ upload, the friends system with requests and online presence. The
 public API behind an API key with rate limiting. The stats, match
 history and leaderboards, the email service for verification and
 password reset, and the bot accounts the AI seats play under, created
-at startup.
+at startup. Challenges: growing a full-stack template into our own
+auth flow without dragging its dead weight along, and keeping the 42
+login alive through an expired application secret and the quirks of
+the intra callback.
 
-**Vinicius, frontend.** <!-- TODO(Vinicius): review and complete, especially the challenges -->
+**Vinicius, frontend.**
 Built the browser client: home, login, register and the account
 screens, the lobby and join screens, and the game room with the card
 rendering, the turn indicators, the wild color pick and the seven
 target pick, the winner screen and the reaction bubbles. The
 WebSocket client that drives the table, the profile and avatar upload,
 the stats and leaderboard screens, the API key screen, and the site
-theme and the design system components with Tailwind.
+theme and the design system components with Material UI. Challenges:
+learning TypeScript and React on the project itself, and driving the
+whole table from a single WebSocket state feed with React 19, where
+the usual socket libraries did not fit and the client had to be
+written by hand.
 
-**Alexandre, real-time and AI.** <!-- TODO(Alexandre): review and complete, especially the challenges -->
+**Alexandre, real-time and AI.**
 Built the realtime layer that runs the rooms: seats, per-player
 broadcasting, reconnection with grace periods, one seat per player
 across rooms, authentication on the socket, the turn clock, the
@@ -245,10 +256,13 @@ lobby with add-bot and kick, recording of finished games to the
 database, and the game metrics that feed the monitoring. The AI
 opponent that fills the bot seats is his as well, with its three
 difficulty levels playing from easy and random up to a tactical hard.
+Challenges: keeping every client's view consistent through drops and
+reconnections without ever leaking a hand, and pacing the bots so they
+play at a human rhythm without blocking the room for anyone else.
 
 ## Resources
 
-The shared set below. <!-- TODO(team): each member adds any extra they used in their area -->
+The shared set below.
 
 - Official Uno rules: <https://www.mattelgames.com/en-us/cards/uno>,
   what the engine implements, +4 challenge included.
@@ -263,8 +277,8 @@ The shared set below. <!-- TODO(team): each member adds any extra they used in t
   in the game protocol.
 - SQLModel: <https://sqlmodel.tiangolo.com/>, the ORM over SQLAlchemy.
 - PostgreSQL: <https://www.postgresql.org/docs/>.
-- React: <https://react.dev/> and Tailwind CSS:
-  <https://tailwindcss.com/docs>, the frontend stack.
+- React: <https://react.dev/>, Material UI: <https://mui.com/>, and
+  Tailwind CSS: <https://tailwindcss.com/docs>, the frontend stack.
 - MDN WebSocket API: <https://developer.mozilla.org/en-US/docs/Web/API/WebSocket>,
   the client side of the realtime connection.
 - Prometheus: <https://prometheus.io/docs/> and Grafana provisioning:
