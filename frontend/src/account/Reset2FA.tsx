@@ -5,32 +5,26 @@ import { CheckCircle, Close, ContentCopy, Download, Visibility, VisibilityOff, }
 import {QRCodeSVG} from 'qrcode.react';
 import {api} from '../core/client';
 import { useAuth } from '../core/AuthContext';
+import axios from 'axios';
 import type { Reset2FADialogProps, Setup2FAResponse, Verify2FAResponse } from '../core/types.ts'
 
 const steps = [ 'Reset Confirm', 'Verify', 'Authenticator', 'Verify code', 'Recovery codes', ];
 
-export default function Reset2FA({
-    open,
-    onClose,
-    onSuccess,
-}: Reset2FADialogProps) {
-    const [activeStep, setActiveStep] = useState(0);
-    const { user, login } = useAuth();
-
-    const [password, setPassword] = useState('');
-    const [showPassword, setShowPassword] = useState(false);
-    const [recoverCode, setRecoverCode] = useState('');
-
+function Reset2FA({ open, onClose, onSuccess }: Reset2FADialogProps)
+{
+	const { user, login } = useAuth();
+	
     const [code, setCode] = useState('');
-
     const [secret, setSecret] = useState('');
+    const [password, setPassword] = useState('');
+    const [loading, setLoading] = useState(false);
+    const [activeStep, setActiveStep] = useState(0);
     const [otpauthUrl, setOtpauthUrl] = useState('');
-
+    const [recoverCode, setRecoverCode] = useState('');
+    const [showPassword, setShowPassword] = useState(false);
+    const [error, setError] = useState<string | null>(null);
     const [recoveryCodes, setRecoveryCodes] = useState<string[]>([]);
     const [savedRecoveryCodes, setSavedRecoveryCodes] = useState(false);
-
-    const [loading, setLoading] = useState(false);
-    const [error, setError] = useState<string | null>(null);
 
     const resetWizard = () => {
         setActiveStep(0);
@@ -56,8 +50,10 @@ export default function Reset2FA({
 	}, [open]);
 
     const handleClose = (_event?: object, reason?: 'backdropClick' |'escapeKeyDown') => {
-        if (loading) { return; }
-        if (reason === 'backdropClick' || reason === 'escapeKeyDown') { return; }
+        if (loading)
+			return ;
+        if (reason === 'backdropClick' || reason === 'escapeKeyDown')
+			return ;
         resetWizard();
         onClose();
     };
@@ -82,12 +78,14 @@ export default function Reset2FA({
             setSecret(response.data.secret);
             setOtpauthUrl(response.data.otpauth_url);
             setActiveStep(2);
-        } catch (error: any) {
-            if (error.response?.status === 401) {
-                setError('Your password is incorrect. Please try again.',);
-            } else {
-                setError(error.response?.data?.message ?? 'Failed to initialize two-factor authentication.',);
-            }
+        } catch (error) {
+            if (axios.isAxiosError(error)) {
+				if (error.response?.status === 401) {
+                	setError('Your password is incorrect. Please try again.',);
+				} else {
+					setError(error.response?.data?.message ?? 'Failed to initialize two-factor authentication.',);
+				}
+			}
         } finally {
             setLoading(false);
         }
@@ -152,11 +150,6 @@ export default function Reset2FA({
         resetWizard();
         onClose();
     };
-
-    // const handleBack = () => {
-    //     setError(null);
-    //     setActiveStep( (currentStep) => currentStep - 1, );
-    // };
 
     return (
         <Dialog open={open} onClose={handleClose} fullWidth maxWidth="sm" aria-labelledby="enable-2fa-dialog-title" aria-describedby="enable-2fa-dialog-description" slotProps={{ transition: { unmountOnExit: true, }, }}>
@@ -341,3 +334,5 @@ export default function Reset2FA({
         </Dialog>
     );
 }
+
+export default Reset2FA

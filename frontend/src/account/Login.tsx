@@ -60,12 +60,18 @@ export default function Login() {
         window.history.replaceState({}, document.title, window.location.pathname);
     }, [searchParams]);
 
-    const handleSubmit = async (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.SubmitEvent<HTMLFormElement>) => {
         e.preventDefault();
         if (!formData.email || !formData.password) {
             setError('Please fill in all fields.');
             return;
         }
+
+		if (!/^\S+@\S+\.\S+$/.test(formData.email)) {
+			setError('Please enter a valid email address.');
+			return;
+		}
+		
         setLoading(true);
         try {
             // o endpoint segue o formato clássico do OAuth2: um form

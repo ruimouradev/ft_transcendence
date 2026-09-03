@@ -4,6 +4,7 @@ import { Alert, Box, Button, CircularProgress, Dialog, DialogActions, DialogCont
 import { Close, Visibility, VisibilityOff, } from '@mui/icons-material';
 // import {QRCodeSVG} from 'qrcode.react';
 import {api} from '../core/client';
+import axios from 'axios';
 import { useAuth } from '../core/AuthContext';
 import type { Disable2FADialogProps, Message} from '../core/types.ts'
 
@@ -76,12 +77,14 @@ function Disable2FADialog({ open, onClose, onSuccess }: Disable2FADialogProps)
             onSuccess();
             resetWizard();
             onClose();
-        } catch (error: any) {
-            if (error.response?.status === 401) {
-                setError('Your password is incorrect. Please try again.',);
-            } else {
-                setError(error.response?.data?.message ?? 'Failed to initialize two-factor authentication.',);
-            }
+        } catch (error) {
+			if (axios.isAxiosError(error)) {
+				if (error.response?.status === 401) {
+					setError('Your password is incorrect. Please try again.',);
+				} else {
+					setError(error.response?.data?.message ?? 'Failed to initialize two-factor authentication.',);
+				}
+			}
         } finally {
             setLoading(false);
         }

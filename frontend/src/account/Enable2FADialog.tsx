@@ -4,6 +4,7 @@ import { Alert, Box, Button, Checkbox, CircularProgress, Dialog, DialogActions, 
 import { CheckCircle, Close, ContentCopy, Download, Visibility, VisibilityOff, } from '@mui/icons-material';
 import {QRCodeSVG} from 'qrcode.react';
 import {api} from '../core/client';
+import axios from 'axios';
 import { useAuth } from '../core/AuthContext';
 import type { Enable2FADialogProps, Setup2FAResponse, Verify2FAResponse } from '../core/types.ts';
 
@@ -78,12 +79,14 @@ function Enable2FADialog({ open, onClose, onSuccess }: Enable2FADialogProps)
             setSecret(response.data.secret);
             setOtpauthUrl(response.data.otpauth_url);
             setActiveStep(2);
-        } catch (error: any) {
-            if (error.response?.status === 401) {
-                setError('Your password is incorrect. Please try again.',);
-            } else {
-                setError(error.response?.data?.message ?? 'Failed to initialize two-factor authentication.',);
-            }
+        } catch (error) {
+			if (axios.isAxiosError(error)) {
+				if (error.response?.status === 401) {
+					setError('Your password is incorrect. Please try again.',);
+				} else {
+					setError(error.response?.data?.message ?? 'Failed to initialize two-factor authentication.',);
+				}
+			}
         } finally {
             setLoading(false);
         }
@@ -108,12 +111,14 @@ function Enable2FADialog({ open, onClose, onSuccess }: Enable2FADialogProps)
             setRecoveryCodes(response.data.recovery_codes,);
             login({ ...user, use2fa: true, },);
             setActiveStep(4);
-        } catch (error: any) {
-            if (error.response?.status === 400) {
-                setError('The verification code is invalid or expired.',);
-            } else {
-                setError(error.response?.data?.message ?? 'Failed to verify the authentication code.',);
-            }
+        } catch (error) {
+			if (axios.isAxiosError(error)) {
+				if (error.response?.status === 400) {
+					setError('The verification code is invalid or expired.',);
+				} else {
+					setError(error.response?.data?.message ?? 'Failed to verify the authentication code.',);
+				}
+			}
         } finally {
             setLoading(false);
         }
