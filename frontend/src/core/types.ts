@@ -143,6 +143,7 @@ export type Notice = {
 export type Notices = {
 	[id: string]: Notice;
 }
+<<<<<<< HEAD
 
 
 // AuthContext
@@ -307,3 +308,5 @@ export type NotificationState = {
     message: string;
     severity: 'success' | 'error' | 'info' | 'warning';
 };
+=======
+>>>>>>> origin/main
