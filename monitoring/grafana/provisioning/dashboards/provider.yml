@@ -1,4 +1,4 @@
-# Grafana loads every dashboard json from the folder below at start.
+# grafana loads every dashboard json from the folder below at start
 
 apiVersion: 1
 

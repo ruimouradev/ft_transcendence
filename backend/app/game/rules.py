@@ -13,7 +13,7 @@ from .contract import Card, Color, Value
 
 
 COLORS: tuple[Color, ...] = ("red", "yellow", "green", "blue")
-# Each color has one zero, two of each number 1 to 9, and two each of
+# each color has one zero, two of each number 1 to 9, and two each of
 # +2, skip and reverse
 VALUES: list[Value] = [
     "0",
@@ -28,8 +28,7 @@ def build_deck(rng: random.Random | None = None) -> list[Card]:
         (c, v) for c in COLORS for v in VALUES
     ]
     for _ in range(4):
-        # adding 4 cards wild (official name for changing color)
-        # adding 4 cards +4 wild
+        # four wilds and four +4 on top of the colored cards
         deck_specs.append(("wild", "wild"))
         deck_specs.append(("wild", "+4"))
     shuffler.shuffle(deck_specs)
