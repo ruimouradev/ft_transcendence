@@ -150,7 +150,7 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "sum by (kind) (rate(uno_moves_total[5m]))",
+          "expr": "sum by (kind) (rate(uno_moves_total[5m])) or vector(0)",
           "legendFormat": "{{kind}}"
         }
       ]
@@ -220,7 +220,7 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "sum by (code) (rate(uno_rejected_total[5m])) * 60",
+          "expr": "sum by (code) (rate(uno_rejected_total[5m])) * 60 or vector(0)",
           "legendFormat": "{{code}}"
         }
       ]

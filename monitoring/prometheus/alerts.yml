@@ -1,5 +1,5 @@
-# Alert rules in two groups, service and game. The thresholds are
-# first guesses, adjust them after some real games.
+# alert rules in two groups, service and game, the thresholds are
+# first guesses, adjust them after some real games
 
 groups:
   - name: service
@@ -37,15 +37,17 @@ groups:
   - name: game
     rules:
       - alert: StuckGames
-        # players online but nothing finishes, something is stuck
+        # players online but no move in a while, a running game always
+        # moves once a minute on the turn clock, so this is the clock
+        # dead or a table nobody plays at
         expr: >
           uno_players_connected > 0
-          and rate(uno_games_finished_total[15m]) == 0
+          and (sum(rate(uno_moves_total[15m])) or vector(0)) == 0
         for: 15m
         labels:
           severity: warning
         annotations:
-          summary: "players online but nothing finishes"
+          summary: "players online but nothing moves"
 
       - alert: RejectionSpike
         # too many refused moves, probably a broken client
