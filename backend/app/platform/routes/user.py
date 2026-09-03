@@ -7,6 +7,8 @@ from app.presence_manager import presence_manager
 from app.platform import security
 from fastapi import APIRouter, Depends, HTTPException, status, BackgroundTasks, UploadFile, WebSocket, WebSocketDisconnect
 from fastapi.responses import RedirectResponse
+from sqlmodel import Session
+from app.models.database import engine
 from pathlib import Path
 
 from app.platform.deps import (CurrentUser, SessionDep,)
@@ -255,41 +257,42 @@ else:
         )
 
 @user_presence_router.websocket("/ws/presence")
-async def websocket_endpoint(websocket: WebSocket, session: SessionDep):
+async def websocket_endpoint(websocket: WebSocket):
     """
     WebSocket endpoint for user presence management.
     """
     logger.info(f"===> New WebSocket connection attempt from {websocket.client.host}:{websocket.client.port}")
     try:
-        current_user = get_current_user(session=session, token=str(websocket.cookies.get("access_token")).replace("Bearer ", ""))
+        token = websocket.cookies.get("access_token")
+        if not token or not token.startswith("Bearer "):
+            await websocket.close(code=status.WS_1008_POLICY_VIOLATION)
+            logger.warning(f"===> WebSocket authentication failed for {websocket.client.host}:{websocket.client.port}: Missing or invalid token")
+            return
+    
+        with Session(engine) as session:
+            current_user = get_current_user(session=session, token=str(websocket.cookies.get("access_token")).replace("Bearer ", ""))
+            user_id = current_user.id
     except Exception as e:
         await websocket.close(code=status.WS_1008_POLICY_VIOLATION)
-        logger.warning(f"===> User {current_user.id} attempted to connect with invalid token. Error: {e}")
+        logger.warning(f"===> WebSocket authentication failed for {websocket.client.host}:{websocket.client.port}: {e}")
         return
-    logger.info(f"===> User {current_user.id} connected to WebSocket.")
-    await presence_manager.connect(current_user.id, websocket)
+    logger.info(f"===> User {user_id} connected to WebSocket.")
     try:
+        await presence_manager.connect(user_id, websocket)
+
         while True:
             data = await websocket.receive_json()
-            # if data.get("type") == "PING":
-            #     presence_manager.update_heartbeat(user_id)
-            #     logger.info(f"===> Received PING from user {user_id}.")
-            #     await websocket.send_json({"type": "PONG", "user_id": user_id})
-            # else:
-            logger.info(f"===> Received message from user {current_user.id}: {data}")
-            await presence_manager.handle_message(current_user.id, data)
+            logger.info(f"===> Received message from user {user_id}: {data}")
+            await presence_manager.handle_message(user_id, data)
 
     except WebSocketDisconnect:
-        logger.info(f"===> User {current_user.id} disconnected.")
+        logger.info(f"===> User {user_id} disconnected.")
 
     except Exception as e:
-        logger.error(f"===> Error in WebSocket connection for user {current_user.id}: {e}")
+        logger.error(f"===> Error in WebSocket connection for user {user_id}: {e}")
 
     finally:
-        await presence_manager.disconnect(current_user.id, websocket)
-        logger.info(
-            f"===> User {current_user.id} disconnected. "
-            f"Current status: {presence_manager.get_status(current_user.id)}"
-        )
+        await presence_manager.disconnect(user_id, websocket)
+        logger.info(f"===> User {user_id} disconnected. " f"Current status: {presence_manager.get_status(user_id)}")
 
 
