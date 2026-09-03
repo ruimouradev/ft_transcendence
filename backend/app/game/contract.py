@@ -45,13 +45,14 @@ class Create(BaseModel):
     # Opens a new room and takes the first seat. The settings are fixed
     # here for the whole game, omitted means the official rules.
     type: Literal["create"] = "create"
-    name: str
+    # Same ceiling as the account nick, the seat shows what the profile shows
+    name: str = Field(min_length=1, max_length=20)
     settings: GameSettings = GameSettings()
 
 
 class Join(BaseModel):
     type: Literal["join"] = "join"
-    name: str
+    name: str = Field(min_length=1, max_length=20)
     # Present when reclaiming a seat after a disconnect, from Welcome
     token: str | None = None
 

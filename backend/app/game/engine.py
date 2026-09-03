@@ -207,8 +207,10 @@ class Game:
         elif card.value in ("+2", "+4") or effect.skip or (
                 effect.reverse and len(self.hands) == 2):
             lands_on = victim
-        if card.value == "+2" and not self.settings.stacking:
-            moved = 2
+        if card.value == "+2" and (not self.settings.stacking
+                                   or not hand.cards):
+            # a last +2 is never stacked on, the whole pile lands now
+            moved = 2 + self.stack
         self.last = LastAction(player=player_id, kind="play", card=card,
                                target=lands_on, count=moved)
         self.seq += 1
@@ -219,6 +221,9 @@ class Game:
             self._step(1)
             return
         if not hand.cards:
+            if moved:
+                self._deal(self._hand(victim), moved)
+                self.stack = 0
             self.phase = "finished"
             self.winner = player_id
             return
@@ -481,6 +486,10 @@ class Game:
         self.seq += 1
         if self.phase == "playing" and self.hands[self.turn].id == player_id:
             self.drawn = None
+            hand = self.hands[self.turn]
+            # an early uno call only holds for the play that follows it
+            if len(hand.cards) == 2:
+                hand.said_uno = False
             if self.plus4:
                 # the cards land on the sleeper, never on the next player
                 plus4, self.plus4 = self.plus4, None

@@ -18,6 +18,9 @@ moves = Counter(
 challenges = Counter(
     "uno_challenges_total", "+4 challenges answered", ["outcome"]
 )
+# both outcomes exist from the start, so the panel shows zero and not No data
+for outcome in ("caught", "wrong"):
+    challenges.labels(outcome=outcome)
 rejected = Counter(
     "uno_rejected_total", "Refused moves", ["code"]
 )
