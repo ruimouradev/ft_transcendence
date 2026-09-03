@@ -15,7 +15,7 @@ from sqlmodel import Session
 from app.platform import security
 from app.platform.config import settings
 from app.models.database import engine
-from app.models.all import APIError, APIErrorCode, ProviderType, TokenPayload, User
+from app.models.all import APIError, APIErrorCode, ProviderType, TokenPayload, User, LoginTokenType
 
 
 logger = logging.getLogger("uvicorn.error")
@@ -65,7 +65,7 @@ def get_current_user(session: SessionDep, token: TokenDep) -> User:
         token_data = TokenPayload(**payload)
     except (InvalidTokenError, ValidationError):
         raise APIError(status_code=403, code=APIErrorCode.INVALID_TOKEN, msg="Could not validate credentials.")
-    if token_data.type != "access":
+    if token_data.type != LoginTokenType.ACCESS.value:
         raise APIError(status_code=403, code=APIErrorCode.INVALID_TOKEN, msg="Invalid token type.")
     
     user = session.get(User, token_data.sub)

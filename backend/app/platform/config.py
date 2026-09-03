@@ -55,7 +55,8 @@ class Settings(BaseSettings):
     O42_CLIENT_ID: str ="need to be seted"
     O42_CLIENT_SECRET: str = "changethis" 
     O42_REDIRECT_URI : str = "changethis" 
-    O42_TOKEN_URL : str = "changethis" 
+    O42_TOKEN_URL : str = "changethis"
+    REDIS_URL : str = "redis://redis:6379/0"
 
     def _check_default_secret(self, var_name: str, value: str | None) -> None:
         if value == "changethis":

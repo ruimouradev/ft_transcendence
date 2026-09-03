@@ -21,3 +21,5 @@ fastapi-mail==1.6.5
 websockets==17.0.1
 prometheus-fastapi-instrumentator==8.1.0
 Faker==40.36.0
+redis==8.1.0
+
