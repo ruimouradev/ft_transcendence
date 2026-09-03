@@ -26,7 +26,8 @@ export type PublicPlayer = {
 	bot: boolean,
 	bot_level: 'easy' | 'medium' | 'hard' | null
 	avatar: string,
-	points: number
+	points: number,
+	ready: boolean
 }
 
 export type PrivatePlayer = {
@@ -38,9 +39,11 @@ export type PrivatePlayer = {
 
 export type LastAction = {
 	player: string,
-    kind: 'join' | 'start' | 'play' | 'draw' | 'pass' 
-			| 'catch' | 'challenge' | 'timeout' | 'uno',
+    kind: 'join' | 'start' | 'play' | 'draw' 
+		| 'catch' | 'challenge' | 'timeout' | 'uno',
     card: GameCard | null,
+	target: string | null,
+	count: number | null
 }
 
 export type GameState = {
@@ -68,7 +71,6 @@ export type GameState = {
 	winner : string | null,
 	winner_score : number | null
 }
-
 
 
 export type Room = {

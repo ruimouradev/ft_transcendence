@@ -24,6 +24,9 @@ function Privacy() {
                     <li>Your email address, used to activate and identify the account.</li>
                     <li>Your nickname and, if you upload one, your avatar image.</li>
                     <li>Your password, stored only as a secure hash, never in plain text.</li>
+					<li>If 2FA is used, the secret is stored so the codes can be checked, and the recovery codes are saved as a secure hash.</li>
+					<li>If an API key is created, only a secure hash of the key is saved.</li>
+					<li>If 42 login is used, the ID, email, login and profile picture provided by 42 are saved, along with the 42 access token.</li>
                 </ul>
                 <p>While you use the site, we also store:</p>
                 <ul className="list-disc pl-6 space-y-1">
@@ -46,7 +49,7 @@ function Privacy() {
             <Section title="Cookies">
                 <p>
                     The site uses a single session cookie so you stay signed in. It
-                    expires after 30 minutes and the browser scripts cannot read it.
+                    expires after 8 days and the browser scripts cannot read it.
                     There are no advertising or tracking cookies.
                 </p>
             </Section>
@@ -62,7 +65,7 @@ function Privacy() {
 
             <Section title="Your rights">
                 <p>
-                    You can see and edit your profile data (nickname, avatar, email,
+                    You can see and edit your profile data (nickname, avatar,
                     password) at any time from the profile page. If you want your
                     account and its data deleted, contact the team and we will remove
                     it.

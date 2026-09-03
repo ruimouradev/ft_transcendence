@@ -12,7 +12,6 @@ function PopUp()
 	if (popUp === 'disabled')
 		return null;
 
-	console.log(popUp);
 	return (
 		<Modal open={true} >
 			<Box className="no-select" sx={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>

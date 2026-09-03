@@ -8,7 +8,7 @@ function Play()
 {
 	const {user} = useAuth();
 	const { connected, joinRoom } = useGameContext();
-	
+
 	useEffect(() => {
 		const room = sessionStorage.getItem('roomID');
 		const message = {"type": "join", "name": user?.nick_name};
