@@ -1,6 +1,6 @@
 import { Box, Container, Divider, Tabs, Tab, ThemeProvider } from '@mui/material';
 import { unoTheme } from '../ui/unoTheme';
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { tab_text } from '../game/macrosConfig.ts';
 import CreateRoom from '../components/CreateRoom';
 import JoinPrivate from '../components/JoinPrivate';

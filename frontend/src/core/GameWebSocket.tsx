@@ -24,17 +24,18 @@ function GameWebSocket({ children }: { children: React.ReactNode }) {
 
 	const { user, isAuthenticated  } = useAuth();
 	const { handleNewError } = usePopUpContext();
+	
+	useEffect(() => {
+		if (!isAuthenticated && socketRef.current)
+		{
+			pendingRoomRef.current = null;
+			sessionStorage.removeItem('roomID');
+			socketRef.current.close();
+		}
+	}, [isAuthenticated])
 
 	function joinRoom(roomID: string, message: object)
 	{
-		useEffect(() => {
-			if (!isAuthenticated && socketRef.current)
-			{
-				pendingRoomRef.current = null;
-				sessionStorage.removeItem('roomID');
-				socketRef.current.close();
-			}
-		}, [isAuthenticated])
 
 		// Don't create another socket while this provider already has one
 		if (socketRef.current)
@@ -69,7 +70,6 @@ function GameWebSocket({ children }: { children: React.ReactNode }) {
 					sessionStorage.setItem('roomID', roomID);
 					break ;
 				case 'notice':
-//					setNotice(message);
 					newNotice(message);
 					break ;
 				case 'error':
@@ -82,9 +82,6 @@ function GameWebSocket({ children }: { children: React.ReactNode }) {
 				default:
 					alert('undefined error');
 			}
-
-			// DEL !
-			console.log("game engine: ", message);
 		}
 
 		socket.onerror = () => {
@@ -145,7 +142,6 @@ function GameWebSocket({ children }: { children: React.ReactNode }) {
 
 	function handleErrorMessages({type, code, msg, room}: {type: string, code: string, msg:string, room: string | null})
 	{
-		// console.log('ERROR CODE:', code, JSON.stringify(code));
 		if (type !== 'error')
 			return ;
 		switch(code)
@@ -169,34 +165,6 @@ function GameWebSocket({ children }: { children: React.ReactNode }) {
 				break ;
 		}
 		handleNewError(msg);
-
-		/*
-			HANDLE
-				ALREADY_IN_ROOM = "ALREADY_IN_ROOM"
-
-			JUST PROMPT
-				NOT_YOUR_TURN = "NOT_YOUR_TURN"
-				INVALID_CARD = "INVALID_CARD"
-				COLOR_REQUIRED = "COLOR_REQUIRED"
-				TARGET_REQUIRED = "TARGET_REQUIRED"
-				CARD_NOT_IN_HAND = "CARD_NOT_IN_HAND"
-				INVALID_CATCH = "INVALID_CATCH"
-				INVALID_UNO = "INVALID_UNO"
-				INVALID_CHALLENGE = "INVALID_CHALLENGE"
-				GAME_NOT_STARTED = "GAME_NOT_STARTED"
-
-			SPECIAL
-				INVALID_MESSAGE = "INVALID_MESSAGE"
-
-				GameState ? (JUST PROMPT) : (FULL CLEAR)
-
-			BACKEND CLOSE (FULL CLEAR)
-				KICKED = "KICKED"
-				ROOM_FULL = "ROOM_FULL"
-				AUTH_REQUIRED = "AUTH_REQUIRED"
-				ROOM_NOT_FOUND = "ROOM_NOT_FOUND"
-				GAME_ALREADY_STARTED = "GAME_ALREADY_STARTED"
-		*/
 	}
 
 	function resetGameState()
@@ -238,3 +206,32 @@ function GameWebSocket({ children }: { children: React.ReactNode }) {
 }
 
 export default  GameWebSocket
+
+
+/*
+	HANDLE
+		ALREADY_IN_ROOM = "ALREADY_IN_ROOM"
+
+	JUST PROMPT
+		NOT_YOUR_TURN = "NOT_YOUR_TURN"
+		INVALID_CARD = "INVALID_CARD"
+		COLOR_REQUIRED = "COLOR_REQUIRED"
+		TARGET_REQUIRED = "TARGET_REQUIRED"
+		CARD_NOT_IN_HAND = "CARD_NOT_IN_HAND"
+		INVALID_CATCH = "INVALID_CATCH"
+		INVALID_UNO = "INVALID_UNO"
+		INVALID_CHALLENGE = "INVALID_CHALLENGE"
+		GAME_NOT_STARTED = "GAME_NOT_STARTED"
+
+	SPECIAL
+		INVALID_MESSAGE = "INVALID_MESSAGE"
+
+		GameState ? (JUST PROMPT) : (FULL CLEAR)
+
+	BACKEND CLOSE (FULL CLEAR)
+		KICKED = "KICKED"
+		ROOM_FULL = "ROOM_FULL"
+		AUTH_REQUIRED = "AUTH_REQUIRED"
+		ROOM_NOT_FOUND = "ROOM_NOT_FOUND"
+		GAME_ALREADY_STARTED = "GAME_ALREADY_STARTED"
+*/
