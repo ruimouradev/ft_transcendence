@@ -51,8 +51,8 @@ def _check_catch_opportunity(state: GameState, bot_id: str, difficulty: str) -> 
     # Because ai_timer checks every 0.5 seconds:
     # Easy: 2% per tick (almost never catches you)
     # Medium: 15% per tick (usually takes 1.5 to 3 seconds to notice, ~60% success rate overall)
-    # Hard: 100% per tick (punishes instantly after the UNO_GRACE period ends)
-    catch_prob = {"easy": 0.02, "medium": 0.15, "hard": 1.0}.get(difficulty, 0.6)
+    # Hard: 40% per tick (~1.25s average reaction time + grace window)
+    catch_prob = {"easy": 0.02, "medium": 0.15, "hard": 0.4}.get(difficulty, 0.6)
     
     if random.random() > catch_prob:
         return None
