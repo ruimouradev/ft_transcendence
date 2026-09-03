@@ -9,7 +9,7 @@ import defaultAvatar from '../assets/avatar/a_default.svg';
 import FriendsTab from '../components/FriendsTab'
 import PendingTab from '../components/PendingTab'
 import SuggestedTab from '../components/SuggestedTab'
-import type { FriendEntry } from '../game/types.ts'
+import type { FriendEntry } from '../core/types.ts'
 
 const avatarVersion = Date.now();
 

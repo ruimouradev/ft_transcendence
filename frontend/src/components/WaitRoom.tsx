@@ -5,13 +5,13 @@ import WifiOffOutlinedIcon from '@mui/icons-material/WifiOffOutlined';
 import ExitToAppOutlinedIcon from '@mui/icons-material/ExitToAppOutlined';
 import DisabledByDefaultOutlinedIcon from '@mui/icons-material/DisabledByDefaultOutlined';
 import { unoTheme } from '../ui/unoTheme';
-import { getGameContext } from '../core/GameWebSocket';
+import { useGameContext } from '../core/GameWebSocketContext';
 import {easy_bot, medium_bot, hard_bot, start_game} from '../game/macrosConfig.ts';
 import { bot_easy, bot_medium, bot_hard } from '../ui/ImagesUtils.ts';
 
 function WaitRoom()
 {
-	const { roomID, gameState, sendMessage, leaveRoom } = getGameContext();
+	const { roomID, gameState, sendMessage, leaveRoom } = useGameContext();
 
 	const host = gameState?.you.id !== gameState?.host_id;
 	const room_full = gameState?.players.length !== gameState?.settings?.max_players;

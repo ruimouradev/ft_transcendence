@@ -1,20 +1,20 @@
 import { useEffect, useState } from 'react';
 import { Box, Card, CardMedia, Typography } from '@mui/material';
-import { getGameContext } from '../core/GameWebSocket';
-import type { PublicPlayer } from '../game/types.ts';
+import { useGameContext } from '../core/GameWebSocketContext';
+import type { PublicPlayer } from '../core/types.ts';
 import EmoticonsMenu from './EmoticonsMenu';
 import { bot_easy, bot_medium, bot_hard } from '../ui/ImagesUtils.ts';
 
 function Avatar({player, position}: {player: PublicPlayer, position: string})
 {
-	const { gameState, sendMessage } = getGameContext();
+	const { gameState, sendMessage } = useGameContext();
 	const [cooldown, setCooldown] = useState(false);
 	const [anchor, setAnchor] = useState<HTMLElement | null>(null);
 
 	useEffect(() => {
 		if (cooldown === false)
 			return ;
-		setAnchor(null);
+		// setAnchor(null);
 		const timer = setTimeout(() => {
 			setCooldown(false);
 		}, 2000)

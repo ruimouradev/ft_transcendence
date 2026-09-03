@@ -1,7 +1,7 @@
 import { Avatar, Box, Chip, IconButton, Paper, Stack, Tooltip, Typography, } from '@mui/material';
 import CheckIcon from '@mui/icons-material/Check';
 import CloseIcon from '@mui/icons-material/Close';
-import type { FriendEntry } from '../game/types.ts'
+import type { FriendEntry } from '../core/types.ts'
 
 function PendingTab({requests, freshAvatar, handleAcceptRequest, handleDeclineRequest}:
 	{requests: FriendEntry[], freshAvatar: (url: string | null) => string,

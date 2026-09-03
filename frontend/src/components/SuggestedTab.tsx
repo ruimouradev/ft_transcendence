@@ -1,7 +1,7 @@
 import { Avatar, Box, Chip, Grid, IconButton, Paper, Tooltip, Typography, } from '@mui/material';
 import PersonAddIcon from '@mui/icons-material/PersonAdd';
 import HourglassEmptyIcon from '@mui/icons-material/HourglassEmpty';
-import type { FriendEntry } from '../game/types.ts';
+import type { FriendEntry } from '../core/types.ts';
 
 function SuggestedTab({filteredSuggestions, freshAvatar, handleSendRequest}:
 	{filteredSuggestions: FriendEntry[], freshAvatar: (url: string | null) => string,

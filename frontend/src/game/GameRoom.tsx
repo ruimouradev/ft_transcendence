@@ -1,18 +1,13 @@
-import { Box, Button, Card, CardContent , CardMedia, Container, Chip, IconButton,  List, ListItem, Paper, ThemeProvider, Typography } from '@mui/material';
-import { createContext, useState, useContext, Fragment, useEffect } from 'react';
-
-import StarOutlinedIcon from '@mui/icons-material/StarOutlined';
-import WifiOffOutlinedIcon from '@mui/icons-material/WifiOffOutlined';
-import ExitToAppOutlinedIcon from '@mui/icons-material/ExitToAppOutlined';
-import DisabledByDefaultOutlinedIcon from '@mui/icons-material/DisabledByDefaultOutlined';
+import { Box, Button, Container, List, ListItem, Paper, ThemeProvider, Typography } from '@mui/material';
+import { useEffect } from 'react';
 
 import { useAuth } from '../core/AuthContext';
 
 import { unoTheme } from '../ui/unoTheme';
 
-import { getGameContext } from '../core/GameWebSocket';
-import { getPopUpContext } from '../core/GamePopUps';
-import type { PopUpTypes } from '../core/GamePopUps';
+import { useGameContext } from '../core/GameWebSocketContext';
+import { usePopUpContext } from '../core/GamePopUpsContext';
+import type { PopUpTypes } from '../core/types.ts';
 
 import { bg_image, cardBacks, defaultCardBack, direction_plus, direction_minus } from '../ui/ImagesUtils.ts';
 
@@ -22,7 +17,7 @@ import Avatar from '../components/Avatar'
 import Emoticons from '../components/Emoticons'
 import WaitRoom from '../components/WaitRoom'
 
-import type {Color, valueNum, valueAction, valueWild, GameCard, Notice, PublicPlayer, PrivatePlayer, LastAction, GameState} from './types.ts'
+import type {GameCard, Notice, PublicPlayer, GameState} from '../core/types.ts'
 
 function getCardName({card}: {card: GameCard})
 {
@@ -50,7 +45,7 @@ function PlayCard({card, gameState, sendMessage, handleNewID}:
 		|| !gameState?.you.playable?.includes(card.id))
 		return null;
 
-	let play_message = {type: 'play', card: `${card.id}`};
+	const play_message = {type: 'play', card: `${card.id}`};
 
 	if (gameState?.settings?.seven_zero === true && card.value == '7')
 		handleNewID('seven', card.id);
@@ -63,7 +58,7 @@ function PlayCard({card, gameState, sendMessage, handleNewID}:
 function DeckArea()
 {
 	const { user } = useAuth();
-	const { gameState, sendMessage } = getGameContext();
+	const { gameState, sendMessage } = useGameContext();
 
 	const uno_click = {"type": "say_uno"};
 	const challenge_click = {"type": "challenge"};
@@ -141,8 +136,8 @@ function DrawHands({deck, amount, card_class}:
 	card_class: string,})
 {
 
-	const { gameState, sendMessage } = getGameContext();
-	const { handleNewID } = getPopUpContext();
+	const { gameState, sendMessage } = useGameContext();
+	const { handleNewID } = usePopUpContext();
 
 	if (deck === undefined)
 		return (
@@ -201,7 +196,7 @@ function DrawHidden({amount, card_class}: {amount: number, card_class: string})
 
 function PlayerOneHand({player, notice}: {player: PublicPlayer, notice: Notice | undefined})
 {
-	const { gameState } = getGameContext();
+	const { gameState } = useGameContext();
 
 	if (!gameState)
 		return null;
@@ -220,7 +215,7 @@ function PlayerOneHand({player, notice}: {player: PublicPlayer, notice: Notice |
 
 function PlayersUI({players}: {players: PublicPlayer[]})
 {
-	const { notices, gameState } = getGameContext();
+	const { notices, gameState } = useGameContext();
 
 	if (!gameState)
 		return null;
@@ -258,7 +253,7 @@ function PlayersUI({players}: {players: PublicPlayer[]})
 
 function RotatePlayers(): PublicPlayer[]
 {
-	const { gameState } = getGameContext();
+	const { gameState } = useGameContext();
 	const player = gameState?.you;
 
 	let players: PublicPlayer[] = [];
@@ -270,7 +265,7 @@ function RotatePlayers(): PublicPlayer[]
 	for (; i < players.length && players[i].id !== player?.id; i++)
 		;
 
-	let new_players: PublicPlayer[] = players.slice(i);
+	const new_players: PublicPlayer[] = players.slice(i);
 	new_players.push(...players.slice(0, i));
 	return (new_players);
 }
@@ -278,16 +273,16 @@ function RotatePlayers(): PublicPlayer[]
 function GameRoom()
 {
 	const new_players = RotatePlayers();
-	if (new_players === null)
-		return ;
-
-	const { gameState } = getGameContext();
-	const { handleGameEnd } = getPopUpContext();
+	const { gameState } = useGameContext();
+	const { handleGameEnd } = usePopUpContext();
 
 	useEffect(() => {
 		if (gameState?.winner != null)
 			handleGameEnd();
-	}, [gameState?.winner]);
+	}, [gameState?.winner, handleGameEnd]);
+
+	if (new_players === null)
+		return ;
 
 	return ( gameState === null || gameState.phase === 'lobby' ? <WaitRoom /> :
 		<ThemeProvider theme={unoTheme}>

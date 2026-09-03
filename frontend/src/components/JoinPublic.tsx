@@ -2,9 +2,9 @@ import { Box, Button, Card, Typography } from '@mui/material';
 import { useState } from 'react';
 import { useAuth } from '../core/AuthContext';
 import PersonIcon from '@mui/icons-material/Person';
-import { getGameContext } from '../core/GameWebSocket';
+import { useGameContext } from '../core/GameWebSocketContext';
 import { menu_text } from '../game/macrosConfig.ts';
-import type { Room } from '../game/types.ts';
+import type { Room } from '../core/types.ts';
 
 function PrintRoom({room, room_flag, onSelect}: {room: Room, room_flag: boolean | null, onSelect: () => void })
 {
@@ -22,7 +22,7 @@ function JoinPublic({rooms}: {rooms: Room[]})
 {
 	const [selected, setSelected] = useState<string | null>(null);
 
-	const { joinRoom } = getGameContext();
+	const { joinRoom } = useGameContext();
 	const { user } = useAuth();
 
 	function PublicClick()

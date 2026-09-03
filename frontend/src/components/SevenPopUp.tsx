@@ -1,15 +1,15 @@
 import { useEffect } from 'react';
 import { Box, Card, CardMedia, IconButton, ThemeProvider, Typography } from '@mui/material';
 import { unoTheme } from '../ui/unoTheme.ts';
-import { getGameContext } from '../core/GameWebSocket.tsx';
-import { getPopUpContext } from '../core/GamePopUps.tsx';
+import { useGameContext } from '../core/GameWebSocketContext';
+import { usePopUpContext } from '../core/GamePopUpsContext.tsx';
 import ClearSharpIcon from '@mui/icons-material/ClearSharp';
 import { bot_easy, bot_medium, bot_hard } from '../ui/ImagesUtils.ts';
 
 function SevenPopUp()
 {
-	const { gameState, sendMessage } = getGameContext();
-	const { identifierID, resetPopUpStates } = getPopUpContext();
+	const { gameState, sendMessage } = useGameContext();
+	const { identifierID, resetPopUpStates } = usePopUpContext();
 
 	const message = {"type": "play", "card": identifierID}
 	const align = {display: 'flex', justifyContent: 'center', alignItems: 'center'};
@@ -17,7 +17,7 @@ function SevenPopUp()
 	useEffect(() => {
 		if (gameState?.turn !== gameState?.you.id)
 			resetPopUpStates();
-	}, [gameState?.turn]);
+	}, [gameState?.turn, gameState?.you.id, resetPopUpStates]);
 
 	const players = gameState?.players;
 

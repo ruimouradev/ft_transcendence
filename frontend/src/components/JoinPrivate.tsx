@@ -1,13 +1,13 @@
 import { Box, Button, OutlinedInput , Typography } from '@mui/material';
 import { useAuth } from '../core/AuthContext';
 import { useState } from 'react';
-import { getGameContext } from '../core/GameWebSocket';
+import { useGameContext } from '../core/GameWebSocketContext';
 import { menu_text, tab_text } from '../game/macrosConfig.ts';
 
 function JoinPrivate()
 {
 	const [code, setCode] = useState<string>('');
-	const { joinRoom } = getGameContext();
+	const { joinRoom } = useGameContext();
 	const { user } = useAuth();
 
 	function PrivateClick()

@@ -1,13 +1,13 @@
 import { Box, Button, ThemeProvider, Typography } from '@mui/material';
-import { getGameContext } from '../core/GameWebSocket';
-import { getPopUpContext } from '../core/GamePopUps';
+import { useGameContext } from '../core/GameWebSocketContext';
+import { usePopUpContext } from '../core/GamePopUpsContext';
 import { unoTheme } from '../ui/unoTheme';
 import { winner_image } from '../ui/ImagesUtils';
 
 function GameEndPopUp()
 {
-	const { gameState, leaveRoom, sendMessage, resetGameState } = getGameContext();
-	const { resetPopUpStates } = getPopUpContext();
+	const { gameState, leaveRoom, sendMessage, resetGameState } = useGameContext();
+	const { resetPopUpStates } = usePopUpContext();
 
 	if (gameState === null)
 		return (null);
@@ -25,7 +25,10 @@ function GameEndPopUp()
 	{
 		resetPopUpStates();
 		resetGameState();
-		str === 'start' ? sendMessage({"type": str}) : leaveRoom();
+		if (str === 'start')
+			sendMessage({"type": str})
+		else
+			leaveRoom();
 	}
 
 	return (
@@ -36,7 +39,7 @@ function GameEndPopUp()
 					<img src={winner_image} draggable={false} style={{position: 'absolute', inset: 0, height: '100%', width: '100%', }}/>
 					<Box sx={{ bgcolor: 'orange', p: 0.5, border: '0.1vw solid black', borderRadius: '5%',position: 'absolute', bottom: '15%' }}>
 						<Typography sx={{ fontSize: 'clamp(0.5vw, 1.2vw, 2vw)' }}>{winner}</Typography>
-					</Box>	
+					</Box>
 				</Box>
 				<Box sx={{ height: '15%', width: '100%', ...align, gap: 3 }}>
 						<Button variant="contained" onClick={() => endGame("start")} sx={{ width: '45%', height: '90%', minWidth: 0   }}>

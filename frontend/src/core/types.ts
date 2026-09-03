@@ -69,6 +69,8 @@ export type GameState = {
 	winner_score : number | null
 }
 
+
+
 export type Room = {
 	code: string,
 	host: string,
@@ -83,12 +85,6 @@ export type Room = {
 	}
 }
 
-export type Notice = {
-	kind: 'emote' | 'uno' | 'catch',
-	sender: string,
-	icon: number
-}
-
 export type FriendEntry = {
     id: string;
     nick_name: string;
@@ -98,4 +94,50 @@ export type FriendEntry = {
     online?: boolean;
     level: number;
     title: string;
+}
+
+
+// PopUp Types
+export type PopUpTypes = 'wildcard' | 'seven' | 'game_end' | 'error' | 'disabled'
+
+export type PopUpBackup = {
+	popUp: PopUpTypes,
+	identifierID: string | null,
+}
+
+export type PopUpContextType = {
+	popUp: PopUpTypes,
+	identifierID: string | null,
+	errorMessage: string | null,
+
+	handleGameEnd: () => void,
+	handleNewID: (type: PopUpTypes, new_id: string) => void,
+	handleNewError: (new_error: string) => void,
+	resetPopUpStates: ()  => void,
+}
+
+
+// GameWebsocket Context
+export type GameContextType = {
+	roomID: string | null,
+	connected: boolean,
+	gameState: GameState | null,
+	notices: Notices,
+
+	leaveRoom: () => void,
+	resetGameState: () => void,
+	closeRoomConnection: () => void,
+	resetNotices: (id: string) => void,
+	sendMessage: (message: object) => void,
+	joinRoom: (roomID: string, message: object) => void
+}
+
+export type Notice = {
+	kind: 'emote' | 'uno' | 'catch',
+	sender: string,
+	icon: number
+}
+
+export type Notices = {
+	[id: string]: Notice;
 }

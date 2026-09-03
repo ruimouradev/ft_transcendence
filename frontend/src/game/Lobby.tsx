@@ -5,7 +5,7 @@ import { tab_text } from '../game/macrosConfig.ts';
 import CreateRoom from '../components/CreateRoom';
 import JoinPrivate from '../components/JoinPrivate';
 import JoinPublic from '../components/JoinPublic';
-import type { Room } from './types.ts';
+import type { Room } from '../core/types.ts';
 
 function JoinRoom({rooms}: {rooms: Room[]})
 {

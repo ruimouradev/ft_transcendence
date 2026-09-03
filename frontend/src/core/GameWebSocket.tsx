@@ -1,6 +1,8 @@
-import { createContext, useContext, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import { useAuth } from './AuthContext';
-import { getPopUpContext } from '../core/GamePopUps';
+import { usePopUpContext } from '../core/GamePopUpsContext';
+import { GameContext } from './GameWebSocketContext'
+import type { GameState, Notice, Notices } from './types.ts'
 
 const originalSetItem = sessionStorage.setItem;
 
@@ -10,58 +12,18 @@ sessionStorage.setItem = function (key, value) {
     return originalSetItem.call(this, key, value);
 };
 
-import type { GameState } from '../game/types.ts'
-
-type GameContextType = {
-	roomID: string | null,
-	connected: boolean,
-	gameState: GameState | null,
-	notices: Notices,
-	// notice: Notice | null,
-
-	leaveRoom: () => void,
-	resetGameState: () => void,
-	closeRoomConnection: () => void,
-	// resetNotice: () => void,
-	resetNotices: (id: string) => void,
-	sendMessage: (message: object) => void,
-	joinRoom: (roomID: string, message: object) => void
-}
-
-type Notice = {
-	kind: 'emote' | 'uno' | 'catch',
-	sender: string,
-	icon: number
-}
-
-type Notices = {
-	[id: string]: Notice;
-}
-
-const GameContext = createContext<GameContextType | null>(null);
-
-export function getGameContext() 
-{
-	const context = useContext(GameContext);
-
-	if (!context)
-		throw new Error('Illegal try to acces getGameContext');
-	return (context);
-}
-
 function GameWebSocket({ children }: { children: React.ReactNode }) {
 	const [roomID, setRoomID] = useState<string | null>(null);
 	const [gameState, setGameState] = useState<GameState | null>(null);
 	const [connected, setConnected] = useState<boolean>(false);
 	const [notices, setNotices] = useState<Notices>({});
-	// const [notice, setNotice] = useState<Notice | null>(null);
 
 	const socketRef = useRef<WebSocket | null>(null);
 	const pendingRoomRef = useRef<string | null>(null);
 	const gameStateRef = useRef<GameState | null>(null);
 
 	const { user } = useAuth();
-	const { handleNewError } = getPopUpContext();
+	const { handleNewError } = usePopUpContext();
 
 	function joinRoom(roomID: string, message: object)
 	{
@@ -72,7 +34,7 @@ function GameWebSocket({ children }: { children: React.ReactNode }) {
 		console.log("pendingRoomRef: ", pendingRoomRef);
 		console.log("sessionStorage: ", sessionStorage);
 
-		// Dont accept two connections from same user if it already has one
+		// Don't create another socket while this provider already has one
 		if (socketRef.current)
 			return ;
 
