@@ -108,7 +108,7 @@ services:
       - WATCHPACK_POLLING=${WATCHPACK_POLLING}
     command:
       - sh
-      - -c
+      - -ec
       - |
         rm -rf /output/*
         npm run build

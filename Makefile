@@ -26,6 +26,13 @@ prod: vinit
 	docker compose -f ./docker-compose.yml build nginx_prod backend
 	docker compose -f ./docker-compose.yml up db redis backend nginx_prod
 
+test_prod: clean vinit 
+	docker compose -f ./docker-compose.yml build frontend_prod
+	docker compose -f ./docker-compose.yml run --rm frontend_prod
+	docker image rm frontend_prod:latest
+	docker compose -f ./docker-compose.yml build nginx_prod backend
+	docker compose -f ./docker-compose.yml up db redis backend nginx_prod
+
 down:
 	docker compose -f ./docker-compose.yml down
 	@echo "[INFO] Docker containers stopped and removed."
