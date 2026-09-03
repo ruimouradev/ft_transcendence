@@ -1,15 +1,15 @@
 import { useEffect } from 'react';
 import { Box, IconButton, ThemeProvider } from '@mui/material';
 import { unoTheme } from '../ui/unoTheme';
-import { getGameContext } from '../core/GameWebSocket';
-import { getPopUpContext } from '../core/GamePopUps';
+import { useGameContext } from '../core/GameWebSocketContext';
+import { usePopUpContext } from '../core/GamePopUpsContext';
 import { color_red, color_blue, color_green, color_yellow } from '../ui/ImagesUtils.ts';
 import ClearSharpIcon from '@mui/icons-material/ClearSharp';
 
 function WildCardPopUp()
 {
-	const { gameState, sendMessage } = getGameContext();
-	const { identifierID, resetPopUpStates } = getPopUpContext();
+	const { gameState, sendMessage } = useGameContext();
+	const { identifierID, resetPopUpStates } = usePopUpContext();
 
 	const message = {"type": "play", "card": identifierID}
 	const box_options = {width: '6vw', aspectRatio: '1 / 1'}
@@ -19,7 +19,7 @@ function WildCardPopUp()
 	useEffect(() => {
 		if (gameState?.turn !== gameState?.you.id)
 			resetPopUpStates();
-	}, [gameState?.turn]);
+	}, [gameState?.turn, gameState?.you.id, resetPopUpStates]);
 
 	return (
 		<ThemeProvider theme={unoTheme}>

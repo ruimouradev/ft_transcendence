@@ -1,19 +1,25 @@
 import { Box, Button, OutlinedInput , Typography } from '@mui/material';
 import { useAuth } from '../core/AuthContext';
 import { useState } from 'react';
-import { getGameContext } from '../core/GameWebSocket';
+import { useGameContext } from '../core/GameWebSocketContext';
+import { usePopUpContext } from '../core/GamePopUpsContext';
 import { menu_text, tab_text } from '../game/macrosConfig.ts';
 
 function JoinPrivate()
 {
 	const [code, setCode] = useState<string>('');
-	const { joinRoom } = getGameContext();
+	const { joinRoom } = useGameContext();
+	const { handleNewError } = usePopUpContext();
 	const { user } = useAuth();
 
 	function PrivateClick()
 	{
 		const message = {"type": "join", "name": user?.nick_name};
-		joinRoom(code.trim(), message)
+		const room_id = code.trim();
+		if (room_id.length === 0)
+			handleNewError("invalid code");
+		else
+			joinRoom(code.trim(), message)
 		setCode('');
 	}
 

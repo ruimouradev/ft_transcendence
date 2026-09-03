@@ -5,18 +5,12 @@ import PermIdentityOutlinedIcon from '@mui/icons-material/PermIdentityOutlined';
 import SportsEsportsOutlinedIcon from '@mui/icons-material/SportsEsportsOutlined';
 import MenuIcon from '@mui/icons-material/Menu';
 import CloseIcon from '@mui/icons-material/Close';
-
 import UserMenu from "./UserMenu";
 import { Link } from "react-router-dom";
-
 import bgImage from '../assets/utils/home.png'
 
-// A barra de cima, presente em todas as páginas. O logo é a imagem
-// do leque e faz de link para a home (por isso não há botão Home).
-// Em ecrã largo os botões ficam em linha; em telemóvel escondem-se
-// atrás do botão de menu, que abre a lista ao alto. O UserMenu do
-// canto troca sozinho entre "sign in / sign up" e o menu da conta.
-export default function Navbar() {
+function Navbar() 
+{
   const [open, setOpen] = useState(false);
 
   const links = (
@@ -90,3 +84,5 @@ function NavItem({
     </Link>
   );
 }
+
+export default Navbar

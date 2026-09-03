@@ -13,18 +13,11 @@ interface ApiKeyStatus {
 
 // um campo so de leitura com o botao de copiar ao lado, usado para o
 // client id e para a chave
-function CopyField({ label, value, copied, onCopy }: {
-  label: string;
-  value: string;
-  copied: boolean;
-  onCopy: () => void;
-}) {
-  return (
-    <TextField label={label} value={value} fullWidth
-      slotProps={{
-        input: {
-          readOnly: true,
-          endAdornment: (
+function CopyField({ label, value, copied, onCopy }:
+	{ label: string; value: string; copied: boolean; onCopy: () => void })
+{
+	return (
+		<TextField label={label} value={value} fullWidth slotProps={{input: {readOnly: true, endAdornment: (
             <InputAdornment position="end">
               <IconButton onClick={onCopy}>
                 {copied ? <CheckCircle color="success" /> : <ContentCopy />}

@@ -1,6 +1,8 @@
-import { createContext, useContext, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useAuth } from './AuthContext';
-import { getPopUpContext } from '../core/GamePopUps';
+import { usePopUpContext } from '../core/GamePopUpsContext';
+import { GameContext } from './GameWebSocketContext'
+import type { GameState, Notice, Notices } from './types.ts'
 
 const originalSetItem = sessionStorage.setItem;
 
@@ -10,69 +12,32 @@ sessionStorage.setItem = function (key, value) {
     return originalSetItem.call(this, key, value);
 };
 
-import type { GameState } from '../game/types.ts'
-
-type GameContextType = {
-	roomID: string | null,
-	connected: boolean,
-	gameState: GameState | null,
-	notices: Notices,
-	// notice: Notice | null,
-
-	leaveRoom: () => void,
-	resetGameState: () => void,
-	closeRoomConnection: () => void,
-	// resetNotice: () => void,
-	resetNotices: (id: string) => void,
-	sendMessage: (message: object) => void,
-	joinRoom: (roomID: string, message: object) => void
-}
-
-type Notice = {
-	kind: 'emote' | 'uno' | 'catch',
-	sender: string,
-	icon: number
-}
-
-type Notices = {
-	[id: string]: Notice;
-}
-
-const GameContext = createContext<GameContextType | null>(null);
-
-export function getGameContext() 
-{
-	const context = useContext(GameContext);
-
-	if (!context)
-		throw new Error('Illegal try to acces getGameContext');
-	return (context);
-}
-
 function GameWebSocket({ children }: { children: React.ReactNode }) {
 	const [roomID, setRoomID] = useState<string | null>(null);
 	const [gameState, setGameState] = useState<GameState | null>(null);
 	const [connected, setConnected] = useState<boolean>(false);
 	const [notices, setNotices] = useState<Notices>({});
-	// const [notice, setNotice] = useState<Notice | null>(null);
 
 	const socketRef = useRef<WebSocket | null>(null);
 	const pendingRoomRef = useRef<string | null>(null);
 	const gameStateRef = useRef<GameState | null>(null);
 
-	const { user } = useAuth();
-	const { handleNewError } = getPopUpContext();
+	const { user, isAuthenticated  } = useAuth();
+	const { handleNewError } = usePopUpContext();
+	
+	useEffect(() => {
+		if (!isAuthenticated && socketRef.current)
+		{
+			pendingRoomRef.current = null;
+			sessionStorage.removeItem('roomID');
+			socketRef.current.close();
+		}
+	}, [isAuthenticated])
 
 	function joinRoom(roomID: string, message: object)
 	{
-		// DEL
-		console.log("connected: ", connected);
-		console.log("roomID: ", roomID);
-		console.log("socketRef: ", socketRef);
-		console.log("pendingRoomRef: ", pendingRoomRef);
-		console.log("sessionStorage: ", sessionStorage);
 
-		// Dont accept two connections from same user if it already has one
+		// Don't create another socket while this provider already has one
 		if (socketRef.current)
 			return ;
 
@@ -105,7 +70,6 @@ function GameWebSocket({ children }: { children: React.ReactNode }) {
 					sessionStorage.setItem('roomID', roomID);
 					break ;
 				case 'notice':
-//					setNotice(message);
 					newNotice(message);
 					break ;
 				case 'error':
@@ -118,9 +82,6 @@ function GameWebSocket({ children }: { children: React.ReactNode }) {
 				default:
 					alert('undefined error');
 			}
-
-			// DEL !
-			console.log("game engine: ", message);
 		}
 
 		socket.onerror = () => {
@@ -181,7 +142,6 @@ function GameWebSocket({ children }: { children: React.ReactNode }) {
 
 	function handleErrorMessages({type, code, msg, room}: {type: string, code: string, msg:string, room: string | null})
 	{
-		// console.log('ERROR CODE:', code, JSON.stringify(code));
 		if (type !== 'error')
 			return ;
 		switch(code)
@@ -205,34 +165,6 @@ function GameWebSocket({ children }: { children: React.ReactNode }) {
 				break ;
 		}
 		handleNewError(msg);
-
-		/*
-			HANDLE
-				ALREADY_IN_ROOM = "ALREADY_IN_ROOM"
-
-			JUST PROMPT
-				NOT_YOUR_TURN = "NOT_YOUR_TURN"
-				INVALID_CARD = "INVALID_CARD"
-				COLOR_REQUIRED = "COLOR_REQUIRED"
-				TARGET_REQUIRED = "TARGET_REQUIRED"
-				CARD_NOT_IN_HAND = "CARD_NOT_IN_HAND"
-				INVALID_CATCH = "INVALID_CATCH"
-				INVALID_UNO = "INVALID_UNO"
-				INVALID_CHALLENGE = "INVALID_CHALLENGE"
-				GAME_NOT_STARTED = "GAME_NOT_STARTED"
-
-			SPECIAL
-				INVALID_MESSAGE = "INVALID_MESSAGE"
-
-				GameState ? (JUST PROMPT) : (FULL CLEAR)
-
-			BACKEND CLOSE (FULL CLEAR)
-				KICKED = "KICKED"
-				ROOM_FULL = "ROOM_FULL"
-				AUTH_REQUIRED = "AUTH_REQUIRED"
-				ROOM_NOT_FOUND = "ROOM_NOT_FOUND"
-				GAME_ALREADY_STARTED = "GAME_ALREADY_STARTED"
-		*/
 	}
 
 	function resetGameState()
@@ -274,3 +206,32 @@ function GameWebSocket({ children }: { children: React.ReactNode }) {
 }
 
 export default  GameWebSocket
+
+
+/*
+	HANDLE
+		ALREADY_IN_ROOM = "ALREADY_IN_ROOM"
+
+	JUST PROMPT
+		NOT_YOUR_TURN = "NOT_YOUR_TURN"
+		INVALID_CARD = "INVALID_CARD"
+		COLOR_REQUIRED = "COLOR_REQUIRED"
+		TARGET_REQUIRED = "TARGET_REQUIRED"
+		CARD_NOT_IN_HAND = "CARD_NOT_IN_HAND"
+		INVALID_CATCH = "INVALID_CATCH"
+		INVALID_UNO = "INVALID_UNO"
+		INVALID_CHALLENGE = "INVALID_CHALLENGE"
+		GAME_NOT_STARTED = "GAME_NOT_STARTED"
+
+	SPECIAL
+		INVALID_MESSAGE = "INVALID_MESSAGE"
+
+		GameState ? (JUST PROMPT) : (FULL CLEAR)
+
+	BACKEND CLOSE (FULL CLEAR)
+		KICKED = "KICKED"
+		ROOM_FULL = "ROOM_FULL"
+		AUTH_REQUIRED = "AUTH_REQUIRED"
+		ROOM_NOT_FOUND = "ROOM_NOT_FOUND"
+		GAME_ALREADY_STARTED = "GAME_ALREADY_STARTED"
+*/

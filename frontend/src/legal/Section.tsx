@@ -1,6 +1,5 @@
-// Uma secção das páginas legais, para o texto ficar todo com a
-// mesma cara nas duas.
-export default function Section({ title, children }: { title: string; children: React.ReactNode }) {
+function Section({ title, children }: { title: string; children: React.ReactNode }) 
+{
     return (
         <section className="mb-8">
             <h2 className="text-xl font-bold text-white mb-3">{title}</h2>
@@ -8,3 +7,5 @@ export default function Section({ title, children }: { title: string; children: 
         </section>
     );
 }
+
+export default Section

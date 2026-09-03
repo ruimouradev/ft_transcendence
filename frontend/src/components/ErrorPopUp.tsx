@@ -1,11 +1,11 @@
 import { Box, IconButton, ThemeProvider, Typography } from '@mui/material';
 import { unoTheme } from '../ui/unoTheme';
-import { getPopUpContext } from '../core/GamePopUps';
+import { usePopUpContext } from '../core/GamePopUpsContext';
 import ClearSharpIcon from '@mui/icons-material/ClearSharp';
 
 function Error()
 {
-	const { errorMessage, resetPopUpStates } = getPopUpContext();
+	const { errorMessage, resetPopUpStates } = usePopUpContext();
 
 	const text_size = {textAlign: 'center', fontSize: 'clamp(0.7rem, 1.5vw, 2rem)'};
 	const align = {display: 'flex', justifyContent: 'center', alignItems: 'center'};

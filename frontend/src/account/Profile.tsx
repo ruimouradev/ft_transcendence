@@ -7,7 +7,7 @@ import { useAuth } from '../core/AuthContext';
 import { api } from '../core/client';
 import NotificationSnackbar from '../ui/NotificationSnackbar';
 import CardBackSelector from './CardBackSelector';
-import { cardBacks, defaultCardBack } from '../ui/cardBacks';
+import { cardBacks, defaultCardBack } from '../ui/ImagesUtils';
 import Enable2FADialog from './Enable2FADialog';
 import Disable2FADialog from './Disable2FADialog';
 

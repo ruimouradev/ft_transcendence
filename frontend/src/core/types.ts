@@ -26,7 +26,8 @@ export type PublicPlayer = {
 	bot: boolean,
 	bot_level: 'easy' | 'medium' | 'hard' | null
 	avatar: string,
-	points: number
+	points: number,
+	ready: boolean
 }
 
 export type PrivatePlayer = {
@@ -38,9 +39,11 @@ export type PrivatePlayer = {
 
 export type LastAction = {
 	player: string,
-    kind: 'join' | 'start' | 'play' | 'draw' | 'pass' 
-			| 'catch' | 'challenge' | 'timeout' | 'uno',
+    kind: 'join' | 'start' | 'play' | 'draw' 
+		| 'catch' | 'challenge' | 'timeout' | 'uno',
     card: GameCard | null,
+	target: string | null,
+	count: number | null
 }
 
 export type GameState = {
@@ -69,6 +72,7 @@ export type GameState = {
 	winner_score : number | null
 }
 
+
 export type Room = {
 	code: string,
 	host: string,
@@ -83,8 +87,59 @@ export type Room = {
 	}
 }
 
+export type FriendEntry = {
+    id: string;
+    nick_name: string;
+    handle: string;
+    avatar: string | null;
+    status: string | null;
+    online?: boolean;
+    level: number;
+    title: string;
+}
+
+
+// PopUp Types
+export type PopUpTypes = 'wildcard' | 'seven' | 'game_end' | 'error' | 'disabled'
+
+export type PopUpBackup = {
+	popUp: PopUpTypes,
+	identifierID: string | null,
+}
+
+export type PopUpContextType = {
+	popUp: PopUpTypes,
+	identifierID: string | null,
+	errorMessage: string | null,
+
+	handleGameEnd: () => void,
+	handleNewID: (type: PopUpTypes, new_id: string) => void,
+	handleNewError: (new_error: string) => void,
+	resetPopUpStates: ()  => void,
+}
+
+
+// GameWebsocket Context
+export type GameContextType = {
+	roomID: string | null,
+	connected: boolean,
+	gameState: GameState | null,
+	notices: Notices,
+
+	leaveRoom: () => void,
+	resetGameState: () => void,
+	closeRoomConnection: () => void,
+	resetNotices: (id: string) => void,
+	sendMessage: (message: object) => void,
+	joinRoom: (roomID: string, message: object) => void
+}
+
 export type Notice = {
 	kind: 'emote' | 'uno' | 'catch',
 	sender: string,
 	icon: number
+}
+
+export type Notices = {
+	[id: string]: Notice;
 }

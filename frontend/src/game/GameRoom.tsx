@@ -1,18 +1,13 @@
-import { Box, Button, Card, CardContent , CardMedia, Container, Chip, IconButton,  List, ListItem, Paper, ThemeProvider, Typography } from '@mui/material';
-import { createContext, useState, useContext, Fragment, useEffect } from 'react';
-
-import StarOutlinedIcon from '@mui/icons-material/StarOutlined';
-import WifiOffOutlinedIcon from '@mui/icons-material/WifiOffOutlined';
-import ExitToAppOutlinedIcon from '@mui/icons-material/ExitToAppOutlined';
-import DisabledByDefaultOutlinedIcon from '@mui/icons-material/DisabledByDefaultOutlined';
+import { Box, Button, Container, List, ListItem, Paper, ThemeProvider, Typography } from '@mui/material';
+import { useEffect } from 'react';
 
 import { useAuth } from '../core/AuthContext';
 
 import { unoTheme } from '../ui/unoTheme';
 
-import { getGameContext } from '../core/GameWebSocket';
-import { getPopUpContext } from '../core/GamePopUps';
-import type { PopUpTypes } from '../core/GamePopUps';
+import { useGameContext } from '../core/GameWebSocketContext';
+import { usePopUpContext } from '../core/GamePopUpsContext';
+import type { PopUpTypes } from '../core/types.ts';
 
 import { bg_image, cardBacks, defaultCardBack, direction_plus, direction_minus } from '../ui/ImagesUtils.ts';
 
@@ -22,18 +17,12 @@ import Avatar from '../components/Avatar'
 import Emoticons from '../components/Emoticons'
 import WaitRoom from '../components/WaitRoom'
 
-import type {Color, valueNum, valueAction, valueWild, GameCard, Notice, PublicPlayer, PrivatePlayer, LastAction, GameState} from './types.ts'
+import type {Color, GameCard, Notice, PublicPlayer, GameState} from '../core/types.ts'
 
 function getCardName({card}: {card: GameCard})
 {
 	const cardPath = '../assets/cards/' + (card.color + '_' + card.value) + '.png'
 	return (cardPath);
-}
-
-function DrawCard(sendMessage: (message: object) => void)
-{
-	const message = {"type": "draw"};
-	sendMessage(message);
 }
 
 function PlayCard({card, gameState, sendMessage, handleNewID}:
@@ -50,7 +39,7 @@ function PlayCard({card, gameState, sendMessage, handleNewID}:
 		|| !gameState?.you.playable?.includes(card.id))
 		return null;
 
-	let play_message = {type: 'play', card: `${card.id}`};
+	const play_message = {type: 'play', card: `${card.id}`};
 
 	if (gameState?.settings?.seven_zero === true && card.value == '7')
 		handleNewID('seven', card.id);
@@ -60,10 +49,27 @@ function PlayCard({card, gameState, sendMessage, handleNewID}:
 		sendMessage(play_message);
 }
 
+function getColor(color: Color | null | undefined)
+{
+	switch (color)
+	{
+		case ('blue'):
+			return (color_blue);
+		case ('green'):
+			return (color_green);
+		case ('red'):
+			return (color_red);
+		case ('yellow'):
+			return (color_yellow);
+		default:
+			return ('black');
+	}
+}
+
 function DeckArea()
 {
 	const { user } = useAuth();
-	const { gameState, sendMessage } = getGameContext();
+	const { gameState, sendMessage } = useGameContext();
 
 	const uno_click = {"type": "say_uno"};
 	const challenge_click = {"type": "challenge"};
@@ -75,29 +81,30 @@ function DeckArea()
 		{ eager: true, query: '?url', import: 'default' }
 	)
 
-	const box_shadow = {boxSizing: 'content-box', borderLeft: '0.5vw solid black', borderBottom: '0.5vw solid black', borderTop: '0.15vw solid black', borderRight: '0.15vw solid black'};
+	const box_shadow = {boxSizing: 'content-box', borderLeft: '0.5vw solid black',
+		borderBottom: '0.5vw solid black', borderTop: '0.15vw solid black', borderRight: '0.15vw solid black'};
 
 	const card = gameState?.top_card;
 	if (card == undefined)
 		return ;
 
-	let color: string;
-	switch (gameState?.active_color)
+	const color = getColor(gameState?.active_color);
+
+	function handleUno()
 	{
-		case ('blue'):
-			color = color_blue;
-			break ;
-		case ('green'):
-			color = color_green;
-			break ;
-		case ('red'):
-			color = color_red;
-			break ;
-		case ('yellow'):
-			color = color_yellow;
-			break ;
-		default:
-			color = 'black';
+		const player = gameState?.you;
+		if (player?.hand.length !== 1)
+			return ;
+		sendMessage(uno_click);
+	}
+
+	function DrawCard()
+	{
+		const player = gameState?.you;
+		if (player?.id !== gameState?.turn)
+			return ;
+		const message = {"type": "draw"};
+		sendMessage(message);
 	}
 
 	const direction = gameState?.direction === 1 ? direction_plus : direction_minus;
@@ -106,7 +113,7 @@ function DeckArea()
 	return (
 		<Box sx={{ height: '80%', width: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center', position: 'relative', transform: 'translateY(10%)' }}>
 			<Box sx={{ width: '50%', height: '50%', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 1, top: 0, position: 'absolute' }}>
-				<img className="card card_small" src={cardBacks[user?.card_back ?? ''] ?? defaultCardBack} alt="" draggable={false} onClick={() => DrawCard(sendMessage)}/>
+				<img className="card card_small" src={cardBacks[user?.card_back ?? ''] ?? defaultCardBack} alt="" draggable={false} onClick={DrawCard}/>
 				<img className="card card_small" src={images[getCardName({card})]} alt="" draggable={false}/>
 			</Box>
 			<Box sx={{ bottom: 0, position: 'absolute', width: '50%', height: '50%', display: 'flex', justifyContent: 'center', alignItems: 'end' }}>
@@ -116,7 +123,7 @@ function DeckArea()
 				<Paper elevation={0} sx={{ width: '4vw', aspectRatio: '1 / 1', bgcolor: color, borderRadius: 1, ...box_shadow }}>
 					<img src={color} draggable={false} style={image_styles}/>
 				</Paper>
-				<Button className="rainbow-button" variant="contained" onClick={() => sendMessage(uno_click)} 
+				<Button className="rainbow-button" variant="contained" onClick={handleUno} 
 					sx={{ width: '4vw',  aspectRatio: '1 / 1', minWidth: 0, p: 0, fontSize: 'clamp(0.2rem, 1.4vh, 1rem)', ...box_shadow }}>UNO!
 				</Button>
 			</Box>
@@ -141,8 +148,8 @@ function DrawHands({deck, amount, card_class}:
 	card_class: string,})
 {
 
-	const { gameState, sendMessage } = getGameContext();
-	const { handleNewID } = getPopUpContext();
+	const { gameState, sendMessage } = useGameContext();
+	const { handleNewID } = usePopUpContext();
 
 	if (deck === undefined)
 		return (
@@ -201,7 +208,7 @@ function DrawHidden({amount, card_class}: {amount: number, card_class: string})
 
 function PlayerOneHand({player, notice}: {player: PublicPlayer, notice: Notice | undefined})
 {
-	const { gameState } = getGameContext();
+	const { gameState } = useGameContext();
 
 	if (!gameState)
 		return null;
@@ -220,7 +227,7 @@ function PlayerOneHand({player, notice}: {player: PublicPlayer, notice: Notice |
 
 function PlayersUI({players}: {players: PublicPlayer[]})
 {
-	const { notices, gameState } = getGameContext();
+	const { notices, gameState } = useGameContext();
 
 	if (!gameState)
 		return null;
@@ -258,7 +265,7 @@ function PlayersUI({players}: {players: PublicPlayer[]})
 
 function RotatePlayers(): PublicPlayer[]
 {
-	const { gameState } = getGameContext();
+	const { gameState } = useGameContext();
 	const player = gameState?.you;
 
 	let players: PublicPlayer[] = [];
@@ -270,7 +277,7 @@ function RotatePlayers(): PublicPlayer[]
 	for (; i < players.length && players[i].id !== player?.id; i++)
 		;
 
-	let new_players: PublicPlayer[] = players.slice(i);
+	const new_players: PublicPlayer[] = players.slice(i);
 	new_players.push(...players.slice(0, i));
 	return (new_players);
 }
@@ -278,16 +285,16 @@ function RotatePlayers(): PublicPlayer[]
 function GameRoom()
 {
 	const new_players = RotatePlayers();
-	if (new_players === null)
-		return ;
-
-	const { gameState } = getGameContext();
-	const { handleGameEnd } = getPopUpContext();
+	const { gameState } = useGameContext();
+	const { handleGameEnd } = usePopUpContext();
 
 	useEffect(() => {
 		if (gameState?.winner != null)
 			handleGameEnd();
-	}, [gameState?.winner]);
+	}, [gameState?.winner, handleGameEnd]);
+
+	if (new_players === null)
+		return ;
 
 	return ( gameState === null || gameState.phase === 'lobby' ? <WaitRoom /> :
 		<ThemeProvider theme={unoTheme}>

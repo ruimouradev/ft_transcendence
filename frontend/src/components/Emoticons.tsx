@@ -1,14 +1,14 @@
 import { useEffect } from 'react';
 import { Box, Card } from '@mui/material';
-import { getGameContext } from '../core/GameWebSocket';
+import { useGameContext } from '../core/GameWebSocketContext';
 import { emoticon_catch, emoticon_sad, emoticon_angry, emoticon_happy, emoticon_confidence,
 	emoticon_nervous, emoticon_surprised, emoticon_uno } from '../ui/ImagesUtils';
 
-import type { Notice } from '../game/types.ts'
+import type { Notice } from '../core/types.ts'
 
 function Emoticons({position, playerID, notice}: {position: string, playerID: string , notice: Notice})
 {
-	const { resetNotices } = getGameContext();
+	const { resetNotices } = useGameContext();
 	const emoticons = [emoticon_sad, emoticon_angry, emoticon_happy, emoticon_confidence, emoticon_nervous, emoticon_surprised, emoticon_catch, emoticon_uno];
 
 	useEffect(() => {
@@ -16,7 +16,7 @@ function Emoticons({position, playerID, notice}: {position: string, playerID: st
 			resetNotices(playerID);
 		}, 2000);
 		 return () => clearTimeout(timer);
-	}, [notice, playerID]);
+	}, [notice, playerID, resetNotices]);
 
 	let choosen_emoticon;
 	switch (notice.kind)
