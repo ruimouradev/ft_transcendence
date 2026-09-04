@@ -7,8 +7,6 @@ import type { GameState, Notice, Notices } from './types.ts'
 const originalSetItem = sessionStorage.setItem;
 
 sessionStorage.setItem = function (key, value) {
-    console.log("sessionStorage SET:", key, value);
-    console.trace();
     return originalSetItem.call(this, key, value);
 };
 
@@ -36,7 +34,6 @@ function GameWebSocket({ children }: { children: React.ReactNode }) {
 
 	function joinRoom(roomID: string, message: object)
 	{
-
 		// Don't create another socket while this provider already has one
 		if (socketRef.current)
 			return ;
@@ -60,28 +57,38 @@ function GameWebSocket({ children }: { children: React.ReactNode }) {
 
 		socket.onmessage = (event) => {
 			// Handle backend message
-			const message = JSON.parse(event.data);
-			const { type } = message;
+			try {
+				const message = JSON.parse(event.data);
+				const { type } = message;
 
-			switch (type) {
-				case 'welcome':
-					setRoomID(roomID);
-					setConnected(true);
-					sessionStorage.setItem('roomID', roomID);
-					break ;
-				case 'notice':
-					newNotice(message);
-					break ;
-				case 'error':
-					handleErrorMessages(message);
-					break ;
-				case 'state':
-					gameStateRef.current = message;
-					setGameState(message);
-					break ;
-				default:
-					alert('undefined error');
+				console.log(message);
+
+				switch (type) {
+					case 'welcome':
+						setRoomID(roomID);
+						setConnected(true);
+						sessionStorage.setItem('roomID', roomID);
+						break ;
+					case 'notice':
+						newNotice(message);
+						break ;
+					case 'error':
+						handleErrorMessages(message);
+						break ;
+					case 'state':
+						gameStateRef.current = message;
+						setGameState(message);
+						break ;
+					default:
+						alert('undefined error');
+				}
 			}
+			catch(e) {
+				handleNewError(`invalid message format ${e}`);
+			}
+
+			
+
 		}
 
 		socket.onerror = () => {
@@ -135,7 +142,6 @@ function GameWebSocket({ children }: { children: React.ReactNode }) {
 	{
 		if (socketRef.current?.readyState  === WebSocket.OPEN)
 		{
-			console.log(message);
 			socketRef.current.send(JSON.stringify(message));
 		}
 	}
@@ -155,6 +161,7 @@ function GameWebSocket({ children }: { children: React.ReactNode }) {
 				break ;
 			case ("KICKED"):
 			case ('ROOM_FULL'):
+			case ("SEAT_TAKEN"):
 			case ("AUTH_REQUIRED"):
 			case ('ROOM_NOT_FOUND'):
 			case ("GAME_ALREADY_STARTED"):

@@ -1,38 +1,17 @@
-import { useEffect, useState } from 'react';
-
-import { Alert, Box, Button, Checkbox, CircularProgress, Dialog, DialogActions, DialogContent, DialogTitle, Divider, FormControlLabel, IconButton, InputAdornment, Paper, Step, StepLabel, Stepper, TextField, Typography, } from '@mui/material';
-
+import { useState } from 'react';
+import { Alert, Box, Button, Checkbox, CircularProgress, Dialog, DialogActions, DialogContent, DialogTitle, Divider,
+	FormControlLabel, IconButton, InputAdornment, Paper, Step, StepLabel, Stepper, TextField, Typography, } from '@mui/material';
 import { CheckCircle, Close, ContentCopy, Download, Visibility, VisibilityOff, } from '@mui/icons-material';
-
 import {QRCodeSVG} from 'qrcode.react';
-
 import {api} from '../core/client';
-
+import axios from 'axios';
 import { useAuth } from '../core/AuthContext';
-
-
-interface Enable2FADialogProps {
-    open: boolean;
-    onClose: () => void;
-    onSuccess: () => void;
-}
-
-interface Setup2FAResponse {
-    otpauth_url: string;
-    secret: string;
-}
-
-interface Verify2FAResponse {
-    recovery_codes: string[];
-}
+import type { Enable2FADialogProps, Setup2FAResponse, Verify2FAResponse } from '../core/types.ts';
 
 const steps = [ 'Confirm', 'Verify identity', 'Authenticator', 'Verify code', 'Recovery codes', ];
 
-export default function Enable2FADialog({
-    open,
-    onClose,
-    onSuccess,
-}: Enable2FADialogProps) {
+function Enable2FADialog({ open, onClose, onSuccess }: Enable2FADialogProps)
+{
     const [activeStep, setActiveStep] = useState(0);
     const { user, login } = useAuth();
 
@@ -68,9 +47,11 @@ export default function Enable2FADialog({
         setError(null);
     };
 
-    useEffect(() => { if (open) { resetWizard(); } }, [open]);
+	const handleOpen = () => {
+		resetWizard();
+	}
 
-    const handleClose = (event, reason) => {
+    const handleClose = (_event?: object, reason?: 'backdropClick' |'escapeKeyDown') => {
         if (loading) { return; }
         if (reason === 'backdropClick' || reason === 'escapeKeyDown') { return; }
         resetWizard();
@@ -97,12 +78,14 @@ export default function Enable2FADialog({
             setSecret(response.data.secret);
             setOtpauthUrl(response.data.otpauth_url);
             setActiveStep(2);
-        } catch (error: any) {
-            if (error.response?.status === 401) {
-                setError('Your password is incorrect. Please try again.',);
-            } else {
-                setError(error.response?.data?.message ?? 'Failed to initialize two-factor authentication.',);
-            }
+        } catch (error) {
+			if (axios.isAxiosError(error)) {
+				if (error.response?.status === 401) {
+					setError('Your password is incorrect. Please try again.',);
+				} else {
+					setError(error.response?.data?.message ?? 'Failed to initialize two-factor authentication.',);
+				}
+			}
         } finally {
             setLoading(false);
         }
@@ -120,17 +103,21 @@ export default function Enable2FADialog({
         }
         setLoading(true);
         setError(null);
+		if (!user)
+			return ;
         try {
             const response = await api.post<Verify2FAResponse>('/2fa/verify-setup', { code, },);
             setRecoveryCodes(response.data.recovery_codes,);
             login({ ...user, use2fa: true, },);
             setActiveStep(4);
-        } catch (error: any) {
-            if (error.response?.status === 400) {
-                setError('The verification code is invalid or expired.',);
-            } else {
-                setError(error.response?.data?.message ?? 'Failed to verify the authentication code.',);
-            }
+        } catch (error) {
+			if (axios.isAxiosError(error)) {
+				if (error.response?.status === 400) {
+					setError('The verification code is invalid or expired.',);
+				} else {
+					setError(error.response?.data?.message ?? 'Failed to verify the authentication code.',);
+				}
+			}
         } finally {
             setLoading(false);
         }
@@ -172,10 +159,10 @@ export default function Enable2FADialog({
     };
 
     return (
-        <Dialog open={open} onClose={handleClose} fullWidth maxWidth="sm" aria-labelledby="enable-2fa-dialog-title" aria-describedby="enable-2fa-dialog-description" slotProps={{ transition: { unmountOnExit: true, }, }}>
-
+        <Dialog open={open} onClose={handleClose} fullWidth maxWidth="sm" aria-labelledby="enable-2fa-dialog-title" aria-describedby="enable-2fa-dialog-description"
+			slotProps={{ transition: { unmountOnExit: true, onEnter: handleOpen} }}>
             <DialogTitle id="enable-2fa-dialog-title" sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', pb: 1, }}>
-                <Typography variant="h6" component="span" fontWeight={600}>
+                <Typography variant="h6" component="span" sx={{ fontWeight: 600 }}>
                     Enable Two-Factor Authentication
                 </Typography>
                 <IconButton onClick={handleClose} disabled={loading} aria-label="Close" >
@@ -250,7 +237,7 @@ export default function Enable2FADialog({
                         </Typography>
                         <Box sx={{ display: 'flex', justifyContent: 'center', mb: 3, }}>
                             <Paper elevation={2} sx={{ p: 2, display: 'inline-flex', }}>
-                                <Box display="flex" justifyContent="center" alignItems="center" alt="Two-factor authentication QR code" >
+                                <Box sx={{ display:'flex', justifyContent:'center', alignItems:'center' }}>
                                     <QRCodeSVG value={otpauthUrl} size={220} level="M" />
                                 </Box>
                             </Paper>
@@ -369,3 +356,5 @@ export default function Enable2FADialog({
         </Dialog>
     );
 }
+
+export default Enable2FADialog

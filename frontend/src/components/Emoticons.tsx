@@ -36,7 +36,7 @@ function Emoticons({position, playerID, notice}: {position: string, playerID: st
 
 	return (
 		<Box sx={{ position: 'absolute', inset: 0, display: 'flex', justifyContent: 'center', alignItems: 'center', pointerEvents: 'none' }}>
-			<Card className={`emoticon-${position}`} sx={{ bgcolor: 'white', width: '5vw', aspectRatio: '1 / 1', overflow: 'visible',
+			<Card className={`emoticon-${position}`} sx={{ bgcolor: 'white', width: 'clamp(2.5rem, 5vw, 6.5rem)', aspectRatio: '1 / 1', overflow: 'visible',
 				display: 'flex', alignItems: 'center', justifyContent: 'center', border: '0.2vw solid black', zIndex: 999, position: 'relative' }}>
 				<img src={choosen_emoticon} draggable={false} />
 				<Box className={`emoticon-arrow-${position}`}>

@@ -23,8 +23,8 @@ function SevenPopUp()
 
 	return (
 		<ThemeProvider theme={unoTheme}>
-			<Box sx={{ width: '40vw', aspectRatio: '3 / 1', ...align, border: '0.1vw solid', borderColor: 'divider', 
-				borderRadius: 2, bgcolor: 'background.default', gap: '5vw', position: 'relative' }}>
+			<Box sx={{ width: 'clamp(280px, 40vw, 52rem)', aspectRatio: '3 / 1', ...align, border: '0.1vw solid', borderColor: 'divider', 
+				borderRadius: 2, bgcolor: 'background.default', gap: 'clamp(1rem, 5vw, 6.5rem)', position: 'relative' }}>
 				{players?.map((player) => {
 						const avatar = player.bot ? 
 							(player?.bot_level === 'easy' ? bot_easy

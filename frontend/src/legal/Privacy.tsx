@@ -8,7 +8,7 @@ function Privacy() {
     return (
         <div className="max-w-3xl mx-auto px-6 py-12">
             <h1 className="text-3xl font-black text-white mb-2">Privacy Policy</h1>
-            <p className="text-gray-400 text-sm mb-10">Last updated: August 21, 2026</p>
+            <p className="text-gray-400 text-sm mb-10">Last updated: September 03, 2026</p>
 
             <Section title="Who we are">
                 <p>

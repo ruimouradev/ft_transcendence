@@ -1,14 +1,13 @@
-import { Box, Button, ThemeProvider, Typography } from '@mui/material'
-import { unoTheme } from '../ui/unoTheme';
+import { Box, Button, Typography } from '@mui/material'
 import { Link } from 'react-router';
 import { align, menu_text, tab_text } from '../game/macrosConfig.ts'
 
-function Error()
+function ErrorPage()
 {
 	const big_text = {fontSize: 'clamp(0.6rem, 5vw, 3rem)'}
 
 	return (
-		<ThemeProvider theme={unoTheme}>
+		<>
 			<Box sx={{ bgcolor: 'gray', width: 'min(70%, 100dvh)', aspectRatio: '1.5 / 1', mx: 'auto', mt: '2%', ...align, flexDirection: 'column', borderRadius: '1%' }}>
 				<Box sx={{ bgcolor: '#070707', height: '90%', width: '95%', my: '2%', overflow: 'hidden' }}>
 					<Box sx={{ height: '20%', width: '100%'}}>
@@ -30,8 +29,8 @@ function Error()
 			</Box>
 			<Box sx={{ bgcolor: 'gray', width: '10%', height: '8dvh', mx: 'auto', transform: 'TranslateY(-3%)', }}></Box>
 			<Box sx={{ bgcolor: 'gray', width: '30%', height: '2dvh', mx: 'auto', transform: 'TranslateY(-20%)', }}></Box>
-		</ThemeProvider>
+		</>
 	)
 }
 
-export default Error
+export default ErrorPage

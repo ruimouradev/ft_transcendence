@@ -1,9 +1,8 @@
 import { useEffect, useState } from 'react';
-import { ThemeProvider, Badge, Box, Container, InputAdornment, Tab, Tabs, TextField, Typography, } from '@mui/material';
+import { Badge, Box, Container, InputAdornment, Tab, Tabs, TextField, Typography } from '@mui/material';
 import SearchIcon from '@mui/icons-material/Search';
 import { useAuth } from '../core/AuthContext';
 import { useNotification } from '../ui/useNotification';
-import { unoTheme } from '../ui/unoTheme';
 import { api } from '../core/client';
 import defaultAvatar from '../assets/avatar/a_default.svg';
 import FriendsTab from '../components/FriendsTab'
@@ -13,7 +12,7 @@ import type { FriendEntry } from '../core/types.ts'
 
 const avatarVersion = Date.now();
 
-export default function FriendsPage() {
+function FriendsPage() {
     const { showNotification, notificationNode } = useNotification();
     const [activeTab, setActiveTab] = useState<'all' | 'pending' | 'suggested'>('all');
     const [searchQuery, setSearchQuery] = useState('');
@@ -104,7 +103,7 @@ export default function FriendsPage() {
     }, [user, showNotification]);
 
     return (
-        <ThemeProvider theme={unoTheme}>
+        <>
             {notificationNode}
             <Container maxWidth="lg" sx={{ py: 4 }}>
                 <Box sx={{ mb: 3, display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: 2 }}>
@@ -120,9 +119,9 @@ export default function FriendsPage() {
 						onChange={(e) => setSearchQuery(e.target.value)} sx={{ width: { xs: '100%', sm: 300 } }}
                         slotProps={{
                             input: {startAdornment: (
-                                    <InputAdornment position="start">
-                                        <SearchIcon />
-                                    </InputAdornment>),},}}
+								<InputAdornment position="start">
+									<SearchIcon />
+								</InputAdornment>),},}}
                     />
                 </Box>
 
@@ -143,6 +142,8 @@ export default function FriendsPage() {
                 {activeTab === 'suggested' && <SuggestedTab filteredSuggestions={filteredSuggestions}
 					freshAvatar={freshAvatar} handleSendRequest={handleSendRequest} />}
             </Container>
-        </ThemeProvider>
+        </>
     );
 }
+
+export default FriendsPage

@@ -5,21 +5,19 @@ import LockIcon from '@mui/icons-material/Lock';
 import { api, getErrorMessage } from '../core/client.ts';
 import { useAuth } from '../core/AuthContext';
 
-// Trocar a password: valida à frente o que se consegue validar sem
-// servidor, e o resto (a password atual estar certa) é o backend a
-// dizer. As regras daqui devem bater certo com as do backend.
-export default function ChangePasswordCard() {
+function ChangePasswordCard() 
+{
     const navigate = useNavigate();
     const [currentPassword, setCurrentPassword] = useState('');
     const [newPassword, setNewPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
-    const { logout, login, user } = useAuth();
+    const { logout } = useAuth();
 
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [success, setSuccess] = useState<string | null>(null);
 
-    const handleSubmit = async (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.SubmitEvent<HTMLFormElement>) => {
         e.preventDefault();
         setError(null);
         setSuccess(null);
@@ -63,9 +61,9 @@ export default function ChangePasswordCard() {
         <Container maxWidth="sm" sx={{ mt: 4, mb: 4 }}>
             <Card elevation={3} sx={{ borderRadius: 3, p: 2 }}>
                 <CardContent>
-                    <Box display="flex" sx={{ alignItems: "center" }} gap={1.5} mb={2}>
+                    <Box  sx={{ display: 'flex', alignItems: "center", gap: 1.5, mb: 2 }} >
                         <LockIcon color="primary" fontSize="large" />
-                        <Typography variant="h5" component="h1" fontWeight="bold">
+                        <Typography variant="h5" component="h1" sx={{ fontWeight: 'bold' }}>
                             Change Password
                         </Typography>
                     </Box>
@@ -89,3 +87,5 @@ export default function ChangePasswordCard() {
         </Container>
     );
 }
+
+export default ChangePasswordCard

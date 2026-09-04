@@ -1,19 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import { Box, Button, Checkbox, Container, CssBaseline, FormControl, FormControlLabel, FormHelperText, Grid, IconButton, InputAdornment, Link, Paper, TextField, Typography, Alert, Avatar, } from '@mui/material';
+import { Box, Button, Checkbox, Container, CssBaseline, FormControl, FormControlLabel, FormHelperText, Grid,
+	IconButton, InputAdornment, Link, Paper, TextField, Typography, Alert, Avatar, } from '@mui/material';
 import { Visibility, VisibilityOff, PersonAddOutlined as PersonAddIcon, } from '@mui/icons-material';
-
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../core/AuthContext';
 import { api, getErrorMessage } from '../core/client.ts';
+import type { ValidationError } from '../core/types.ts' 
 
-interface ValidationError {
-    loc: (string | number)[];
-    msg: string;
-    type: string;
-    input?: unknown;
-}
-export default function SignUp() {
+function SignUp()
+{
     const [showPassword, setShowPassword] = useState(false);
     const [formData, setFormData] = useState({
         nick_name: '',
@@ -48,15 +44,15 @@ export default function SignUp() {
         }));
     };
 
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
+    const handleSubmit = async (e: React.SubmitEvent<HTMLFormElement>) => {
+        e.preventDefault(); 
         if (!e.currentTarget.checkValidity()) {
             e.currentTarget.reportValidity();
             return;
         }
 
-        if (formData.nick_name.length < 3 || formData.nick_name.length > 20) {
-            setErrors({ nick_name: 'Nick name must be between 3 and 20 characters long.' });
+        if (formData.nick_name.length < 3 || formData.nick_name.length > 12) {
+            setErrors({ nick_name: 'Nick name must be between 3 and 12 characters long.' });
             return;
         }
 
@@ -92,12 +88,9 @@ export default function SignUp() {
     const handleResendActivationEmail = async (e: React.MouseEvent) => {
         e.preventDefault();
         setError('');
-        setErrors((prev) => {
-            const next = {};
-            return next;
-        });
-        if (formData.nick_name.length < 3 || formData.nick_name.length > 20) {
-            setErrors({ nick_name: 'Nick name must be between 3 and 20 characters long.' });
+        setErrors({});
+        if (formData.nick_name.length < 3 || formData.nick_name.length > 12) {
+            setErrors({ nick_name: 'Nick name must be between 3 and 12 characters long.' });
             return;
         }
 
@@ -238,3 +231,5 @@ const returnErrorMessageHandler = (error: unknown) => {
         </Container>
     );
 }
+
+export default SignUp

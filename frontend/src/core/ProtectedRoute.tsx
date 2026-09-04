@@ -1,9 +1,6 @@
 import { Navigate, Outlet } from 'react-router-dom';
 import { useAuth } from './AuthContext';
 
-// Porta das rotas que exigem sessão: enquanto o /me não responde
-// mostra-se a espera, sem sessão vai-se para o login, com sessão
-// renderiza-se a rota filha (o Outlet).
 export const ProtectedRoute = () => {
   const { isAuthenticated, isLoading } = useAuth();
 

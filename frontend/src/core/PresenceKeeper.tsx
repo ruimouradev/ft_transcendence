@@ -12,11 +12,10 @@ const MAX_RECONNECT_ATTEMPTS = 50;
 const BASE_RECONNECT_DELAY = 1000; // primeiro reencontro ao fim de 1s
 // const HEARTBEAT_INTERVAL = 10000; // uma batida a cada 10s
 
-export default function PresenceKeeper() {
+function PresenceKeeper() 
+{
     const { user, isLoading } = useAuth();
 
-    // refs porque nada disto deve redesenhar o ecrã: o socket, os
-    // temporizadores e o contador de tentativas
     const socketRef = useRef<WebSocket | null>(null);
     //   const heartbeatRef = useRef<ReturnType<typeof setInterval> | null>(null);
     const reconnectRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -119,3 +118,5 @@ export default function PresenceKeeper() {
 
     return null;
 }
+
+export default PresenceKeeper
