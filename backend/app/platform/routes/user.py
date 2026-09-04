@@ -3,6 +3,8 @@ from typing import Any
 import logging
 from datetime import datetime, timezone
 from pydantic import ValidationError
+from PIL import Image, UnidentifiedImageError
+from io import BytesIO
 
 from app.presence_manager import presence_manager
 from app.platform import security
@@ -229,18 +231,23 @@ async def upload_file(file: UploadFile, session: SessionDep, current_user: Curre
     Upload a file (avatar) for the current user.
     """
 
-    if file.content_type not in ["image/jpeg", "image/png"]:
-        raise HTTPException(status_code=400, detail="Invalid file type. Only JPEG and PNG are allowed.")
-        # return {"error": "Invalid file type. Only JPEG and PNG are allowed."}
-    if file.content_type == "image/jpeg":
-        avatar_filename = f"avatar.jpg"
-    if file.content_type == "image/png" :
-        avatar_filename = f"avatar.png"
+    # if file.content_type not in ["image/jpeg", "image/png"]:
+    #     raise HTTPException(status_code=400, detail="Invalid file type. Only JPEG and PNG are allowed.")
+    #     # return {"error": "Invalid file type. Only JPEG and PNG are allowed."}
+    # if file.content_type == "image/jpeg":
+    #     avatar_filename = f"avatar.jpg"
+    # if file.content_type == "image/png" :
+    #     avatar_filename = f"avatar.png"
 
     uploaddir = Path("app/static/"+current_user.id.hex+"/")
     uploaddir.mkdir(parents=True, exist_ok=True)
 
-    MAX_SIZE = 2 * 1024 * 1024  # 2MB
+    MAX_FILE_SIZE = 2 * 1024 * 1024  # 2MB
+    MAX_WIDTH = 4096
+    MAX_HEIGHT = 4096
+    AVATAR_SIZE = (512, 512)
+
+    original_filename = file.filename
     size = 0
     
     while True:
@@ -248,17 +255,43 @@ async def upload_file(file: UploadFile, session: SessionDep, current_user: Curre
         if not chunk:
             break
         size += len(chunk)
-        if size > MAX_SIZE:
+        if size > MAX_FILE_SIZE:
             raise HTTPException(status_code=400, detail="File size exceeds the limit of 2MB.")
-            # return {"error": "File size exceeds the limit of 2MB."}
+
+    if size ==0:
+        raise HTTPException(status_code=400, detail="File is empty.")
     
     await file.seek(0)
     content = await file.read()
-    
-    with open(uploaddir / avatar_filename, "wb") as f:
-        f.write(content)
+    try:
+        image = Image.open(BytesIO(content))
+        image.verify()
+    except (UnidentifiedImageError, OSError):
+        raise HTTPException(status_code=400, detail="Invalid image file.")
 
-    userservice.update_user(session=session, db_user=current_user, user_in=UserUpdate(avatar=f"/static/{current_user.id.hex}/{avatar_filename}"))
+    if image.format not in ["JPEG", "PNG"]:
+        raise HTTPException(status_code=400, detail="Only JPEG and PNG are allowed.")
+
+    image = Image.open(BytesIO(content))
+    if image.width > MAX_WIDTH or image.height > MAX_HEIGHT:
+        raise HTTPException(status_code=400, detail=f"Image dimensions exceed the limit of {MAX_WIDTH}x{MAX_HEIGHT} pixels.")
+    if image.mode != "RGB":
+        background = Image.new("RGB", image.size, (255, 255, 255))
+        if "A" in image.getbands():
+            background.paste(image, mask=image.getchannel("A"))
+        else:
+            background.paste(image)
+        image = background
+    image.thumbnail(AVATAR_SIZE,Image.Resampling.LANCZOS)
+    output = BytesIO()
+    image.save(output, format="JPEG",quality=90,optimize=True)
+    output.seek(0)
+
+    avatar_filename = f"avatar.jpg"
+    avatar_path = uploaddir / avatar_filename
+    avatar_path.write_bytes(output.getvalue())
+
+    userservice.update_user(session=session, db_user=current_user, user_in=UserUpdate(nick_name=current_user.nick_name, avatar=f"/static/{current_user.id.hex}/{avatar_filename}"))
     return {"filename": avatar_filename, "file_size": len(content), "url": f"/static/{current_user.id.hex}/{avatar_filename}"}
 
 user_presence_router = APIRouter()

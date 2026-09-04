@@ -48,7 +48,7 @@ export default function PresenceKeeper() {
         const scheduleReconnect = () => {
             if (closedByUsRef.current) { return; }
             if (attemptsRef.current >= MAX_RECONNECT_ATTEMPTS) {
-                console.error('Presence: maximum reconnect attempts reached');
+                console.log('Presence: maximum reconnect attempts reached');
                 return;
             }
             attemptsRef.current += 1;
@@ -87,7 +87,7 @@ export default function PresenceKeeper() {
 
             ws.onerror = () => {
                 // o onclose que se segue trata do resto
-                console.warn('Presence: websocket error');
+                console.log('Presence: websocket error');
             };
         }
 
