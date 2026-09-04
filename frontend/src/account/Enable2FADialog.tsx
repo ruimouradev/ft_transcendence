@@ -211,6 +211,7 @@ function Enable2FADialog({ open, onClose, onSuccess }: Enable2FADialogProps)
                         <Typography color="text.secondary" sx={{ mb: 3 }}>
                             For security reasons, please enter your current password before setting up two-factor authentication.
                         </Typography>
+						
                         <TextField fullWidth autoFocus required type={showPassword ? 'text' : 'password'} label="Current password" value={password}
                             onChange={(event) => setPassword(event.target.value)} autoComplete="current-password"
                             slotProps={{
