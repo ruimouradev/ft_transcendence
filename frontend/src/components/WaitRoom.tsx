@@ -50,7 +50,7 @@ function WaitRoom()
 												: <Chip icon={<WifiOffOutlinedIcon />} label="Reconnecting" sx={{ backgroundColor: 'transparent',
 													color: 'text.secondary', border: '1px dashed', borderColor: 'text.secondary', opacity: 0.55,
 													fontSize: '0.95rem', py: 2.2, px: 0.5, '& .MuiChip-icon': { color: 'text.secondary' },}}/>}
-											{!not_host && !player.ready
+											{not_host || !player.ready
 												? <></> 
 												: <Chip icon={<ThumbUpOffAltOutlinedIcon />} label="Ready" sx={{ backgroundColor: 'transparent',
 													color: 'success.main', border: '1px solid', borderColor: 'success.main', opacity: 0.55,

@@ -52,7 +52,7 @@ function SignUp()
         }
 
         if (formData.nick_name.length < 3 || formData.nick_name.length > 12) {
-            setErrors({ nick_name: 'Nick name must be between 3 and 12 characters long.' });
+            setErrors({ nick_name: 'Nickname must be between 3 and 12 characters long.' });
             return;
         }
 
@@ -90,7 +90,7 @@ function SignUp()
         setError('');
         setErrors({});
         if (formData.nick_name.length < 3 || formData.nick_name.length > 12) {
-            setErrors({ nick_name: 'Nick name must be between 3 and 12 characters long.' });
+            setErrors({ nick_name: 'Nickname must be between 3 and 12 characters long.' });
             return;
         }
 
@@ -140,7 +140,7 @@ const returnErrorMessageHandler = (error: unknown) => {
                 if (error.response.data?.code === 'USER_EXISTS') {
                     setErrors({ email: error.response.data?.msg || 'This email is already registered. Please try a different one.' });
                 } else if (error.response.data?.code === 'NICKNAME_EXISTS') {
-                    setErrors({ nick_name: error.response.data?.msg || 'This nick name is already taken. Please try a different one.' });
+                    setErrors({ nick_name: error.response.data?.msg || 'This nickname is already taken. Please try a different one.' });
                 } else {
                     setError(getErrorMessage(error));
                 }
@@ -167,7 +167,7 @@ const returnErrorMessageHandler = (error: unknown) => {
                 <Box component="form" onSubmit={handleSubmit} sx={{ mt: 1 }}>
                     <Grid container spacing={2}>
                         <Grid size={{ xs: 12 }}>
-                            <TextField name="nick_name" autoFocus required fullWidth id="nick_name" label="Nick Name" error={!!errors.nick_name} helperText={errors.nick_name} value={formData.nick_name} onChange={handleChange} />
+                            <TextField name="nick_name" autoFocus required fullWidth id="nick_name" label="Nickname" error={!!errors.nick_name} helperText={errors.nick_name} value={formData.nick_name} onChange={handleChange} />
                         </Grid>
                         <Grid size={{ xs: 12 }}>
                             <TextField required fullWidth id="email" label="Email Address" type="email" name="email" autoComplete="email" value={formData.email} onChange={handleChange} error={!!errors.email} helperText={errors.email} />
