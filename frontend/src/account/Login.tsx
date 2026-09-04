@@ -4,7 +4,7 @@ import { Visibility, VisibilityOff } from '@mui/icons-material';
 import axios from 'axios';
 import icon42 from '../assets/i42.ico';
 import avatarUno from '../assets/avatar/a_default.svg';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams, useLocation } from 'react-router-dom';
 import { api, getErrorMessage } from '../core/client';
 import { useAuth } from '../core/AuthContext';
 
@@ -32,6 +32,7 @@ function Login()
 	});
 
     const navigate = useNavigate();
+	const location = useLocation();
     const urlError = errorParam === 'oauth2_error' ? 'Login failed: OAuth2 error.' : (errorParam || '');
     const shownError = error || urlError;
 
@@ -43,9 +44,15 @@ function Login()
 
     useEffect(() => {
         if (!loading && user) {
-            navigate('/', { replace: true });
+			const sessionUrl = sessionStorage.getItem('returnTo');
+			const oldUrl = location.state?.from?.pathname
+		
+			const finalURL = sessionUrl || oldUrl || '/';
+			sessionStorage.removeItem('returnTo');
+			
+            navigate(finalURL, { replace: true });
         }
-    }, [user, loading, navigate]);
+    }, [user, loading, navigate, location]);
 
     useEffect(() => {
         window.history.replaceState({}, document.title, window.location.pathname);

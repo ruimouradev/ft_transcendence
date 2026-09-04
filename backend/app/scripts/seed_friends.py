@@ -5,7 +5,14 @@ from uuid import uuid4
 from faker import Faker
 from sqlmodel import Session, select
 
-from app.models.all import User, Game, GamePlayer, UserStatistic
+from app.models.all import (
+    User,
+    Game,
+    GamePlayer,
+    UserStatistic,
+    Friendship,
+    FriendshipStatus,
+)
 from app.models.database import engine
 from app.platform.security import get_password_hash
 
@@ -13,11 +20,13 @@ from app.platform.security import get_password_hash
 fake = Faker()
 
 
-NUM_USERS = 100
+NUM_USERS = 200
 NUM_GAMES = 100
 
 MIN_PLAYERS = 2
 MAX_PLAYERS = 4
+
+FRIENDS_PER_USER = 10
 
 
 def create_users(session: Session) -> list[User]:
@@ -26,8 +35,11 @@ def create_users(session: Session) -> list[User]:
     for i in range(NUM_USERS):
         user = User(
             id=uuid4(),
-            email=f"user_{i + 1}@example.com",
-            nick_name=fake.name()[:12],
+            email=f"user_{i + 1}@ex.pt",
+
+            # Guaranteed unique and <= 12 characters
+            nick_name=f"player{i + 1}",
+
             avatar="/static/a00.jpeg",
             is_active=True,
             is_verified=True,
@@ -42,6 +54,75 @@ def create_users(session: Session) -> list[User]:
     return users
 
 
+def create_friendships(
+    session: Session,
+    users: list[User],
+) -> int:
+    friendships_created = 0
+    total_users = len(users)
+
+    # ---------------------------------------------------------
+    # ACCEPTED FRIENDSHIPS
+    #
+    # Each user connects to the next 12 users.
+    #
+    # Since friendships are mutual when accepted:
+    #   12 ahead + 12 behind = 24 friends per user
+    # ---------------------------------------------------------
+
+    accepted_pairs = set()
+
+    for i, user in enumerate(users):
+        for offset in range(1, 13):
+            friend = users[(i + offset) % total_users]
+
+            pair = frozenset((user.id, friend.id))
+
+            if pair in accepted_pairs:
+                continue
+
+            friendship = Friendship(
+                requester_id=user.id,
+                addressee_id=friend.id,
+                status=FriendshipStatus.ACCEPTED,
+            )
+
+            session.add(friendship)
+            accepted_pairs.add(pair)
+            friendships_created += 1
+
+    # ---------------------------------------------------------
+    # PENDING REQUESTS
+    #
+    # Each user sends requests to 20 users further around
+    # the circle.
+    #
+    # This means every user:
+    #   - sends 20 requests
+    #   - receives 20 requests
+    #
+    # Starting at offset 20 prevents these from overlapping
+    # with the accepted friendships above.
+    # ---------------------------------------------------------
+
+    for i, user in enumerate(users):
+        for offset in range(20, 40):
+            addressee = users[(i + offset) % total_users]
+
+            friendship = Friendship(
+                requester_id=user.id,
+                addressee_id=addressee.id,
+                status=FriendshipStatus.PENDING,
+            )
+
+            session.add(friendship)
+            friendships_created += 1
+
+    session.flush()
+
+    return friendships_created
+
+
 def create_games(
     session: Session,
     users: list[User],
@@ -50,6 +131,7 @@ def create_games(
     games = []
 
     for _ in range(NUM_GAMES):
+
         # Select 2–4 different players
         players = random.sample(
             users,
@@ -86,7 +168,6 @@ def create_games(
         shuffled_players = players.copy()
         random.shuffle(shuffled_players)
 
-        # Create rankings
         for rank, user in enumerate(shuffled_players, start=1):
 
             is_winner = user.id == winner.id
@@ -97,8 +178,16 @@ def create_games(
                 is_winner=is_winner,
                 seat=rank - 1,
                 score=winner_score if is_winner else 0,
-                remain_points=0 if is_winner else random.randint(10, 100),
-                cards_left=0 if is_winner else random.randint(1, 10),
+                remain_points=(
+                    0
+                    if is_winner
+                    else random.randint(10, 100)
+                ),
+                cards_left=(
+                    0
+                    if is_winner
+                    else random.randint(1, 10)
+                ),
                 is_connected=True,
             )
 
@@ -154,15 +243,28 @@ def seed_database():
         # Create users
         users = create_users(session)
 
+        # Create accepted friendships
+        friendships = create_friendships(
+            session,
+            users,
+        )
+
         # Create games and game players
-        games = create_games(session, users)
+        games = create_games(
+            session,
+            users,
+        )
 
         # Create user statistics
-        create_statistics(session, users)
+        create_statistics(
+            session,
+            users,
+        )
 
         session.commit()
 
         print(f"Created {len(users)} users")
+        print(f"Created {friendships} friendships")
         print(f"Created {len(games)} games")
         print("Created game players and user statistics")
 

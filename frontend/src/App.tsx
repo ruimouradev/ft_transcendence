@@ -14,7 +14,7 @@ import Rules from './legal/Rules'
 import Play from './game/Play'
 import Lobby from './game/Lobby'
 import ErrorPage from './pages/ErrorPage'
-import { ProtectedRoute } from './core/ProtectedRoute'
+import ProtectedRoute from './core/ProtectedRoute'
 import Verify2fa from './account/Verify2fa'
 import ResetPassword from './account/ResetPassword'
 

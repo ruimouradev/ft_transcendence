@@ -85,12 +85,44 @@ function FriendsPage() {
 
     useEffect(() => {
         const fetchFriendsData = async () => {
+			const amount = 10;
+			let skip = 0;
+			let parcialFriends;
+			let friendList: FriendEntry[] = [];
             try {
-                const friendsResponse = await api.get('/friends/all');
-                setFriends(friendsResponse.data.friends);
+				// const old_friendsResponse = await api.get('/friends/all', { params: { limit: 100 } });
+				// console.log(old_friendsResponse.data.friends)
+				// setFriends(old_friendsResponse.data.friends);
+				do
+				{
+					const friendsResponse = await api.get('/friends/all', { params: { limit: amount, skip: skip } });
+					
+					skip += amount;
+					parcialFriends = friendsResponse.data.friends;
+					friendList = [...friendList, ...parcialFriends];
 
-                const requestsResponse = await api.get('/friends/pending');
-                setRequests(requestsResponse.data.requests);
+				} while (amount === parcialFriends.length);
+				setFriends(friendList);
+
+
+				skip = 0;
+				let parcialRequests;
+				let requestList: any[] = [];
+
+                // const requestsResponse = await api.get('/friends/pending');
+                // setRequests(requestsResponse.data.requests);
+				do
+				{
+					const requestsResponse = await api.get('/friends/pending', { params: { limit: amount, skip: skip } });
+					
+					skip += amount;
+					parcialRequests = requestsResponse.data.requests;
+					requestList = [...requestList, ...parcialRequests];
+
+				} while (amount === parcialRequests.length);
+				setRequests(requestList);
+
+				// console.log(requestList);
 
                 const suggestionsResponse = await api.get('/friends/suggested');
                 setSuggestions(suggestionsResponse.data.suggestions);

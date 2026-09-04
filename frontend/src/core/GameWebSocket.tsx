@@ -61,8 +61,6 @@ function GameWebSocket({ children }: { children: React.ReactNode }) {
 				const message = JSON.parse(event.data);
 				const { type } = message;
 
-				console.log(message);
-
 				switch (type) {
 					case 'welcome':
 						setRoomID(roomID);
@@ -80,7 +78,7 @@ function GameWebSocket({ children }: { children: React.ReactNode }) {
 						setGameState(message);
 						break ;
 					default:
-						alert('undefined error');
+						handleNewError('invalid message type');
 				}
 			}
 			catch(e) {
