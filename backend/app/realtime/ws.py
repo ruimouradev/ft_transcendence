@@ -69,6 +69,7 @@ class Room:
 rooms: dict[str, Room] = {}
 
 TURN_TIMEOUT = 60  # seconds an idle turn is allowed to sit
+OFFLINE_TURN_TIMEOUT = 15  # shorter clock when the seat on turn is gone
 TIMER_TICK = 5  # how often each room looks at its clock
 UNO_GRACE = 0.5  # seconds a fresh one-card hand is safe from the catch
 SEAT_GRACE = 5  # seconds a lobby chair waits for its player to come back
@@ -225,7 +226,12 @@ async def room_timer(room_id: str, room: Room) -> None:
         if mark is None or mark[0] != turn_key(game):
             mark = (turn_key(game), time.monotonic())
             continue
-        if time.monotonic() - mark[1] < TURN_TIMEOUT:
+        # a disconnected seat gets the short clock, the table should
+        # not wait the full minute for someone who is not there, and a
+        # reconnect flips it back to the normal limit mid-wait
+        limit = (TURN_TIMEOUT if game.hands[game.turn].connected
+                 else OFFLINE_TURN_TIMEOUT)
+        if time.monotonic() - mark[1] < limit:
             continue
         pid = game.hands[game.turn].id
         # Owing cards (a +4 or a +2 pile) or holding nothing playable
