@@ -127,10 +127,7 @@ def accept_friend(friend_id: str, status: FriendshipStatus, session: Session, cu
     1. Only the accepted status can be blocked by the requester or addressee. If the status is not accepted, the block operation will not be allowed.
     2. If the status is accepted, the requester or addressee can block the friendship by setting the blocked_by_req or blocked_by_add flag to True.
     3. If want to set another status(ACCEPTED, REJECTED), the addressee can only set the status to ACCEPTED or REJECTED. The requester cannot set the status to ACCEPTED or REJECTED.
-    4. If the status is ACCEPTED, the accepted_at field will be set to the current datetime in UTC.
-    5. If the status is REJECTED, the friendship will be deleted from the database.
-    6. If the status is BLOCKED, the friendship will remain in the database, but the blocked_by_req or blocked_by_add flag will be set to True.
-    7. The function will return the updated friendship object.
+    4. The function will return the updated friendship object.
     '''
     friendship = session.exec(select(Friendship).where(or_(
                                 (Friendship.addressee_id == current_user.id) & (Friendship.requester_id == friend_id),
@@ -141,8 +138,13 @@ def accept_friend(friend_id: str, status: FriendshipStatus, session: Session, cu
         raise APIError(status_code=404, code=APIErrorCode.FRIEND_REQUEST_NOT_FOUND, msg="No friendship request found.")
     new_status = None
     if status == FriendshipStatus.BLOCKED:
-        if friendship.status == FriendshipStatus.REJECTED:
-            raise APIError(status_code=400, code=APIErrorCode.INVALID_OPERATION, msg="Cannot block a rejected friendship.")
+        if friendship.status not in [FriendshipStatus.ACCEPTED, FriendshipStatus.BLOCKED]:
+            raise APIError(status_code=400, code=APIErrorCode.INVALID_OPERATION, msg="Only accepted friendships can be blocked.")
+        # if friendship.status == FriendshipStatus.REJECTED:
+        #     raise APIError(status_code=400, code=APIErrorCode.INVALID_OPERATION, msg="Cannot block a rejected friendship.")
+        # if friendship.status == FriendshipStatus.PENDING:
+        #     if friendship.addressee_id != current_user.id:
+        #         raise APIError(status_code=400, code=APIErrorCode.INVALID_OPERATION, msg="Only the addressee can block a pending friendship.")
         if friendship.requester_id == current_user.id:
             friendship.blocked_by_req = True
         elif friendship.addressee_id == current_user.id:
