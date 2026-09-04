@@ -44,8 +44,8 @@ def get_user_by_nick_name(*, session: Session, nick_name: str) -> User | None:
     session_user = session.exec(statement).first()
     return session_user
 
-def get_oauth_account_by_provider_and_user_id(*, session: Session, provider: ProviderType, user_id: str) -> OAuthAccount | None:
-    statement = select(OAuthAccount).where(OAuthAccount.provider == provider, OAuthAccount.user_id == user_id)
+def get_oauth_account_by_provider_and_user_id(*, session: Session, provider: ProviderType, provider_user_id: str) -> OAuthAccount | None:
+    statement = select(OAuthAccount).where(OAuthAccount.provider == provider, OAuthAccount.provider_user_id == provider_user_id)
     oauth_account = session.exec(statement).first()
     return oauth_account
 

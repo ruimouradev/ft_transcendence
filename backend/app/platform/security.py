@@ -79,7 +79,12 @@ async def cache_state(state: str, session_id: str, expires_in: int = 300) -> Non
 async def verify_state(state: str, session_id: str) -> None:
     """Verify the state parameter for CSRF protection."""
     key = f"oauth_state:{session_id}"
-    value = await redis.getdel(key)
+    try:
+        value = await redis.getdel(key)
+    except redis.exceptions.TimeoutError as e:
+        raise APIError(status_code=400, code=APIErrorCode.BAD_REQUEST, msg=f"Error occurred while verifying state: {e}")
+    except redis.exceptions.RedisError as e:
+        raise APIError(status_code=400, code=APIErrorCode.BAD_REQUEST, msg=f"Redis error occurred while verifying state: {e}")
     if value is None:
         raise APIError(status_code=400, code=APIErrorCode.BAD_REQUEST, msg="Invalid or expired state parameter. Please try logging in again.")
     if value != state:
