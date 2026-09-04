@@ -36,7 +36,6 @@ function Verify2fa()
         }
     };
 
-
     const handleAuthenticatorReset = async () => {
         setUserRecoverCode(true);
     };

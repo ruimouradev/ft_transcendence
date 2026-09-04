@@ -30,7 +30,7 @@ from app.robots_manager import robots_user_manager
 
 # email local part -> nick name shown on the site
 NAMES = {"ana": "ana", "joana": "joana", "vinicius": "Vinicius",
-         "maria": "Maria João do Porto"}
+         "maria": "Maria João"}
 DOMAIN = "@test.pt"
 PASSWORD = "11111111"
 

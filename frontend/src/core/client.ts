@@ -1,28 +1,28 @@
 import axios from 'axios';
 
 export const api = axios.create({
-  baseURL: '/api/v1',
-  withCredentials: true,
+	baseURL: '/api/v1',
+	withCredentials: true,
 });
 
 // Unique parameter on each GET so the browser never serves it from cache
 api.interceptors.request.use((config) => {
-  if (config.method?.toLowerCase() === 'get') {
-    config.params = { ...config.params, _t: Date.now() };
-  }
-  return config;
+	if (config.method?.toLowerCase() === 'get') {
+		config.params = { ...config.params, _t: Date.now() };
+	}
+	return config;
 });
 
 // Expired session, any 401 outside the login screen goes to /login
 api.interceptors.response.use(
-  (response) => response,
-  (error) => {
+	(response) => response,
+	(error) => {
     if (error.response?.status === 401 && !error.config?.url?.includes('/users/me')) {
-      if (window.location.pathname !== '/login') {
+    	if (window.location.pathname !== '/login') {
         // Login reads returnTo after a successful sign in
-        sessionStorage.setItem('returnTo', window.location.pathname);
-        window.location.href = '/login?error=Session expired, please log in again.';
-      }
+    		sessionStorage.setItem('returnTo', window.location.pathname);
+    		window.location.href = '/login?error=Session expired, please log in again.';
+    	}
     }
     return Promise.reject(error);
   },
