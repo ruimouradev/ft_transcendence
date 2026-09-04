@@ -161,6 +161,7 @@ function GameWebSocket({ children }: { children: React.ReactNode }) {
 				break ;
 			case ("KICKED"):
 			case ('ROOM_FULL'):
+			case ("SEAT_TAKEN"):
 			case ("AUTH_REQUIRED"):
 			case ('ROOM_NOT_FOUND'):
 			case ("GAME_ALREADY_STARTED"):
