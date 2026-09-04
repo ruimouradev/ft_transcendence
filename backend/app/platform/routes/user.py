@@ -2,6 +2,7 @@ import uuid
 from typing import Any
 import logging
 from datetime import datetime, timezone
+from pydantic import ValidationError
 
 from app.presence_manager import presence_manager
 from app.platform import security
@@ -14,7 +15,7 @@ from pathlib import Path
 from app.platform.deps import (CurrentUser, SessionDep,)
 from app.platform.config import settings
 from app.platform.security import get_password_hash, verify_password
-from app.models.all import (APIError, APIErrorCode,APIKeyContext,APIKeyStatus,EmailVerificationType,Message,OAuthAccountCreate,ProviderType,UpdatePassword,User,UserCreate,UserPublic,UserRegister,UserUpdate,UserUpdateMe,)
+from app.models.all import (APIError, APIErrorCode,APIKeyContext,APIKeyStatus,EmailVerificationType,Message,OAuthAccountCreate,ProviderType,UpdatePassword,User,UserCreate,UserPublic,UserRegister,UserUpdate,UserUpdateMe, nickname_validator,)
 
 from app.platform.service import userservice
 from app.platform.service.mailservice import (
@@ -38,10 +39,21 @@ def update_user_me(*, session: SessionDep, user_in: UserUpdateMe, current_user: 
                 status_code=409, detail="User with this email already exists"
             )
     if user_in.nick_name:
+        try:
+            user_in.nick_name = nickname_validator(user_in.nick_name)
+        except ValueError as e:
+            raise HTTPException(
+                status_code=400, detail=str(e)
+            )
         existing_user = userservice.get_user_by_nick_name(session=session, nick_name=user_in.nick_name)
         if existing_user and existing_user.id != current_user.id:
             raise HTTPException(
                 status_code=409, detail="User with this nick name already exists"
+            )
+    if user_in.card_back:
+        if user_in.card_back not in ["back00", "back01", "back02", "back03", "back04"]:
+            raise HTTPException(
+                status_code=400, detail="Invalid card back URL"
             )
     user_data = user_in.model_dump(exclude_unset=True)
     current_user.sqlmodel_update(user_data)
@@ -88,8 +100,21 @@ def register_user(session: SessionDep, user_in: UserRegister, background_tasks: 
     same_email_user = userservice.get_user_by_email(session=session, email=user_in.email)
     if same_email_user:
         raise APIError(status_code=400, code="USER_EXISTS", msg="This email is already registered. Please try a different one.")
-    
-    user_create = UserCreate.model_validate(user_in)
+
+    try:
+        user_create = UserCreate.model_validate(user_in)
+    except ValidationError as e:
+        messages = [
+            str(error.get("ctx", {}).get("error", error["msg"]))
+            for error in e.errors()
+        ]
+
+        raise APIError(
+            status_code=400,
+            code=APIErrorCode.BAD_REQUEST,
+            msg="; ".join(messages),
+        )
+
     user_create.avatar = "/static/a00.jpeg"
     userservice.create_user(session=session, user_create=user_create)
     if settings.EMAILS_ENABLED and user_in.email:

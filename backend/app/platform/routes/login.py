@@ -160,10 +160,19 @@ async def download_image(url: str, filename: str):
                     f.write(chunk)
 
 @authRouter.get("/auth/42/callback", tags=["auth"])
-async def callback_42(code: str, session: SessionDep, state: str, request: Request):
+async def callback_42(session: SessionDep, request: Request, code: str | None = None, state: str | None = None, error: str | None = None):
     """
     Handle the callback from 42 OAuth2 login. Exchange the authorization code for an access token, then use the access token to get user info. If the user does not exist, create a new user. Finally, return a redirect response with the access token set in a cookie.
     """
+    if error:
+        logger.error(f"42 Oauth Error: {error}")
+        response=RedirectResponse(url="/login?error=oauth2_error", status_code=status.HTTP_303_SEE_OTHER)
+        return response;
+    if not code or not state:
+        logger.error("42 Oauth Missing code or state")
+        response=RedirectResponse(url="/login?error=oauth2_error", status_code=status.HTTP_303_SEE_OTHER)
+        return response;
+
     session_id = request.cookies.get("session_id")
     if not session_id:
         logger.error("42 Oauth Session ID not found")

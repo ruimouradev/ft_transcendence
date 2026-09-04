@@ -93,7 +93,7 @@ export default function ProfileCard() {
         try {
             await api.patch('/users/me', { nick_name: newNickName });
         } catch (error: any) {
-            setNotification({ open: true, message: 'Failed to update the nick name. Please try again.', severity: 'error', });
+            setNotification({ open: true, message: 'Failed to update the nick name: ' + error.response?.data?.detail, severity: 'error', });
             return;
         }
         login({ ...user, nick_name: newNickName || user.nick_name });

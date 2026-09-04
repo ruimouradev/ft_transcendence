@@ -3,23 +3,42 @@ from uuid import UUID, uuid4
 from datetime import datetime, timezone
 
 from sqlmodel import SQLModel, Field, Relationship
-from pydantic import EmailStr, BaseModel
+from pydantic import EmailStr, BaseModel, field_validator
 from sqlalchemy import DateTime
 from enum import Enum
 
 def get_datetime_utc() -> datetime:
     return datetime.now(timezone.utc)
 
+def nickname_validator(value: str) -> str:
+    value = value.strip()
+    if not value:
+        raise ValueError("Nickname cannot be empty or whitespace")
+    if len(value) < 3 or len(value) > 12:
+        raise ValueError("Nickname must be between 3 and 12 characters")
+    if value.lower() in ["admin", "root", "system"]:
+        raise ValueError("Nickname cannot be a reserved word")
+    if value.lower().startswith("bot"):
+        raise ValueError("Nickname cannot start with 'bot'")
+    if "<" in value or ">" in value:
+        raise ValueError("Nickname cannot contain HTML")
+    return value
+
 # Shared properties
 class UserBase(SQLModel):
     email: EmailStr = Field(unique=True, index=True, max_length=255)
     is_active: bool = False
     is_superuser: bool = False
-    nick_name: str = Field(default=None, unique=True, index=True, max_length=12)
+    nick_name: str = Field(unique=True, index=True, max_length=12)
     avatar: str | None = Field(default="/static/a00.jpeg", max_length=255)
-    card_back: str | None = Field(default="/static/cardback.jpeg", max_length=255)
+    card_back: str | None = Field(default="back00", max_length=255)
     use2fa: bool = False
 
+    @field_validator("nick_name")
+    @classmethod
+    def validate_nick_name(cls, value: str) -> str:
+        value = nickname_validator(value)
+        return value
 
 # Properties to receive via API on creation
 class UserCreate(UserBase):
