@@ -1,10 +1,12 @@
 from sqlmodel import Session, select, and_, or_
+from fastapi import Query
 from datetime import datetime, timezone
 from uuid import UUID
 
 from app.models.all import APIError, APIErrorCode, Friend, Friendship, FriendshipStatus, User, UserStatistic
 from app.platform.deps import CurrentUser, SessionDep
 from app.platform.service.userStatisticService import calculate_level_data
+from app.platform.service.userservice import get_user_by_id
 from app.presence_manager import presence_manager
 
     
@@ -32,7 +34,6 @@ def get_suggested_friends(session: Session, current_user: CurrentUser)-> list[Fr
         friends.extend([Friend(id=user.id, nick_name=user.nick_name, handle=user.nick_name, avatar=user.avatar, status=None, level=calculate_level_data(user_statistic.total_score if user_statistic and user_statistic.total_score is not None else 0).current_level, title=calculate_level_data(user_statistic.total_score if user_statistic and user_statistic.total_score is not None else 0).title) for user, user_statistic in users_result])
 
     return friends
-
 
 def get_all_friends(session: Session, current_user: CurrentUser, skip: int = 0, limit: int = 10)-> list[Friend]:
     '''
@@ -83,6 +84,10 @@ def add_friend(friend_id: UUID, session: Session, current_user: CurrentUser)-> F
     '''
     if friend_id == current_user.id:
         raise APIError(status_code=400, code=APIErrorCode.INVALID_OPERATION, msg="Cannot add yourself as a friend.")
+    friend_user = get_user_by_id(session=session, user_id=str(friend_id))
+    if not friend_user:
+        raise APIError(status_code=400, code=APIErrorCode.INVALID_OPERATION, msg="Cannot add friend. User not found.")
+    
     friendship = session.exec(
         select(Friendship).where((Friendship.addressee_id == friend_id) , (Friendship.requester_id == current_user.id))
     ).first()

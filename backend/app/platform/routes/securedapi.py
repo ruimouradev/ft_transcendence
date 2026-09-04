@@ -1,8 +1,6 @@
-from uuid import UUID
-
 from app.platform.deps import SessionDep, verify_api_key
 from app.platform.service import userservice,userStatisticService
-from app.models.all import APIError, APIErrorCode, UserGameDetail, UserOnLineStatus, UserStatisticInfo, UserStatisticLeaderboardEntry
+from app.models.all import APIError, APIErrorCode, UserGameDetail, UserOnLineStatus, UserStatisticInfo, UserStatisticLeaderboardEntry, uuid_check
 from fastapi import APIRouter, Depends, HTTPException, status
 from app.presence_manager import presence_manager
 
@@ -16,10 +14,7 @@ def get_online_players():
 
 @router.get("/userinfo/{user_id}", response_model=UserStatisticInfo, summary="An secured API endpoint, get specific user information", description=''' ## Retrieve information about a specific user by their user ID. Requires a valid API key and client ID.''')
 def get_user_info(session: SessionDep, user_id: str):
-    try:
-        UUID(user_id)
-    except ValueError:
-        raise APIError(status_code=400, code=APIErrorCode.BAD_REQUEST, msg="Invalid user ID format. Must be a valid UUID.")
+    uuid_check(user_id, msg_str="Invalid user ID format. Must be a valid UUID.")
 
     user_info=userservice.get_user_by_id(session=session, user_id=user_id)
     if not user_info:
@@ -32,10 +27,7 @@ def get_user_info(session: SessionDep, user_id: str):
 
 @router.get("/{user_id}/friendlistwithrank", response_model=list[UserStatisticLeaderboardEntry], summary="An secured API endpoint, get specific user friend list with rank", description=''' ## Retrieve the friend list of a specific user along with their ranks. Requires a valid API key and client ID.''')
 def get_friend_list_with_rank(session: SessionDep, user_id: str):
-    try:
-        UUID(user_id)
-    except ValueError:
-        raise APIError(status_code=400, code=APIErrorCode.BAD_REQUEST, msg="Invalid user ID format. Must be a valid UUID.")
+    uuid_check(user_id, msg_str="Invalid user ID format. Must be a valid UUID.")
 
     user_info=userservice.get_user_by_id(session=session, user_id=user_id)
     if not user_info:
@@ -54,10 +46,7 @@ def get_global_rank(session: SessionDep):
 
 @router.get("/gamehistory/{user_id}", response_model=list[UserGameDetail], summary="An secured API endpoint, get specific user game history", description=''' ## Retrieve the game history of a specific user. Requires a valid API key and client ID.''')
 def get_game_history(session: SessionDep, user_id: str):
-    try:
-        UUID(user_id)
-    except ValueError:
-        raise APIError(status_code=400, code=APIErrorCode.BAD_REQUEST, msg="Invalid user ID format. Must be a valid UUID.")
+    uuid_check(user_id, msg_str="Invalid user ID format. Must be a valid UUID.")
 
     user_info=userservice.get_user_by_id(session=session, user_id=user_id)
     if not user_info:

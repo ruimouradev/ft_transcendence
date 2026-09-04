@@ -1,6 +1,5 @@
 from collections.abc import Generator
 from typing import Annotated, Optional
-from uuid import UUID
 
 import jwt
 import logging
@@ -15,7 +14,7 @@ from sqlmodel import Session
 from app.platform import security
 from app.platform.config import settings
 from app.models.database import engine
-from app.models.all import APIError, APIErrorCode, ProviderType, TokenPayload, User, LoginTokenType
+from app.models.all import APIError, APIErrorCode, ProviderType, TokenPayload, User, LoginTokenType, uuid_check
 
 
 logger = logging.getLogger("uvicorn.error")
@@ -94,11 +93,7 @@ def verify_api_key( session: SessionDep, api_key: str | None = Depends(api_key_h
 
     if api_key is None:
         raise APIError(status_code=401, code=APIErrorCode.API_KEY_MISSING, msg="API key is missing")
-
-    try:
-        UUID(client_id)
-    except ValueError:
-        raise APIError(status_code=400, code=APIErrorCode.BAD_REQUEST, msg="Invalid client ID format. Must be a valid UUID.")
+    uuid_check(client_id, msg_str="Invalid client ID format. Must be a valid UUID.")
     oauth_account = userservice.get_oauth_account_by_provider_and_user_id(session=session, provider=ProviderType.api_key, user_id=client_id)
     if oauth_account is None:
         raise APIError(status_code=401, code=APIErrorCode.APIKEY_NOT_EXIST, msg="API key does not exist for the provided client ID")

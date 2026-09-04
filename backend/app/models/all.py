@@ -10,6 +10,12 @@ from enum import Enum
 def get_datetime_utc() -> datetime:
     return datetime.now(timezone.utc)
 
+def uuid_check(value: str,msg_str: str) -> UUID:
+    try:
+        return UUID(value)
+    except ValueError:
+        raise APIError(status_code=400, code=APIErrorCode.BAD_REQUEST, msg=msg_str)
+
 def nickname_validator(value: str) -> str:
     value = value.strip()
     if not value:
