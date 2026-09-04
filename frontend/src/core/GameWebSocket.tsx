@@ -7,8 +7,6 @@ import type { GameState, Notice, Notices } from './types.ts'
 const originalSetItem = sessionStorage.setItem;
 
 sessionStorage.setItem = function (key, value) {
-    console.log("sessionStorage SET:", key, value);
-    console.trace();
     return originalSetItem.call(this, key, value);
 };
 
@@ -63,6 +61,8 @@ function GameWebSocket({ children }: { children: React.ReactNode }) {
 				const message = JSON.parse(event.data);
 				const { type } = message;
 
+				console.log(message);
+
 				switch (type) {
 					case 'welcome':
 						setRoomID(roomID);
@@ -86,6 +86,9 @@ function GameWebSocket({ children }: { children: React.ReactNode }) {
 			catch(e) {
 				handleNewError(`invalid message format ${e}`);
 			}
+
+			
+
 		}
 
 		socket.onerror = () => {
@@ -139,7 +142,6 @@ function GameWebSocket({ children }: { children: React.ReactNode }) {
 	{
 		if (socketRef.current?.readyState  === WebSocket.OPEN)
 		{
-			console.log(message);
 			socketRef.current.send(JSON.stringify(message));
 		}
 	}

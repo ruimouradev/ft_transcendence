@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useCallback, useState } from 'react'
 import { PopUpContext } from './GamePopUpsContext'
 import type { PopUpTypes, PopUpBackup } from  './types.ts'
 
@@ -9,11 +9,10 @@ function GamePopUps({ children }: { children: React.ReactNode })
 	const [errorMessage, setErrorMessage] = useState<string | null>(null);
 	const [popUpBackup, setPopUpBackup] = useState<PopUpBackup>({popUp: 'disabled', identifierID: null});
 
-	function handleGameEnd()
-	{
+	const handleGameEnd = useCallback(() => {
 		setPopUp('game_end');
-	}
-
+	}, [])
+	
 	function handleNewID(type: PopUpTypes, new_id: string)
 	{
 		setIdentifierID(new_id);

@@ -50,7 +50,7 @@ function WaitRoom()
 													color: 'text.secondary', border: '1px dashed', borderColor: 'text.secondary', opacity: 0.55,
 													fontSize: '0.95rem', py: 2.2, px: 0.5, '& .MuiChip-icon': { color: 'text.secondary' },}}/>}
 										</CardContent>
-										<CardContent>
+										<CardContent sx={{display: 'flex', alignItems: 'center', }}>
 											{
 												(player.id !== gameState?.host_id)
 												?	<IconButton hidden={host} size="large" sx={{ position: 'absolute', right: 2, zIndex: 1, color: 'primary.main' }}

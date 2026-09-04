@@ -10,6 +10,7 @@ import CardBackSelector from './CardBackSelector';
 import { cardBacks, defaultCardBack } from '../ui/ImagesUtils';
 import Enable2FADialog from './Enable2FADialog';
 import Disable2FADialog from './Disable2FADialog';
+import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
 import type { NotificationState } from '../core/types.ts';
 
 const cardBackUrls = Object.values(cardBacks);
@@ -40,12 +41,13 @@ function ProfileCard()
     // ficheiro, e se o servidor recusar volta ao avatar antigo.
     const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
-        if (!file || !user) return;
+        if (!file || !user)
+			return;
 
         const oldAvatarUrl = user.avatar || '';
         const tempPreviewUrl = URL.createObjectURL(file);
 
-        login({ ...user, avatar: tempPreviewUrl });
+        // login({ ...user, avatar: tempPreviewUrl });
         const formData = new FormData();
         formData.append('file', file);
 
@@ -176,10 +178,12 @@ function ProfileCard()
                                 </Stack>
                             </Stack>
                         ) : (
-                            <Typography variant="h5" component="h1" sx={{ fontWeight: 'bold', cursor: 'pointer', userSelect: 'none' }}
-                                // o campo de edição nasce com o nome atual
-                                onDoubleClick={() => { setNickName(user.nick_name ?? ''); setIsEditingName(true); }}>
+                            <Typography variant="h5" component="h1" sx={{ fontWeight: 'bold', cursor: 'pointer',
+								userSelect: 'none', display: 'flex', alignItems: 'center', gap: 1 }}>
                                 {user.nick_name}
+								<Tooltip title={"Click to change nickname"} arrow>
+									<EditOutlinedIcon onClick={() => { setNickName(user.nick_name ?? ''); setIsEditingName(true); }}/>
+								</Tooltip>
                             </Typography>
                         )}
 

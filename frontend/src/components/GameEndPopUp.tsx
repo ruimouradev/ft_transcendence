@@ -21,12 +21,12 @@ function GameEndPopUp()
 	}
 
 	function endGame(str: string)
-	{
-		resetPopUpStates();
+	{	
 		if (str === 'start')
 			sendMessage({"type": str})
 		else
 			leaveRoom();
+		resetPopUpStates();
 	}
 
 	return (
