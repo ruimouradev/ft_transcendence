@@ -90,7 +90,7 @@ api_key_header = APIKeyHeader(
 )
 
 
-async def verify_api_key( session: SessionDep, api_key: str | None = Depends(api_key_header), client_id: str = Header(..., alias="X-Client-ID"),) -> str:
+def verify_api_key( session: SessionDep, api_key: str | None = Depends(api_key_header), client_id: str = Header(..., alias="X-Client-ID"),) -> str:
 
     if api_key is None:
         raise APIError(status_code=401, code=APIErrorCode.API_KEY_MISSING, msg="API key is missing")

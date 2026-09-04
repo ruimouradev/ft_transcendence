@@ -259,7 +259,7 @@ async def callback_42(session: SessionDep, request: Request, code: str | None = 
 
             access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
             access_token=security.create_access_token(user.id, expires_delta=access_token_expires)
-            oauth_account = userservice.get_oauth_account_by_provider_and_user_id(session=session, provider=ProviderType.t42, provider_user_id=str(user42_id))
+            oauth_account = userservice.get_oauth_account_by_provider_and_provider_user_id(session=session, provider=ProviderType.t42, provider_user_id=str(user42_id))
 
             if not oauth_account:
                 oauth_account = userservice.create_oauth_account(session=session, oauth_account_create=OAuthAccountCreate(

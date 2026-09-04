@@ -60,7 +60,7 @@ class UserUpdate(UserBase):
 class UserUpdateMe(BaseModel):
     nick_name: str | None = Field(default=None,min_length=3, max_length=12)
     card_back: str | None = Field(default=None, max_length=255)
-    email: EmailStr | None = Field(default=None, max_length=255)
+    # email: EmailStr | None = Field(default=None, max_length=255)
 
 
 class UpdatePassword(BaseModel):

@@ -30,14 +30,14 @@ router = APIRouter(prefix="/users", tags=["users"], include_in_schema=False)
 @router.patch("/me", response_model=UserPublic)
 def update_user_me(*, session: SessionDep, user_in: UserUpdateMe, current_user: CurrentUser) -> Any:
     """
-    Update own user.
+    Update own user. only nickname and card back can be updated. Email update is not allowed.
     """
-    if user_in.email:
-        existing_user = userservice.get_user_by_email(session=session, email=user_in.email)
-        if existing_user and existing_user.id != current_user.id:
-            raise HTTPException(
-                status_code=409, detail="User with this email already exists"
-            )
+    # if user_in.email:
+    #     existing_user = userservice.get_user_by_email(session=session, email=user_in.email)
+    #     if existing_user and existing_user.id != current_user.id:
+    #         raise HTTPException(
+    #             status_code=409, detail="User with this email already exists"
+    #         )
     if user_in.nick_name:
         try:
             user_in.nick_name = nickname_validator(user_in.nick_name)
