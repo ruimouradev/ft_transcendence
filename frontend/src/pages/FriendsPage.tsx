@@ -91,7 +91,6 @@ function FriendsPage() {
 			let friendList: FriendEntry[] = [];
             try {
 				// const old_friendsResponse = await api.get('/friends/all', { params: { limit: 100 } });
-				// console.log(old_friendsResponse.data.friends)
 				// setFriends(old_friendsResponse.data.friends);
 				do
 				{
@@ -107,7 +106,7 @@ function FriendsPage() {
 
 				skip = 0;
 				let parcialRequests;
-				let requestList: any[] = [];
+				let requestList: FriendEntry[] = [];
 
                 // const requestsResponse = await api.get('/friends/pending');
                 // setRequests(requestsResponse.data.requests);
@@ -121,8 +120,6 @@ function FriendsPage() {
 
 				} while (amount === parcialRequests.length);
 				setRequests(requestList);
-
-				// console.log(requestList);
 
                 const suggestionsResponse = await api.get('/friends/suggested');
                 setSuggestions(suggestionsResponse.data.suggestions);
