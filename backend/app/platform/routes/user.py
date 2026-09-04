@@ -240,7 +240,7 @@ async def upload_file(file: UploadFile, session: SessionDep, current_user: Curre
     uploaddir = Path("app/static/"+current_user.id.hex+"/")
     uploaddir.mkdir(parents=True, exist_ok=True)
 
-    MAX_SIZE = 3 * 1024 * 1024  # 3MB
+    MAX_SIZE = 2 * 1024 * 1024  # 2MB
     size = 0
     
     while True:
@@ -249,8 +249,8 @@ async def upload_file(file: UploadFile, session: SessionDep, current_user: Curre
             break
         size += len(chunk)
         if size > MAX_SIZE:
-            raise HTTPException(status_code=400, detail="File size exceeds the limit of 3MB.")
-            # return {"error": "File size exceeds the limit of 3MB."}
+            raise HTTPException(status_code=400, detail="File size exceeds the limit of 2MB.")
+            # return {"error": "File size exceeds the limit of 2MB."}
     
     await file.seek(0)
     content = await file.read()
