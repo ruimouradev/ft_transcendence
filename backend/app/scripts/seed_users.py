@@ -47,6 +47,7 @@ GAMES = [
     {"days": 1, "winner": "maria", "losers": {"bot1": 40, "bot2": 12}},
 ]
 
+
 FRIENDSHIPS = [
     ("ana", "joana", FriendshipStatus.ACCEPTED),
     ("vinicius", "maria", FriendshipStatus.ACCEPTED),
