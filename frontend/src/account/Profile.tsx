@@ -13,6 +13,7 @@ import Disable2FADialog from './Disable2FADialog';
 import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
 import type { NotificationState } from '../core/types.ts';
 
+const MAX_SIZE = 3 * 1024 * 1024; // 3MB
 const cardBackUrls = Object.values(cardBacks);
 
 function ProfileCard()
@@ -44,10 +45,13 @@ function ProfileCard()
         if (!file || !user)
 			return;
 
+		if (file.size > MAX_SIZE) {
+			setNotification(({ open: true, message: 'Avatar maximum size is 3MB.', severity: 'error', }))
+			return ;
+		}
+			
         const oldAvatarUrl = user.avatar || '';
         const tempPreviewUrl = URL.createObjectURL(file);
-
-        // login({ ...user, avatar: tempPreviewUrl });
         const formData = new FormData();
         formData.append('file', file);
 
@@ -83,13 +87,24 @@ function ProfileCard()
         const newNickName = nickName.trim();
         try {
             await api.patch('/users/me', { nick_name: newNickName });
-        } catch {
-            setNotification({ open: true, message: 'Failed to update the nick name. Please try again.', severity: 'error', });
+        } catch (error)
+		{
+			if (axios.isAxiosError(error)) {
+				if (axiosStatus(error) === 409) {
+					setNotification({ open: true, message: 'Nickname is already taken. Choose a different one.', severity: 'error', });
+					return;
+				}
+				else if (axiosStatus(error) === 422) {
+					setNotification({ open: true, message: 'Nickname must be between 3 and 12 characters long.', severity: 'error', });
+					return;
+				}
+			}
+            setNotification({ open: true, message: 'Failed to update the nickname. Please try again.', severity: 'error', });
             return;
         }
         login({ ...user, nick_name: newNickName || user.nick_name });
         setIsEditingName(false);
-        setNotification({ open: true, message: 'Nick name updated successfully.', severity: 'success', });
+        setNotification({ open: true, message: 'Nickname updated successfully.', severity: 'success', });
     };
 
     const handleNameCancel = () => {
@@ -166,7 +181,7 @@ function ProfileCard()
                     <Stack spacing={1} sx={{ alignItems: 'center', textAlign: 'center' }}>
                         {isEditingName ? (
                             <Stack spacing={1} sx={{ width: '100%', alignItems: 'center' }}>
-                                <TextField label="Nick name" size="small" value={nickName}
+                                <TextField label="Nickname" size="small" value={nickName}
 									onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNickName(e.target.value)} sx={{ minWidth: 140 }} />
                                 <Stack direction="row" spacing={1}>
                                     <Button variant="contained" size="small" onClick={handleNameSave}>
