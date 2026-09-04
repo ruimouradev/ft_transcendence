@@ -327,10 +327,13 @@ class Game:
     def say_uno(self, player_id: str) -> None:
         """Register a player's Uno call, sent as its own message.
 
-        Two moments make it valid: holding two cards on the player's own turn,
-        calling before the play, or holding one undeclared card, the
-        late call that races the opponents' catch. Ties are settled by
-        whichever message reached the server first.
+        Two moments make it valid: holding two cards on the player's
+        own turn with a legal play available, calling before that play,
+        or holding one undeclared card, the late call that races the
+        opponents' catch. Ties are settled by whichever message reached
+        the server first. With two cards and nothing playable the turn
+        can only end in a draw, so such a call would always be empty
+        and is refused.
 
         Args:
             player_id: Who is calling Uno.
@@ -344,8 +347,9 @@ class Game:
         hand = self._hand(player_id)
         if hand.said_uno:
             raise GameError(ErrorCode.INVALID_UNO, "uno already said")
-        on_turn = self.hands[self.turn].id == player_id
-        before = len(hand.cards) == 2 and on_turn
+        # legal_moves already knows the turn, a pending +4 or +2 pile
+        # and the drawn card rule, empty means no play can follow
+        before = len(hand.cards) == 2 and bool(self.legal_moves(player_id))
         late = len(hand.cards) == 1
         if not (before or late):
             raise GameError(
@@ -572,4 +576,3 @@ class Game:
         # with two players a reverse just skips, like the rules say
         two_player_reverse = effect.reverse and len(self.hands) == 2
         self._step(2 if effect.skip or two_player_reverse else 1)
-        
