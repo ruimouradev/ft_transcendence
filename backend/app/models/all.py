@@ -15,7 +15,7 @@ class UserBase(SQLModel):
     email: EmailStr = Field(unique=True, index=True, max_length=255)
     is_active: bool = False
     is_superuser: bool = False
-    nick_name: str = Field(default=None, max_length=20)
+    nick_name: str = Field(default=None, unique=True, index=True, max_length=12)
     avatar: str | None = Field(default="/static/a00.jpeg", max_length=255)
     card_back: str | None = Field(default="/static/cardback.jpeg", max_length=255)
     use2fa: bool = False
@@ -29,7 +29,7 @@ class UserCreate(UserBase):
 class UserRegister(BaseModel):
     email: EmailStr = Field(max_length=255)
     password: str = Field(min_length=8, max_length=32)
-    nick_name: str = Field(min_length=3, max_length=20)
+    nick_name: str = Field(min_length=3, max_length=12)
 
 # This class can not be used for a request body;
 class UserUpdate(UserBase):
@@ -39,7 +39,7 @@ class UserUpdate(UserBase):
 
 
 class UserUpdateMe(BaseModel):
-    nick_name: str | None = Field(default=None,min_length=3, max_length=20)
+    nick_name: str | None = Field(default=None,min_length=3, max_length=12)
     card_back: str | None = Field(default=None, max_length=255)
     email: EmailStr | None = Field(default=None, max_length=255)
 

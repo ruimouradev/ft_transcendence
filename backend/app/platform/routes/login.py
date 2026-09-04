@@ -6,8 +6,9 @@ import logging
 from datetime import timedelta
 from typing import Annotated, Any
 
-from fastapi import APIRouter, Depends, status, BackgroundTasks, Body
+from fastapi import APIRouter, Depends, status, BackgroundTasks, Body, Request
 from fastapi.security import OAuth2PasswordRequestForm
+
     
 from app.platform.service import userservice, twofa_service
 from app.platform.deps import SessionDep, TokenDep
@@ -135,9 +136,19 @@ async def login_42():
     client_id = settings.O42_CLIENT_ID
     redirect_uri = settings.O42_REDIRECT_URI
     state = secrets.token_urlsafe(16)
-    await security.cache_state(state)
+    session_id = secrets.token_urlsafe(16)
+    await security.cache_state(state, session_id)
     auth_url = f"https://api.intra.42.fr/oauth/authorize?client_id={client_id}&redirect_uri={redirect_uri}&response_type=code&state={state}"
-    return RedirectResponse(auth_url)
+    response = RedirectResponse(auth_url)
+    response.set_cookie(
+        key="session_id",
+        value=session_id,
+        httponly=True,
+        secure=True,
+        samesite="lax",
+        max_age=300  # 5 minutes
+    )
+    return response
 
 async def download_image(url: str, filename: str):
     async with httpx.AsyncClient() as client:
@@ -149,12 +160,16 @@ async def download_image(url: str, filename: str):
                     f.write(chunk)
 
 @authRouter.get("/auth/42/callback", tags=["auth"])
-async def callback_42(code: str, session: SessionDep, state: str):
+async def callback_42(code: str, session: SessionDep, state: str, request: Request):
     """
     Handle the callback from 42 OAuth2 login. Exchange the authorization code for an access token, then use the access token to get user info. If the user does not exist, create a new user. Finally, return a redirect response with the access token set in a cookie.
     """
+    session_id = request.cookies.get("session_id")
+    if not session_id:
+        response=RedirectResponse(url="/login?error=oauth2_error", status_code=status.HTTP_307_TEMPORARY_REDIRECT)
+        return response;
     # Verify the state parameter
-    await security.verify_state(state)
+    await security.verify_state(state, session_id)
 
     # Exchange the authorization code for an access token
     client_id = settings.O42_CLIENT_ID
@@ -197,6 +212,8 @@ async def callback_42(code: str, session: SessionDep, state: str):
             return response;
 
         user = userservice.get_user_by_email(session=session, email=user42_email)
+        nick_user = userservice.get_user_by_nick_name(session=session, nick_name=user42_login)
+
         if not user:
             # Download the user's avatar image and save it to the static folder
             try:
@@ -208,11 +225,14 @@ async def callback_42(code: str, session: SessionDep, state: str):
             except Exception as e:
                 logger.error(f"Failed to download avatar image for user {user42_login}: {e}")
                 avatar_path = "/static/a00.jpeg"
+            if nick_user:
+                # If the nick_name is already taken, append a random string to it
+                user42_login = f"{user42_login}_{secrets.token_hex(4)}"
             user_create = UserCreate(
                 email=user42_email,
                 password=security.generate_password(8),
                 is_active=True,
-                nick_name=f"{user42_login}",
+                nick_name=f"{user42_login[:12]}",  # Truncate to 12 characters
                 avatar=avatar_path
             )
             user = userservice.create_user(session=session, user_create=user_create)

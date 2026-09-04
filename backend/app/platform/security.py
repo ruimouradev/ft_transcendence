@@ -72,13 +72,15 @@ def get_verify_token_expiration_time(token: str) -> datetime:
     except jwt.PyJWTError:
         raise APIError(status_code=400, code=APIErrorCode.BAD_REQUEST, msg="Invalid verification link. Please check your email and try again.")
 
-async def cache_state(state: str, expires_in: int = 300) -> None:
+async def cache_state(state: str, session_id: str, expires_in: int = 300) -> None:
     """Cache the state parameter for CSRF protection."""
-    await redis.set(f"oauth_state:{state}", "42", ex=expires_in, nx=True)
+    await redis.set(f"oauth_state:{session_id}", state, ex=expires_in, nx=True)
 
-async def verify_state(state: str) -> None:
+async def verify_state(state: str, session_id: str) -> None:
     """Verify the state parameter for CSRF protection."""
-    key = f"oauth_state:{state}"
+    key = f"oauth_state:{session_id}"
     value = await redis.getdel(key)
     if value is None:
         raise APIError(status_code=400, code=APIErrorCode.BAD_REQUEST, msg="Invalid or expired state parameter. Please try logging in again.")
+    if value != state:
+        raise APIError(status_code=400, code=APIErrorCode.BAD_REQUEST, msg="State parameter mismatch. Possible CSRF attack. Please try logging in again.")

@@ -86,6 +86,10 @@ export default function ProfileCard() {
         if (!user) return;
 
         const newNickName = nickName.trim();
+        if (newNickName.length < 3 || newNickName.length > 12) {
+            setNotification({ open: true, message: 'Nick name must be between 3 and 12 characters long.', severity: 'error', });
+            return;
+        }
         try {
             await api.patch('/users/me', { nick_name: newNickName });
         } catch (error: any) {

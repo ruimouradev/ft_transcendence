@@ -278,12 +278,12 @@ async def websocket_endpoint(websocket: WebSocket):
         return
     logger.info(f"===> User {user_id} connected to WebSocket.")
     try:
-        await presence_manager.connect(user_id, websocket)
+        await presence_manager.connect(str(user_id), websocket)
 
         while True:
             data = await websocket.receive_json()
             logger.info(f"===> Received message from user {user_id}: {data}")
-            await presence_manager.handle_message(user_id, data)
+            await presence_manager.handle_message(str(user_id), data)
 
     except WebSocketDisconnect:
         logger.info(f"===> User {user_id} disconnected.")
@@ -292,7 +292,7 @@ async def websocket_endpoint(websocket: WebSocket):
         logger.error(f"===> Error in WebSocket connection for user {user_id}: {e}")
 
     finally:
-        await presence_manager.disconnect(user_id, websocket)
-        logger.info(f"===> User {user_id} disconnected. " f"Current status: {presence_manager.get_status(user_id)}")
+        await presence_manager.disconnect(str(user_id), websocket)
+        logger.info(f"===> User {user_id} disconnected. " f"Current status: {presence_manager.get_status(str(user_id))}")
 
 

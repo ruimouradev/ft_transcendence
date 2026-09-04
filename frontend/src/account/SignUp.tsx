@@ -55,8 +55,8 @@ export default function SignUp() {
             return;
         }
 
-        if (formData.nick_name.length < 3 || formData.nick_name.length > 20) {
-            setErrors({ nick_name: 'Nick name must be between 3 and 20 characters long.' });
+        if (formData.nick_name.length < 3 || formData.nick_name.length > 12) {
+            setErrors({ nick_name: 'Nick name must be between 3 and 12 characters long.' });
             return;
         }
 
@@ -96,8 +96,8 @@ export default function SignUp() {
             const next = {};
             return next;
         });
-        if (formData.nick_name.length < 3 || formData.nick_name.length > 20) {
-            setErrors({ nick_name: 'Nick name must be between 3 and 20 characters long.' });
+        if (formData.nick_name.length < 3 || formData.nick_name.length > 12) {
+            setErrors({ nick_name: 'Nick name must be between 3 and 12 characters long.' });
             return;
         }
 
