@@ -3,7 +3,7 @@ from typing import Any
 import logging
 from datetime import datetime, timezone
 from pydantic import ValidationError
-from PIL import Image, UnidentifiedImageError
+from PIL import Image, UnidentifiedImageError, DecompressionBombError
 from io import BytesIO
 
 from app.presence_manager import presence_manager
@@ -230,15 +230,6 @@ async def upload_file(file: UploadFile, session: SessionDep, current_user: Curre
     """
     Upload a file (avatar) for the current user.
     """
-
-    # if file.content_type not in ["image/jpeg", "image/png"]:
-    #     raise HTTPException(status_code=400, detail="Invalid file type. Only JPEG and PNG are allowed.")
-    #     # return {"error": "Invalid file type. Only JPEG and PNG are allowed."}
-    # if file.content_type == "image/jpeg":
-    #     avatar_filename = f"avatar.jpg"
-    # if file.content_type == "image/png" :
-    #     avatar_filename = f"avatar.png"
-
     uploaddir = Path("app/static/"+current_user.id.hex+"/")
     uploaddir.mkdir(parents=True, exist_ok=True)
 
@@ -248,44 +239,44 @@ async def upload_file(file: UploadFile, session: SessionDep, current_user: Curre
     AVATAR_SIZE = (512, 512)
 
     original_filename = file.filename
-    size = 0
-    
-    while True:
-        chunk = await file.read(1024 * 1024)
-        if not chunk:
-            break
-        size += len(chunk)
-        if size > MAX_FILE_SIZE:
-            raise HTTPException(status_code=400, detail="File size exceeds the limit of 2MB.")
 
-    if size ==0:
-        raise HTTPException(status_code=400, detail="File is empty.")
-    
-    await file.seek(0)
-    content = await file.read()
+    content = await file.read(MAX_FILE_SIZE + 1)
+
+    if not content:
+        raise HTTPException( status_code=400, detail="File is empty." )
+
+    if len(content) > MAX_FILE_SIZE:
+        raise HTTPException( status_code=400, detail="File size exceeds the limit of 2MB." )
     try:
         image = Image.open(BytesIO(content))
-        image.verify()
-    except (UnidentifiedImageError, OSError):
-        raise HTTPException(status_code=400, detail="Invalid image file.")
 
-    if image.format not in ["JPEG", "PNG"]:
-        raise HTTPException(status_code=400, detail="Only JPEG and PNG are allowed.")
+        if image.format not in ["JPEG", "PNG"]:
+            raise HTTPException(status_code=400, detail="Only JPEG and PNG are allowed.")
+        
+        if image.width > MAX_WIDTH or image.height > MAX_HEIGHT:
+            raise HTTPException(status_code=400, detail=f"Image dimensions exceed the limit of {MAX_WIDTH}x{MAX_HEIGHT} pixels.")
+        
+        image.verify()        
 
-    image = Image.open(BytesIO(content))
-    if image.width > MAX_WIDTH or image.height > MAX_HEIGHT:
-        raise HTTPException(status_code=400, detail=f"Image dimensions exceed the limit of {MAX_WIDTH}x{MAX_HEIGHT} pixels.")
-    if image.mode != "RGB":
-        background = Image.new("RGB", image.size, (255, 255, 255))
-        if "A" in image.getbands():
-            background.paste(image, mask=image.getchannel("A"))
-        else:
-            background.paste(image)
-        image = background
-    image.thumbnail(AVATAR_SIZE,Image.Resampling.LANCZOS)
-    output = BytesIO()
-    image.save(output, format="JPEG",quality=90,optimize=True)
-    output.seek(0)
+        image = Image.open(BytesIO(content))        
+        
+        image.load()
+        if image.mode != "RGB":
+            background = Image.new("RGB", image.size, (255, 255, 255))
+            if "A" in image.getbands():
+                background.paste(image, mask=image.getchannel("A"))
+            else:
+                background.paste(image)
+            image = background
+        image.thumbnail(AVATAR_SIZE,Image.Resampling.LANCZOS)
+        output = BytesIO()
+        image.save(output, format="JPEG",quality=90,optimize=True)
+        output.seek(0)
+
+    except HTTPException:
+        raise
+    except (UnidentifiedImageError, OSError, DecompressionBombError) as exc:
+        raise HTTPException( status_code=400, detail="Invalid or corrupted image file." ) from exc
 
     avatar_filename = f"avatar.jpg"
     avatar_path = uploaddir / avatar_filename
