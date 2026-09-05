@@ -1,6 +1,5 @@
 import { useEffect } from 'react';
-import { Box, IconButton, ThemeProvider } from '@mui/material';
-import { unoTheme } from '../ui/unoTheme';
+import { Box, IconButton } from '@mui/material';
 import { useGameContext } from '../core/GameWebSocketContext';
 import { usePopUpContext } from '../core/GamePopUpsContext';
 import { color_red, color_blue, color_green, color_yellow } from '../ui/ImagesUtils.ts';
@@ -22,7 +21,6 @@ function WildCardPopUp()
 	}, [gameState?.turn, gameState?.you.id, resetPopUpStates]);
 
 	return (
-		<ThemeProvider theme={unoTheme}>
 			<Box sx={{ width: '40vw', aspectRatio: '3 / 1', ...align, border: '0.1vw solid', borderColor: 'divider', borderRadius: 2, bgcolor: 'background.default', gap: '3vw', position: 'relative' }}>
 				<Box onClick={() => {resetPopUpStates(); sendMessage({...message, "color": "red"})}} sx={{ ...box_options, ...align }}>
 					<img src={color_red} draggable={false} style={image_styles}/>
@@ -41,7 +39,6 @@ function WildCardPopUp()
 						fontSize: 'clamp(0.7rem, 2vw, 2.5rem)' }}/>
 				</IconButton>
 			</Box>
-		</ThemeProvider>
 	)
 }
 

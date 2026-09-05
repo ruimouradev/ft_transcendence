@@ -5,20 +5,14 @@ import { winner_image } from '../ui/ImagesUtils';
 
 function GameEndPopUp()
 {
-	const { gameState, leaveRoom, sendMessage } = useGameContext();
+	const { gameState, leaveRoom, sendMessage, getWinnerName } = useGameContext();
 	const { resetPopUpStates } = usePopUpContext();
 
 	if (gameState === null)
 		return (null);
 
 	const align = {display: 'flex', justifyContent: 'center', alignItems: 'center'}
-	let winner = "No Winner";
-
-	for (let i = 0; i < gameState.players.length; i++)
-	{
-		if (gameState.winner === gameState.players[i].id)
-			winner = gameState.players[i].name;
-	}
+	const winner = getWinnerName();
 
 	function endGame(str: string)
 	{	
@@ -36,7 +30,7 @@ function GameEndPopUp()
 				<Box sx={{ height: '85%', width: '100%', ...align, position: 'relative', flexDirection: 'column' }}>
 					<img src={winner_image} draggable={false} style={{position: 'absolute', inset: 0, height: '100%', width: '100%', }}/>
 					<Box sx={{ bgcolor: 'orange', p: 0.5, border: '0.1vw solid black', borderRadius: '5%',position: 'absolute', bottom: '15%' }}>
-						<Typography sx={{ fontSize: 'clamp(0.9rem, 1.2vw, 2rem)' }}>{winner}</Typography>
+						<Typography sx={{ fontSize: 'clamp(0.9rem, 2vw, 2.3rem)' }}>{winner}</Typography>
 					</Box>
 				</Box>
 				<Box sx={{ height: '15%', width: '100%', ...align, gap: 3 }}>

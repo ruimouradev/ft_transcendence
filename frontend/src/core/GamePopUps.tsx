@@ -12,7 +12,7 @@ function GamePopUps({ children }: { children: React.ReactNode })
 	const handleGameEnd = useCallback(() => {
 		setPopUp('game_end');
 	}, [])
-	
+
 	function handleNewID(type: PopUpTypes, new_id: string)
 	{
 		setIdentifierID(new_id);

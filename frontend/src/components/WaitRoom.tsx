@@ -1,11 +1,10 @@
 import { Box, Button, Card, CardContent , CardMedia, Container, Chip,
-	IconButton,  List, ListItem, ThemeProvider, Typography } from '@mui/material';
+	IconButton,  List, ListItem, Typography } from '@mui/material';
 import StarOutlinedIcon from '@mui/icons-material/StarOutlined';
 import WifiOffOutlinedIcon from '@mui/icons-material/WifiOffOutlined';
 import ExitToAppOutlinedIcon from '@mui/icons-material/ExitToAppOutlined';
 import DisabledByDefaultOutlinedIcon from '@mui/icons-material/DisabledByDefaultOutlined';
 import ThumbUpOffAltOutlinedIcon from '@mui/icons-material/ThumbUpOffAltOutlined';
-import { unoTheme } from '../ui/unoTheme';
 import { useGameContext } from '../core/GameWebSocketContext';
 import {easy_bot, medium_bot, hard_bot, start_game} from '../game/macrosConfig.ts';
 import { bot_easy, bot_medium, bot_hard } from '../ui/ImagesUtils.ts';
@@ -21,7 +20,6 @@ function WaitRoom()
 	const button_text = {fontSize: { xs: '1.6vh', md: '2vh' }}
 
 	return (
-		<ThemeProvider theme={unoTheme}>
 			<Container sx={{ height: '65dvh', width: { xs: '95%', md: '80%' }, display: 'flex', flexDirection: 'column', my: 2, p: 0.5,
 				position: 'relative', border: '1px solid', borderColor: 'divider', borderRadius: 2, bgcolor: 'background.paper' }}>
 				<Box sx={{height: '10%', width: '100%'}}>
@@ -96,7 +94,6 @@ function WaitRoom()
 					</Box>
 				</Box>
 			</Container>
-		</ThemeProvider>
 	)
 }
 

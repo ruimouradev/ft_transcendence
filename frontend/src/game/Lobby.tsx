@@ -1,5 +1,4 @@
-import { Box, Container, Divider, Tabs, Tab, ThemeProvider } from '@mui/material';
-import { unoTheme } from '../ui/unoTheme';
+import { Box, Container, Divider, Tabs, Tab } from '@mui/material';
 import { useEffect, useState } from 'react';
 import { tab_text } from '../game/macrosConfig.ts';
 import CreateRoom from '../components/CreateRoom';
@@ -27,7 +26,6 @@ function JoinCreateLobby({ rooms }: { rooms: Room[]})
 	}
 
 	return (
-		 <ThemeProvider theme={unoTheme}>
 			<Container sx={{ height: '75dvh', width: { xs: '95%', md: '80%' }, display: 'flex', flexDirection: 'column',
 				my: 2, p: 0.5, border: '1px solid', borderColor: 'divider', borderRadius: 2, bgcolor: 'background.paper' }}>
 				<Tabs value={value} onChange={handleChange} sx={{ height: '10%', width:'100%' }} >
@@ -38,7 +36,6 @@ function JoinCreateLobby({ rooms }: { rooms: Room[]})
 						{value === 0 ? <JoinRoom rooms={rooms}/> : <CreateRoom rooms={rooms}/>}
 				</Box>
 			</Container>
-		</ThemeProvider>
 	)
 }
 
