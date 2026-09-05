@@ -34,8 +34,6 @@ test_prod: clean vinit
 	docker image rm frontend_prod:latest
 	docker compose -f ./docker-compose.yml build nginx_prod backend
 	docker compose -f ./docker-compose.yml up db redis backend nginx_prod
-	rm -rf ./frontend/dist/*
-	rm -rf ./nginx/dist/*
 
 down:
 	docker compose -f ./docker-compose.yml down
