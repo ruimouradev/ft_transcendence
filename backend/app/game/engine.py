@@ -486,9 +486,9 @@ class Game:
         Args:
             player_id: The player whose time ran out.
         """
-        self.last = LastAction(player=player_id, kind="timeout")
-        self.seq += 1
         if self.phase == "playing" and self.hands[self.turn].id == player_id:
+            self.last = LastAction(player=player_id, kind="timeout")
+            self.seq += 1
             self.drawn = None
             hand = self.hands[self.turn]
             # an early uno call only holds for the play that follows it
