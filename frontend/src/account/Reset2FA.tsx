@@ -4,6 +4,7 @@ import { CheckCircle, Close, ContentCopy, Download, Visibility, VisibilityOff, }
 import {QRCodeSVG} from 'qrcode.react';
 import {api} from '../core/client';
 import { useAuth } from '../core/AuthContext';
+import { useNavigate } from 'react-router-dom';
 
 
 interface Reset2FADialogProps {
@@ -29,6 +30,7 @@ export default function Reset2FA({
     onSuccess,
 }: Reset2FADialogProps) {
     const [activeStep, setActiveStep] = useState(0);
+    const navigate = useNavigate();
     const { user, login } = useAuth();
 
     const [password, setPassword] = useState('');
@@ -93,6 +95,8 @@ export default function Reset2FA({
             const response = await api.post<Setup2FAResponse>('/2fa/reset', { password, recovery_code: recoverCode },);
             setSecret(response.data.secret);
             setOtpauthUrl(response.data.otpauth_url);
+            const userResponse = await api.get('/users/me');
+            login(userResponse.data);
             setActiveStep(2);
         } catch (error: any) {
             if (error.response?.status === 401) {
@@ -160,8 +164,9 @@ export default function Reset2FA({
     const handleFinish = () => {
         if (!savedRecoveryCodes) { return; }
         onSuccess();
-        resetWizard();
+        // resetWizard();
         onClose();
+        navigate('/', { replace: true });
     };
 
     return (

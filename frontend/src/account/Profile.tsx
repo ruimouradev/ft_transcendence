@@ -38,6 +38,7 @@ export default function ProfileCard() {
     const [isEditingName, setIsEditingName] = useState(false);
     const [nickName, setNickName] = useState('');
     const fileInputRef = useRef<HTMLInputElement | null>(null);
+    const twoFAChipRef = useRef<HTMLDivElement | null>(null);
     const [enable2FADialogOpen, setEnable2FADialogOpen] = useState(false);
     const [disable2FADialogOpen, setDisable2FADialogOpen] = useState(false);
 
@@ -133,10 +134,17 @@ export default function ProfileCard() {
         }
     };
 
+    const restore2FAChipFocus = () => {
+        requestAnimationFrame(() => {
+            twoFAChipRef.current?.focus();
+        });
+    };
+
     const handle2FADisabled = () => {
         if (!user) return;
         login({ ...user, use2fa: false });
         setNotification({ open: true, message: '2FA disabled successfully.', severity: 'success', });
+
     }
 
     const handle2FAEnabled = () => {
@@ -200,17 +208,18 @@ export default function ProfileCard() {
                             
                             <Tooltip title="Click to manage 2FA settings" arrow>
                                 {user.use2fa ? (
-                                        <Chip icon={<ActiveIcon />} label="2FA Enabled" color="primary" onClick={handle2FAClick} variant="outlined" size="small" />
+                                        <Chip icon={<ActiveIcon />} ref={twoFAChipRef} label="2FA Enabled" color="primary" onClick={handle2FAClick} variant="outlined" size="small" />
                                     ) : (
-                                        <Chip icon={<InactiveIcon />} label="2FA Disabled" color="warning" onClick={handle2FAClick} variant="outlined" size="small" />
+                                        <Chip icon={<InactiveIcon />} ref={twoFAChipRef} label="2FA Disabled" color="warning" onClick={handle2FAClick} variant="outlined" size="small" />
                                     )}
                             </Tooltip>
-                            <Enable2FADialog open={enable2FADialogOpen} onClose={() => setEnable2FADialogOpen(false)} onSuccess={handle2FAEnabled} />
-                            <Disable2FADialog open={disable2FADialogOpen} onClose={() => setDisable2FADialogOpen(false)} onSuccess={handle2FADisabled} />
+                            
                         </Stack>
                     </Stack>
                 </CardContent>
             </Card>
+            <Enable2FADialog open={enable2FADialogOpen} onClose={() => { setEnable2FADialogOpen(false); }} onSuccess={handle2FAEnabled} onClosed={restore2FAChipFocus} />
+            <Disable2FADialog open={disable2FADialogOpen} onClose={() => { setDisable2FADialogOpen(false); }} onSuccess={handle2FADisabled} onClosed={restore2FAChipFocus} />
         </Container>
     );
 }

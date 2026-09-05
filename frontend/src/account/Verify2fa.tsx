@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useAuth } from '../core/AuthContext';
-import { Box, Container, Paper, Button, Link, Typography, TextField } from '@mui/material';
+import { Box, Container, Paper, Button, Typography, TextField } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import { api, getErrorMessage } from '../core/client';
 import Reset2FA from './Reset2FA';
@@ -22,7 +22,7 @@ export default function Verify2fa() {
         }
         setLoading(true);
         try {
-            const response = await api.post(`/login/verify-2fa`,{ code });
+            const response = await api.post(`/login/verify-2fa`, { code });
             if (response.data.code === 'success') {
                 const userResponse = await api.get('/users/me');
                 login(userResponse.data);
@@ -55,15 +55,15 @@ export default function Verify2fa() {
                     <Typography color="text.secondary" sx={{ mb: 3 }}>
                         Enter the 6-digit code currently shown in your authenticator app.
                     </Typography>
-                    {!userecoverCode? (
-                    <TextField fullWidth autoFocus label="Authentication code" value={code} onChange={(event) => { const value = event.target.value.replace(/\D/g, '').slice(0, 6); setCode(value); }} placeholder="000000"
-                        slotProps={{ htmlInput: { inputMode: 'numeric', maxLength: 6, autoComplete: 'one-time-code', }, }}
-                        sx={{ '& input': { textAlign: 'center', fontSize: '1.5rem', letterSpacing: '0.4rem', fontFamily: 'monospace', }, }}
-                    />): (
-                    <TextField fullWidth autoFocus label="Recovery code" value={recoverCode} onChange={(event) => { const value = event.target.value.replace(/\D/g, '').slice(0, 20); setRecoverCode(value); }} placeholder="00000000000000000000"
-                        slotProps={{ htmlInput: { inputMode: 'numeric', maxLength: 20, autoComplete: 'one-time-code', }, }}
-                        sx={{ '& input': { textAlign: 'center', fontSize: '1.5rem', letterSpacing: '0.4rem', fontFamily: 'monospace', }, }}
-                    />)}
+                    {!userecoverCode ? (
+                        <TextField fullWidth autoFocus label="Authentication code" value={code} onChange={(event) => { const value = event.target.value.replace(/\D/g, '').slice(0, 6); setCode(value); }} placeholder="000000"
+                            slotProps={{ htmlInput: { inputMode: 'numeric', maxLength: 6, autoComplete: 'one-time-code', }, }}
+                            sx={{ '& input': { textAlign: 'center', fontSize: '1.5rem', letterSpacing: '0.4rem', fontFamily: 'monospace', }, }}
+                        />) : (
+                        <TextField fullWidth autoFocus label="Recovery code" value={recoverCode} onChange={(event) => { const value = event.target.value.replace(/\D/g, '').slice(0, 20); setRecoverCode(value); }} placeholder="00000000000000000000"
+                            slotProps={{ htmlInput: { inputMode: 'numeric', maxLength: 20, autoComplete: 'one-time-code', }, }}
+                            sx={{ '& input': { textAlign: 'center', fontSize: '1.5rem', letterSpacing: '0.4rem', fontFamily: 'monospace', }, }}
+                        />)}
                     <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 1, }}>
                         The code changes every 30 seconds.
                     </Typography>
@@ -80,9 +80,11 @@ export default function Verify2fa() {
                     <Box sx={{ mt: 1, textAlign: 'center' }}>
                         <Typography variant="body2" color="text.secondary">
                             Forgot your authenticator?{' '}
-                            <Link href="#" onClick={handleAuthenticatorReset} underline="hover" sx={{ fontWeight: 600 }}>
+                            {/* <Link href="#" onClick={handleAuthenticatorReset} underline="hover" sx={{ fontWeight: 600 }}>
                                 Reset authenticator
-                            </Link>
+                            </Link> */}
+                            <Button type="button" onClick={handleAuthenticatorReset} variant="text" sx={{ p: 0, minWidth: 0, fontWeight: 600, textTransform: 'none', verticalAlign: 'baseline', }}>Reset authenticator</Button>
+
                         </Typography>
                     </Box>
                     <Reset2FA open={userecoverCode} onClose={() => setUserRecoverCode(false)} onSuccess={handle2FAEnabled} />

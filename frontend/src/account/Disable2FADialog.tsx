@@ -10,6 +10,7 @@ interface Disable2FADialogProps {
     open: boolean;
     onClose: () => void;
     onSuccess: () => void;
+    onClosed?: () => void;
 }
 
 interface Message {
@@ -24,6 +25,7 @@ export default function Disable2FADialog({
     open,
     onClose,
     onSuccess,
+    onClosed,
 }: Disable2FADialogProps) {
     const [activeStep, setActiveStep] = useState(0);
     const { user, login } = useAuth();
@@ -50,8 +52,8 @@ export default function Disable2FADialog({
 
     useEffect(() => { if (open) { resetWizard(); } }, [open]);
 
-    const handleClose = (event: React.MouseEvent<HTMLButtonElement>, reason: 'backdropClick' | 'escapeKeyDown') => {
-        event.preventDefault();
+    const handleClose = (event: object, reason: 'backdropClick' | 'escapeKeyDown') => {
+        void event;
         if (loading) { return; }
         if (reason === 'backdropClick' || reason === 'escapeKeyDown') { return; }
         resetWizard();
@@ -63,7 +65,7 @@ export default function Disable2FADialog({
         setActiveStep(1);
     };
 
-    const handleSetup2FA = async () => {
+    const handleDisable2FA = async () => {
         if (!password) {
             setError('Please enter your current password.');
             return;
@@ -99,9 +101,9 @@ export default function Disable2FADialog({
     };
 
     return (
-        <Dialog open={open} onClose={handleClose} fullWidth maxWidth="sm" aria-labelledby="enable-2fa-dialog-title" aria-describedby="enable-2fa-dialog-description" slotProps={{ transition: { unmountOnExit: true, }, }}>
+        <Dialog open={open} onClose={handleClose} fullWidth maxWidth="sm" aria-labelledby="disable-2fa-dialog-title" aria-describedby="disable-2fa-dialog-description" disableRestoreFocus slotProps={{ transition: { unmountOnExit: true, onExited: onClosed}, }}>
 
-            <DialogTitle id="enable-2fa-dialog-title" sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', pb: 1, }}>
+            <DialogTitle id="disable-2fa-dialog-title" sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', pb: 1, }}>
                 <Typography variant="h6" component="span" sx={{ fontWeight: 600 }}>
                     Disable Two-Factor Authentication
                 </Typography>
@@ -119,7 +121,7 @@ export default function Disable2FADialog({
                     ))}
                 </Stepper>
             </Box>
-            <DialogContent dividers id="enable-2fa-dialog-description">
+            <DialogContent dividers id="disable-2fa-dialog-description">
                 {error && (
                     <Alert severity="error" sx={{ mb: 3 }} onClose={() => setError(null)}>
                         {error}
@@ -162,7 +164,7 @@ export default function Disable2FADialog({
                         <Typography color="text.secondary" sx={{ mb: 3 }}>
                             Enter the 6-digit code currently shown in your authenticator app.
                         </Typography>
-                        <TextField fullWidth autoFocus label="Authentication code" value={code} onChange={(event) => { const value = event.target.value.replace(/\D/g, '').slice(0, 6); setCode(value); }} placeholder="000000"
+                        <TextField fullWidth label="Authentication code" value={code} onChange={(event) => { const value = event.target.value.replace(/\D/g, '').slice(0, 6); setCode(value); }} placeholder="000000"
                             slotProps={{ htmlInput: { inputMode: 'numeric', maxLength: 6, autoComplete: 'one-time-code', }, }}
                             sx={{ '& input': { textAlign: 'center', fontSize: '1.5rem', letterSpacing: '0.4rem', fontFamily: 'monospace', }, }}
                         />
@@ -182,7 +184,7 @@ export default function Disable2FADialog({
                     </>
                 )}
                 {activeStep === 1 && (
-                        <Button variant="contained" onClick={handleSetup2FA} disabled={!password || !code || loading} startIcon={loading ? (<CircularProgress size={18} color="inherit" />) : undefined} >
+                        <Button variant="contained" onClick={handleDisable2FA} disabled={!password || !code || loading} startIcon={loading ? (<CircularProgress size={18} color="inherit" />) : undefined} >
                             {loading ? 'Setting up...' : 'Disable 2FA'}
                         </Button>
                 )}

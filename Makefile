@@ -3,6 +3,7 @@ include ./.env
 all: vinit
 	docker compose -f ./docker-compose.yml build frontend_prod
 	docker compose -f ./docker-compose.yml run --rm frontend_prod
+	docker image rm frontend_prod:latest
 	docker compose -f ./docker-compose.yml build nginx_prod backend
 	docker compose -f ./docker-compose.yml up -d db redis backend nginx_prod postgres-exporter prometheus grafana
 
@@ -14,7 +15,7 @@ re: down all
 
 vinit:
 	@mkdir -p ${DBDATAPATH}
-	@mkdir -p /nginx/dist
+	@mkdir -p ./nginx/dist
 
 dev: vinit
 	docker compose -f ./docker-compose.yml build frontend backend nginx
@@ -33,6 +34,8 @@ test_prod: clean vinit
 	docker image rm frontend_prod:latest
 	docker compose -f ./docker-compose.yml build nginx_prod backend
 	docker compose -f ./docker-compose.yml up db redis backend nginx_prod
+	rm -rf ./frontend/dist/*
+	rm -rf ./nginx/dist/*
 
 down:
 	docker compose -f ./docker-compose.yml down

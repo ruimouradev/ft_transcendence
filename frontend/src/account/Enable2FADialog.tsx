@@ -15,6 +15,7 @@ interface Enable2FADialogProps {
     open: boolean;
     onClose: () => void;
     onSuccess: () => void;
+    onClosed?: () => void;
 }
 
 interface Setup2FAResponse {
@@ -32,6 +33,7 @@ export default function Enable2FADialog({
     open,
     onClose,
     onSuccess,
+    onClosed,
 }: Enable2FADialogProps) {
     const [activeStep, setActiveStep] = useState(0);
     const { user, login } = useAuth();
@@ -174,7 +176,7 @@ export default function Enable2FADialog({
     };
 
     return (
-        <Dialog open={open} onClose={handleClose} fullWidth maxWidth="sm" aria-labelledby="enable-2fa-dialog-title" aria-describedby="enable-2fa-dialog-description" slotProps={{ transition: { unmountOnExit: true, }, }}>
+        <Dialog open={open} onClose={handleClose} disableRestoreFocus fullWidth maxWidth="sm" aria-labelledby="enable-2fa-dialog-title" aria-describedby="enable-2fa-dialog-description" slotProps={{ transition: { unmountOnExit: true, onExited: onClosed}, }}>
 
             <DialogTitle id="enable-2fa-dialog-title" sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', pb: 1, }}>
                 <Typography variant="h6" component="span" sx={{ fontWeight: 600 }}>
