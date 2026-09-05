@@ -4,6 +4,7 @@ import ErrorPopUp from '../components/ErrorPopUp';
 import SevenPopUp from './SevenPopUp';
 import GameEndPopUp from '../components/GameEndPopUp';
 import WildCardPopUp from '../components/WildCardPopUp';
+import Plus4PopUp from '../components/Plus4PopUp';
 
 function PopUp()
 {
@@ -19,6 +20,7 @@ function PopUp()
 				{popUp === 'seven' && <SevenPopUp />}
 				{popUp === 'game_end' && <GameEndPopUp />}
 				{popUp === 'error' && <ErrorPopUp />}
+				{popUp === 'plus4' && <Plus4PopUp />}
 			</Box>
 		</Modal>
 	)

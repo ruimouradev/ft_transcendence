@@ -7,9 +7,11 @@ function LeaderboardTable({ title, rows, currentUserId, currentUserAvatar, tag }
     return (
         <Paper sx={{ p: 3, height: '100%', }}>
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-                {typeof title === 'string' ? <Typography variant="h6">{title}</Typography> : title}{tag && <Chip label={tag} variant="outlined" size="small" />}
+                {typeof title === 'string' 
+					? <Typography variant="h6">{title}</Typography> 
+					: title}{tag && <Chip label={tag} variant="outlined" size="small" />
+				}
             </Box>
-
             <TableContainer>
                 <Table>
                     <TableHead>
@@ -36,7 +38,7 @@ function LeaderboardTable({ title, rows, currentUserId, currentUserAvatar, tag }
                                     </TableCell>
                                     <TableCell>
                                         {isMe ? (
-                                            <Box component="span" sx={{ ml: 1 }} className="flex items-center no-wrap gap-1">
+                                            <Box component="span" sx={{ ml: 1, display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'nowrap' }}>
                                                 <Avatar src={currentUserAvatar} sx={{ width: 24, height: 24 }} />
                                                 <Chip label="You" size="small" sx={{ px: 0.8, py: 0.2, borderRadius: 1, fontSize: '0.65rem', fontWeight: 700,
 													letterSpacing: 0.5, backgroundColor: 'warning.main', color: 'warning.contrastText' }} />

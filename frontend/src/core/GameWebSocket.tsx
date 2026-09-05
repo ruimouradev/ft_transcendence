@@ -19,9 +19,10 @@ function GameWebSocket({ children }: { children: React.ReactNode }) {
 	const socketRef = useRef<WebSocket | null>(null);
 	const pendingRoomRef = useRef<string | null>(null);
 	const gameStateRef = useRef<GameState | null>(null);
+	const winnerRef = useRef<string | null>(null);
 
 	const { user, isAuthenticated  } = useAuth();
-	const { handleNewError } = usePopUpContext();
+	const { handleNewError, handleNewID } = usePopUpContext();
 	
 	useEffect(() => {
 		if (!isAuthenticated && socketRef.current)
@@ -61,6 +62,10 @@ function GameWebSocket({ children }: { children: React.ReactNode }) {
 				const message = JSON.parse(event.data);
 				const { type } = message;
 
+				// DEL
+				console.log('state:')
+				console.log(message);
+
 				switch (type) {
 					case 'welcome':
 						setRoomID(roomID);
@@ -74,8 +79,7 @@ function GameWebSocket({ children }: { children: React.ReactNode }) {
 						handleErrorMessages(message);
 						break ;
 					case 'state':
-						gameStateRef.current = message;
-						setGameState(message);
+						handleNewGameState(message);
 						break ;
 					default:
 						handleNewError('invalid message type');
@@ -84,9 +88,6 @@ function GameWebSocket({ children }: { children: React.ReactNode }) {
 			catch(e) {
 				handleNewError(`invalid message format ${e}`);
 			}
-
-			
-
 		}
 
 		socket.onerror = () => {
@@ -101,6 +102,7 @@ function GameWebSocket({ children }: { children: React.ReactNode }) {
 			setConnected(false);
 			resetGameState();
 			setRoomID(null);
+			winnerRef.current = null;
 
 			if (pendingRoomRef.current && user) {
 				const room = pendingRoomRef.current;
@@ -141,6 +143,20 @@ function GameWebSocket({ children }: { children: React.ReactNode }) {
 		if (socketRef.current?.readyState  === WebSocket.OPEN)
 		{
 			socketRef.current.send(JSON.stringify(message));
+		}
+	}
+
+	function handleNewGameState(gamestate: GameState)
+	{
+		gameStateRef.current = gamestate;
+		setGameState(gamestate);
+		if (gamestate.plus4_by)
+			handleNewID('plus4', '');
+		if (gamestate.winner) {
+			for (let i = 0; i < gamestate.players.length; i++) {
+				if (gamestate.winner === gamestate.players[i].id)
+					winnerRef.current = gamestate.players[i].name;
+			}
 		}
 	}
 
@@ -203,8 +219,15 @@ function GameWebSocket({ children }: { children: React.ReactNode }) {
 		setNotices({});
 	}
 
+	function getWinnerName()
+	{
+		if (winnerRef.current)
+			return (winnerRef.current);
+		return ('No Winner');
+	}
+
 	return (
-		<GameContext.Provider value={{ roomID, connected, gameState, notices, leaveRoom, resetNotices, resetGameState, joinRoom, closeRoomConnection, sendMessage }}>
+		<GameContext.Provider value={{ roomID, connected, gameState, notices, leaveRoom, resetNotices, getWinnerName, resetGameState, joinRoom, closeRoomConnection, sendMessage }}>
 			{ children }
 		</GameContext.Provider>
 	)

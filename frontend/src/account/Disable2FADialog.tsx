@@ -48,7 +48,9 @@ function Disable2FADialog({ open, onClose, onSuccess }: Disable2FADialogProps)
         setActiveStep(1);
     };
 
-    const handleSetup2FA = async () => {
+    const handleSetup2FA = async (e: React.SubmitEvent<HTMLFormElement>) => {
+        e.preventDefault();
+
         if (!password) {
             setError('Please enter your current password.');
             return;
@@ -89,93 +91,94 @@ function Disable2FADialog({ open, onClose, onSuccess }: Disable2FADialogProps)
     return (
         <Dialog open={open} onClose={handleClose} fullWidth maxWidth="sm" aria-labelledby="enable-2fa-dialog-title" aria-describedby="enable-2fa-dialog-description"
 			slotProps={{ transition: { unmountOnExit: true, onEnter: handleOpen }}}>
+			<Box component="form" onSubmit={handleSetup2FA} sx={{ width: '100%', height: '100%' }}>
+				<DialogTitle id="enable-2fa-dialog-title" sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', pb: 1, }}>
+					<Typography variant="h6" component="span" sx={{ fontWeight: 600}}>
+						Disable Two-Factor Authentication
+					</Typography>
+					<IconButton onClick={handleClose} disabled={loading} aria-label="Close" >
+						<Close />
+					</IconButton>
+				</DialogTitle>
 
-            <DialogTitle id="enable-2fa-dialog-title" sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', pb: 1, }}>
-                <Typography variant="h6" component="span" sx={{ fontWeight: 600}}>
-                    Disable Two-Factor Authentication
-                </Typography>
-                <IconButton onClick={handleClose} disabled={loading} aria-label="Close" >
-                    <Close />
-                </IconButton>
-            </DialogTitle>
+				<Box sx={{ px: 3, pt: 2, pb: 1, }}>
+					<Stepper activeStep={activeStep} alternativeLabel>
+						{steps.map((label) => (
+							<Step key={label}>
+								<StepLabel>{label}</StepLabel>
+							</Step>
+						))}
+					</Stepper>
+				</Box>
+				<DialogContent dividers id="enable-2fa-dialog-description">
+					{error && (
+						<Alert severity="error" sx={{ mb: 3 }} onClose={() => setError(null)}>
+							{error}
+						</Alert>
+					)}
 
-            <Box sx={{ px: 3, pt: 2, pb: 1, }}>
-                <Stepper activeStep={activeStep} alternativeLabel>
-                    {steps.map((label) => (
-                        <Step key={label}>
-                            <StepLabel>{label}</StepLabel>
-                        </Step>
-                    ))}
-                </Stepper>
-            </Box>
-            <DialogContent dividers id="enable-2fa-dialog-description">
-                {error && (
-                    <Alert severity="error" sx={{ mb: 3 }} onClose={() => setError(null)}>
-                        {error}
-                    </Alert>
-                )}
+					{activeStep === 0 && (
+						<Box>
+							<Typography variant="h6" gutterBottom>
+								Disable Two-Factor Authentication
+							</Typography>
+							<Typography color="text.secondary" sx={{ mb: 3 }}>
+								Disabling two-factor authentication will remove the current authenticator from your account.
+							</Typography>
+						</Box>
+					)}
 
-                {activeStep === 0 && (
-                    <Box>
-                        <Typography variant="h6" gutterBottom>
-                            Disable Two-Factor Authentication
-                        </Typography>
-                        <Typography color="text.secondary" sx={{ mb: 3 }}>
-                            Disabling two-factor authentication will remove the current authenticator from your account.
-                        </Typography>
-                    </Box>
-                )}
+					{activeStep === 1 && (
+						<Box>
+							<Typography variant="h6" gutterBottom>
+								Verify your identity
+							</Typography>
+							<Typography color="text.secondary" sx={{ mb: 3 }}>
+								For security reasons, please enter your current password .
+							</Typography>
+							<TextField fullWidth autoFocus required type={showPassword ? 'text' : 'password'} label="Current password" value={password}
+								onChange={(event) => setPassword(event.target.value)} autoComplete="current-password"
+								slotProps={{
+									input: {
+										endAdornment: (
+											<InputAdornment position="end">
+												<IconButton onClick={() => setShowPassword((visible) => !visible)} edge="end" aria-label={showPassword ? 'Hide password' : 'Show password'}>
+													{showPassword ? <VisibilityOff /> : <Visibility />}
+												</IconButton>
+											</InputAdornment>
+										),
+									},
+								}}
+							/>                        
+							<Typography color="text.secondary" sx={{ mb: 3 }}>
+								Enter the 6-digit code currently shown in your authenticator app.
+							</Typography>
+							<TextField fullWidth label="Authentication code" value={code} onChange={(event) => { const value = event.target.value.replace(/\D/g, '').slice(0, 6); setCode(value); }} placeholder="000000"
+								slotProps={{ htmlInput: { inputMode: 'numeric', maxLength: 6, autoComplete: 'one-time-code', }, }}
+								sx={{ '& input': { textAlign: 'center', fontSize: '1.5rem', letterSpacing: '0.4rem', fontFamily: 'monospace', }, }}
+							/>
+						</Box>
+					)}
+				</DialogContent>
 
-                {activeStep === 1 && (
-                    <Box>
-                        <Typography variant="h6" gutterBottom>
-                            Verify your identity
-                        </Typography>
-                        <Typography color="text.secondary" sx={{ mb: 3 }}>
-                            For security reasons, please enter your current password .
-                        </Typography>
-                        <TextField fullWidth autoFocus required type={showPassword ? 'text' : 'password'} label="Current password" value={password}
-                            onChange={(event) => setPassword(event.target.value)} autoComplete="current-password"
-                            slotProps={{
-                                input: {
-                                    endAdornment: (
-                                        <InputAdornment position="end">
-                                            <IconButton onClick={() => setShowPassword((visible) => !visible)} edge="end" aria-label={showPassword ? 'Hide password' : 'Show password'}>
-                                                {showPassword ? <VisibilityOff /> : <Visibility />}
-                                            </IconButton>
-                                        </InputAdornment>
-                                    ),
-                                },
-                            }}
-                        />                        
-                        <Typography color="text.secondary" sx={{ mb: 3 }}>
-                            Enter the 6-digit code currently shown in your authenticator app.
-                        </Typography>
-                        <TextField fullWidth autoFocus label="Authentication code" value={code} onChange={(event) => { const value = event.target.value.replace(/\D/g, '').slice(0, 6); setCode(value); }} placeholder="000000"
-                            slotProps={{ htmlInput: { inputMode: 'numeric', maxLength: 6, autoComplete: 'one-time-code', }, }}
-                            sx={{ '& input': { textAlign: 'center', fontSize: '1.5rem', letterSpacing: '0.4rem', fontFamily: 'monospace', }, }}
-                        />
-                    </Box>
-                )}
-            </DialogContent>
-
-            <DialogActions sx={{ px: 3, py: 2, }} >
-                {activeStep === 0 && (
-                    <>
-                        <Button onClick={handleClose}>
-                            Cancel
-                        </Button>
-                        <Button variant="contained" onClick={handleConfirm} >
-                            Continue
-                        </Button>
-                    </>
-                )}
-                {activeStep === 1 && (
-                        <Button variant="contained" onClick={handleSetup2FA} disabled={!password || !code || loading} startIcon={loading ? (<CircularProgress size={18} color="inherit" />) : undefined} >
-                            {loading ? 'Setting up...' : 'Disable 2FA'}
-                        </Button>
-                )}
-            </DialogActions>
+				<DialogActions sx={{ px: 3, py: 2, }} >
+					{activeStep === 0 && (
+						<>
+							<Button onClick={handleClose}>
+								Cancel
+							</Button>
+							<Button variant="contained" onClick={handleConfirm} >
+								Continue
+							</Button>
+						</>
+					)}
+					{activeStep === 1 && (
+							<Button type="submit" variant="contained" disabled={!password || !code || loading} startIcon={loading ? (<CircularProgress size={18} color="inherit" />) : undefined} >
+								{loading ? 'Setting up...' : 'Disable 2FA'}
+							</Button>
+					)}
+				</DialogActions>
+			</Box>
         </Dialog>
     );
 }
