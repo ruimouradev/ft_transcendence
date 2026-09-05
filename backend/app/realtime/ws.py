@@ -2,7 +2,6 @@ import asyncio
 import re
 import time
 from dataclasses import dataclass, field
-from uuid import uuid4
 from datetime import datetime, timezone
 
 import logging
@@ -36,7 +35,6 @@ from app.game.ai import decide_bot_action
 class Player:
     id: str
     name: str
-    token: str
     ws: WebSocket | None  # None while the seat belongs to a bot
     connected: bool = True
     bot: bool = False
@@ -458,7 +456,7 @@ async def apply(room: Room, player: Player, action: PlayerAction) -> Error | Non
         room.bots_made += 1
         # the id never repeats, the name comes from reseat
         room.players.append(Player(id=f"b{room.bots_made}", name="",
-                                   token="", ws=None, bot=True,
+                                   ws=None, bot=True,
                                    bot_level=action.level))
         reseat(room)
         return None
@@ -597,10 +595,10 @@ async def seat_player(ws: WebSocket, room: Room, name: str, avatar: str,
                       user: str) -> Player:
     room.humans_made += 1
     player = Player(id=f"p{room.humans_made}", name=name,
-                    token=uuid4().hex, ws=ws, user=user, avatar=avatar)
+                    ws=ws, user=user, avatar=avatar)
     # the welcome goes first, a socket that dies here takes no chair
     await ws.send_text(
-        Welcome(id=player.id, token=player.token).model_dump_json()
+        Welcome(id=player.id).model_dump_json()
     )
     room.players.append(player)
     metrics.players_connected.inc()
@@ -696,17 +694,12 @@ async def game(ws: WebSocket, room_id: str) -> None:
                     return
 
                 # Reconnection: the logged in account is enough to get
-                # the seat back, the welcome token still works as before
+                # the seat back
                 existing = next(
                     (p for p in room.players if p.user == user
                      and not p.bot),
                     None,
                 )
-                if existing is None and action.token:
-                    existing = next(
-                        (p for p in room.players if p.token == action.token),
-                        None,
-                    )
                 if existing:
                     # the newest window wins the chair, the old socket
                     # is closed only after the handover
@@ -720,7 +713,7 @@ async def game(ws: WebSocket, room_id: str) -> None:
                     player.ready = True
                     room.game.set_connected(player.id, True)
                     await ws.send_text(
-                        Welcome(id=player.id, token=player.token).model_dump_json()
+                        Welcome(id=player.id).model_dump_json()
                     )
                     await broadcast(room)
                     if old is not None:
