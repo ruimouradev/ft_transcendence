@@ -39,7 +39,8 @@ function UserMenu()
                 <Button component={RouterLink} to="/login" variant="contained" color="primary">
                     sign in
                 </Button>
-                <Button component={RouterLink} to="/signup" variant="contained" sx={{ backgroundColor: '#eab308', color: '#0f172a', '&:hover': { backgroundColor: '#facc15' }, }}>
+                <Button component={RouterLink} to="/signup" variant="contained"
+					sx={{ backgroundColor: '#eab308', color: '#0f172a', '&:hover': { backgroundColor: '#facc15' } }}>
                     sign up
                 </Button>
             </Box>
@@ -49,11 +50,11 @@ function UserMenu()
     return (
         <Box>
             <Button id={buttonId} aria-controls={open ? menuId : undefined} aria-haspopup="true" aria-expanded={open} onClick={handleOpen}>
-                <Box className="flex items-center gap-4">
-                    <img src={user?.avatar || defaultAvatar} alt={user?.nick_name || 'avatar'} className="w-12 h-12 rounded-full" />
-                    <Box className="hidden sm:block">
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                    <img src={user?.avatar || defaultAvatar} alt={user?.nick_name || 'avatar'} style={{width: 48, height: 48, borderRadius: '50%'}} />
+                    <Box sx={{ display: {xs: 'none', sm: 'block' } }}>
                         <Box>{user?.nick_name}</Box>
-                        <Box sx={{ fontSize: '14px', lineHeight: '1.25rem', color: '#99a1af'}}>
+                        <Box sx={{ fontSize: '14px', lineHeight: '1.25rem', color: '#999999'}}>
                             User
                         </Box>
                     </Box>
@@ -66,28 +67,7 @@ function UserMenu()
                 <MenuItem onClick={handleLogout}>Logout</MenuItem>
             </Menu>
         </Box>
-		);
-
-		{/* <div>
-			<Button id={buttonId} aria-controls={open ? menuId : undefined} aria-haspopup="true" aria-expanded={open} onClick={handleOpen}>
-				<div className="flex items-center gap-4">
-					<img src={user?.avatar || defaultAvatar} alt={user?.nick_name || 'avatar'} className="w-12 h-12 rounded-full" />
-					<div className="hidden sm:block">
-						<div>{user?.nick_name}</div>
-						<div className="text-sm text-gray-400">
-							User
-						</div>
-					</div>
-				</div>
-			</Button>
-			<Menu id={menuId} anchorEl={anchorEl} open={open} onClose={handleClose} slotProps={{ list: { 'aria-labelledby': buttonId } }}>
-				<MenuItem component={RouterLink} to="/profile" onClick={handleClose}>Profile</MenuItem>
-				<MenuItem component={RouterLink} to="/password" onClick={handleClose}>Password</MenuItem>
-				<MenuItem component={RouterLink} to="/apikey" onClick={handleClose}>API Key</MenuItem>
-				<MenuItem onClick={handleLogout}>Logout</MenuItem>
-			</Menu>
-		</div> */}
+	);
 }
 
 export default UserMenu
-

@@ -319,3 +319,38 @@
 .player_turn {
     box-shadow: 0 0 15px 8px rgba(196, 181, 15, 0.8);
 }
+
+.footer {
+	color: #999999;
+}
+
+.footer:hover {
+	color: white;
+}
+
+.navbar {
+	color: white;
+	display: flex;
+	align-items: center;
+	padding: 8px 0;
+	gap: 8px;
+}
+
+.navbar:hover {
+	color: rgb(219, 219, 5);
+}
+
+.nav-button {
+	padding: 8px;
+	border-radius: 8px;
+}
+
+.nav-button:hover {
+	background-color: rgba(255, 255, 255, 0.1);
+}
+
+@media (min-width: 900px) {
+    .nav-button {
+        display: none;
+    }
+}
