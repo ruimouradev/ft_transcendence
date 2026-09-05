@@ -4,7 +4,7 @@ all: vinit
 	docker compose -f ./docker-compose.yml build frontend_prod
 	docker compose -f ./docker-compose.yml run --rm frontend_prod
 	docker image rm frontend_prod:latest
-	docker compose -f ./docker-compose.yml build nginx_prod backend
+	docker compose -f ./docker-compose.yml buildmake docker  nginx_prod backend
 	docker compose -f ./docker-compose.yml up -d db redis backend nginx_prod postgres-exporter prometheus grafana
 
 

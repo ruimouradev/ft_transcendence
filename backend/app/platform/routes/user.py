@@ -3,7 +3,8 @@ from typing import Any
 import logging
 from datetime import datetime, timezone
 from pydantic import ValidationError
-from PIL import Image, UnidentifiedImageError, DecompressionBombError
+from PIL import Image, UnidentifiedImageError
+from PIL.Image import DecompressionBombError
 from io import BytesIO
 
 from app.presence_manager import presence_manager
