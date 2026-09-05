@@ -42,30 +42,27 @@ class GameSettings(BaseModel):
 
 
 class Create(BaseModel):
-    # opens a new room and takes the first seat, the settings are fixed
-    # here for the whole game, omitted means the official rules, the
-    # seat carries the nick of the logged in account, no name travels
+    # opens a new room and takes the first seat, omitted settings
+    # mean the official rules
     type: Literal["create"] = "create"
     settings: GameSettings = GameSettings()
 
 
 class Join(BaseModel):
+    # reclaiming a seat after a disconnect needs no field, the server
+    # matches the seat by the logged in account
     type: Literal["join"] = "join"
-    # present when reclaiming a seat after a disconnect, from Welcome
-    token: str | None = None
 
 
 class AddBot(BaseModel):
     # host only, in the lobby, seats an AI player on the next free chair
     type: Literal["add_bot"] = "add_bot"
-    # difficulty the host picked, read by the AI, the engine treats
-    # every seat alike
+    # difficulty the host picked
     level: Literal["easy", "medium", "hard"] = "medium"
 
 
 class Kick(BaseModel):
-    # host only, in the lobby, frees any other chair, bot or human, not
-    # a ban, the same player may join again with the code
+    # host only, in the lobby, frees any other chair, bot or human
     type: Literal["kick"] = "kick"
     target: str
 
@@ -85,8 +82,8 @@ class Play(BaseModel):
     card: str
     # color is required when the card is a wild
     color: Color | None = None
-    # saying uno may travel with the play, say_uno is the richer way
-    # and also works right after, until someone catches you
+    # how the bots declare uno, travelling with the play itself, the
+    # frontend sends say_uno as its own message instead
     uno: bool = False
     # whose hand you take, required for a 7 under the seven-zero rule
     target: str | None = None
@@ -116,13 +113,12 @@ class Challenge(BaseModel):
 
 
 class Emote(BaseModel):
-    # a reaction the player sends to the table, only for show, it never
-    # touches the game, the server passes it on to everyone as a Notice
+    # a reaction passed on to everyone as a Notice, it never touches
+    # the game
     type: Literal["emote"] = "emote"
-    # the id of the reaction, the frontend maps it to a picture, kept a
-    # small number so nothing odd travels, an id with no picture on the
-    # frontend shows nothing
-    icon: int = Field(ge=1, le=9)
+    # the id of the reaction, the frontend maps it to a picture, one
+    # of the six the menu offers, anything else is refused
+    icon: int = Field(ge=1, le=6)
 
 
 # the type field tells pydantic which model to build from the raw text
@@ -172,9 +168,8 @@ class Error(BaseModel):
 
 
 class Notice(BaseModel):
-    # a short notice the server sends to everyone, an uno, a catch or a
-    # player's emote, it carries no game state and does not move the
-    # seq, the frontend just shows it
+    # a short notice the server sends to everyone, an uno, a catch or
+    # a player's emote, it carries no game state and does not move the seq
     type: Literal["notice"] = "notice"
     sender: str
     kind: Literal["uno", "catch", "emote"]
@@ -183,11 +178,10 @@ class Notice(BaseModel):
 
 
 class Welcome(BaseModel):
-    # sent once when a seat is taken, join again with the token to get
-    # the same seat back after a disconnect
+    # sent once when a seat is taken, a join from the same account
+    # gets the seat back after a disconnect
     type: Literal["welcome"] = "welcome"
     id: str
-    token: str
 
 
 class PrivateView(BaseModel):
@@ -227,7 +221,7 @@ class LastAction(BaseModel):
     # "timeout" is the server closing an idle turn, never a player act
     player: str
     kind: Literal[
-        "join", "start", "play", "draw", "catch", "challenge",
+        "start", "play", "draw", "catch", "challenge",
         "timeout", "uno",
     ]
     card: Card | None = None
