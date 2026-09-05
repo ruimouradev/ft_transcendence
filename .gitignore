@@ -8,5 +8,6 @@ dbdata/
 
 data/
 
-nginx/dist
+nginx/dist/*
+
 frontend/dist

@@ -14,6 +14,7 @@ re: down all
 
 vinit:
 	@mkdir -p ${DBDATAPATH}
+	@mkdir -p /nginx/dist
 
 dev: vinit
 	docker compose -f ./docker-compose.yml build frontend backend nginx
