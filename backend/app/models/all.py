@@ -24,7 +24,7 @@ def nickname_validator(value: str) -> str:
         raise ValueError("Nickname must be between 3 and 12 characters")
     if value.lower() in ["admin", "root", "system"]:
         raise ValueError("Nickname cannot be a reserved word")
-    if value.lower().startswith("bot"):
+    if value.lower().startswith("bot") and value not in ["Bot1", "Bot2", "Bot3"]:
         raise ValueError("Nickname cannot start with 'bot'")
     if "<" in value or ">" in value:
         raise ValueError("Nickname cannot contain HTML")
@@ -58,6 +58,7 @@ class UserRegister(BaseModel):
 
 # This class can not be used for a request body;
 class UserUpdate(UserBase):
+    nick_name: str | None = Field(default=None, min_length=3, max_length=12)
     email: EmailStr | None = Field(default=None, max_length=255)
     password: str | None = Field(default=None, min_length=8, max_length=32)
     two_factor_secret: str | None = Field(default=None, max_length=512)
