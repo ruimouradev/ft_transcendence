@@ -44,7 +44,7 @@ function Verify2fa()
     return (
         <Box sx={{ minHeight: '80vh', display: 'flex', alignItems: 'center', justifyContent: 'center', p: 2 }} >
             <Container component="main" maxWidth="xs">
-                <Paper component="form" onSubmit={handleSubmit} elevation={6} sx={{ p: 4, display: 'flex', flexDirection: 'column', alignItems: 'center', borderRadius: 3 }} >
+                <Paper  component="form" onSubmit={handleSubmit} elevation={6} sx={{ p: 4, display: 'flex', flexDirection: 'column', alignItems: 'center', borderRadius: 3 }} >
                     <Typography variant="h6" gutterBottom>
                         Verify your authenticator
                     </Typography>
