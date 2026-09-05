@@ -51,7 +51,6 @@ function JoinPublic({rooms}: {rooms: Room[]})
 	function PublicClick()
 	{
 		const message = {"type": "join", "name": user?.nick_name};
-		console.log(message);
 		setSelected(null);
 		if (selected !== null)
 			joinRoom(selected, message)

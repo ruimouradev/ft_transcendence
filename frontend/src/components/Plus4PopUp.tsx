@@ -2,7 +2,6 @@ import { useEffect } from 'react';
 import { Box, Button, Typography } from '@mui/material';
 import { useGameContext } from '../core/GameWebSocketContext';
 import { usePopUpContext } from '../core/GamePopUpsContext';
-import ClearSharpIcon from '@mui/icons-material/ClearSharp';
 
 import  { tab_text } from '../game/macrosConfig.ts'
 
@@ -40,10 +39,6 @@ function Plus4PopUp()
 						<Typography sx={{...button_font}}>Draw: +4 </Typography>
 					</Button>
 				</Box>
-				{/* <IconButton sx={{position: 'absolute', top: 0, right: 0}}>
-					<ClearSharpIcon onClick={resetPopUpStates} sx={{ color: 'primary.main', border: 3, borderRadius: 1,
-						fontSize: 'clamp(0.7rem, 2vw, 2.5rem)' }}/>
-				</IconButton> */}
 			</Box>
 	)
 }

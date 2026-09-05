@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Box, Button } from '@mui/material'
+import { Box } from '@mui/material'
 import PeopleOutlinedIcon from '@mui/icons-material/PeopleOutlined';
 import EmojiEventsOutlinedIcon from '@mui/icons-material/EmojiEventsOutlined';
 import PermIdentityOutlinedIcon from '@mui/icons-material/PermIdentityOutlined';
