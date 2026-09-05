@@ -8,7 +8,9 @@ all: vinit
 	docker compose -f ./docker-compose.yml up -d db redis backend nginx_prod postgres-exporter prometheus grafana
 
 
-build:
+build: vinit
+	docker compose -f ./docker-compose.yml build frontend_prod --no-cache
+	docker compose -f ./docker-compose.yml run --rm frontend_prod
 	docker compose -f ./docker-compose.yml build --no-cache
 
 re: down all

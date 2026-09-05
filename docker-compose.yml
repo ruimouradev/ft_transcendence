@@ -172,6 +172,8 @@ services:
     depends_on:
       backend:
         condition: service_healthy
+      frontend_prod:
+        condition: service_completed_successfully
     networks:
       - ft_network
 
