@@ -1,26 +1,21 @@
 import { useEffect } from 'react'
-
 import GameRoom from './GameRoom'
 import Lobby from './Lobby'
-
 import { useAuth } from '../core/AuthContext';
-
-import { getGameContext } from '../core/GameWebSocket'
+import { useGameContext } from '../core/GameWebSocketContext';
 
 function Play()
 {
 	const {user} = useAuth();
-	const { connected } = getGameContext();
-	const { joinRoom } = getGameContext();
-	
+	const { connected, joinRoom } = useGameContext();
+
 	useEffect(() => {
 		const room = sessionStorage.getItem('roomID');
 		const message = {"type": "join", "name": user?.nick_name};
-		// const token = sessionStorage.getItem('reconnectToken');
 
 		if (room !== null)
 			joinRoom(room, message);
-	}, []);
+	}, [joinRoom, user?.nick_name]);
 
 	// if player in room, connect to room
 	return (connected === true ? <GameRoom /> : <Lobby />);

@@ -207,8 +207,10 @@ class Game:
         elif card.value in ("+2", "+4") or effect.skip or (
                 effect.reverse and len(self.hands) == 2):
             lands_on = victim
-        if card.value == "+2" and not self.settings.stacking:
-            moved = 2
+        if card.value == "+2" and (not self.settings.stacking
+                                   or not hand.cards):
+            # a last +2 is never stacked on, the whole pile lands now
+            moved = 2 + self.stack
         self.last = LastAction(player=player_id, kind="play", card=card,
                                target=lands_on, count=moved)
         self.seq += 1
@@ -219,6 +221,9 @@ class Game:
             self._step(1)
             return
         if not hand.cards:
+            if moved:
+                self._deal(self._hand(victim), moved)
+                self.stack = 0
             self.phase = "finished"
             self.winner = player_id
             return
@@ -322,10 +327,13 @@ class Game:
     def say_uno(self, player_id: str) -> None:
         """Register a player's Uno call, sent as its own message.
 
-        Two moments make it valid: holding two cards on player own turn,
-        calling before the play, or holding one undeclared card, the
-        late call that races the opponents' catch. Ties are settled by
-        whichever message reached the server first.
+        Two moments make it valid: holding two cards on the player's
+        own turn with a legal play available, calling before that play,
+        or holding one undeclared card, the late call that races the
+        opponents' catch. Ties are settled by whichever message reached
+        the server first. With two cards and nothing playable the turn
+        can only end in a draw, so such a call would always be empty
+        and is refused.
 
         Args:
             player_id: Who is calling Uno.
@@ -339,8 +347,9 @@ class Game:
         hand = self._hand(player_id)
         if hand.said_uno:
             raise GameError(ErrorCode.INVALID_UNO, "uno already said")
-        on_turn = self.hands[self.turn].id == player_id
-        before = len(hand.cards) == 2 and on_turn
+        # legal_moves already knows the turn, a pending +4 or +2 pile
+        # and the drawn card rule, empty means no play can follow
+        before = len(hand.cards) == 2 and bool(self.legal_moves(player_id))
         late = len(hand.cards) == 1
         if not (before or late):
             raise GameError(
@@ -477,10 +486,14 @@ class Game:
         Args:
             player_id: The player whose time ran out.
         """
-        self.last = LastAction(player=player_id, kind="timeout")
-        self.seq += 1
         if self.phase == "playing" and self.hands[self.turn].id == player_id:
+            self.last = LastAction(player=player_id, kind="timeout")
+            self.seq += 1
             self.drawn = None
+            hand = self.hands[self.turn]
+            # an early uno call only holds for the play that follows it
+            if len(hand.cards) == 2:
+                hand.said_uno = False
             if self.plus4:
                 # the cards land on the sleeper, never on the next player
                 plus4, self.plus4 = self.plus4, None
@@ -563,4 +576,3 @@ class Game:
         # with two players a reverse just skips, like the rules say
         two_player_reverse = effect.reverse and len(self.hands) == 2
         self._step(2 if effect.skip or two_player_reverse else 1)
-        

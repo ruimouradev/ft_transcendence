@@ -1,48 +1,26 @@
-// As chaves da API pública: mostra o estado atual e gera chaves novas.
-// A chave só se vê no momento em que nasce, o servidor não a guarda
-// em claro, por isso o aviso para a copiar é a sério.
 import { useEffect, useState } from "react";
 import { Alert, Box, Button, Card, CardContent, Chip, CircularProgress, Tooltip, Divider, IconButton, InputAdornment, Stack, TextField, Typography, } from "@mui/material";
 import { CheckCircle, ContentCopy, Key, LibraryBooks, Refresh, WarningAmber, } from "@mui/icons-material";
 import { api } from "../core/client";
+import type { ApiKeyResponse, ApiKeyStatus } from '../core/types.ts'
 
-interface ApiKeyStatus {
-  has_api_key: boolean;
-  client_id?: string;
-}
-
-// um campo so de leitura com o botao de copiar ao lado, usado para o
-// client id e para a chave
-function CopyField({ label, value, copied, onCopy }: {
-  label: string;
-  value: string;
-  copied: boolean;
-  onCopy: () => void;
-}) {
-  return (
-    <TextField label={label} value={value} fullWidth
-      slotProps={{
-        input: {
-          readOnly: true,
-          endAdornment: (
+function CopyField({ label, value, copied, onCopy }:
+	{ label: string; value: string; copied: boolean; onCopy: () => void })
+{
+	return (
+		<TextField label={label} value={value} fullWidth slotProps={{input: {readOnly: true, endAdornment: (
             <InputAdornment position="end">
-              <IconButton onClick={onCopy}>
-                {copied ? <CheckCircle color="success" /> : <ContentCopy />}
-              </IconButton>
-            </InputAdornment>
-          ),
-        },
-      }}
-    />
-  );
+				<IconButton onClick={onCopy}>
+					{copied ? <CheckCircle color="success" /> : <ContentCopy />}
+				</IconButton>
+            </InputAdornment>)}
+			}}
+		/>
+	);
 }
 
-interface ApiKeyResponse {
-  api_key: string;
-  client_id: string;
-}
-
-export default function ApiKeyPage() {
+function ApiKeyPage()
+{
   const [status, setStatus] = useState<ApiKeyStatus | null>(null);
   const [newKey, setNewKey] = useState<ApiKeyResponse | null>(null);
 
@@ -235,3 +213,5 @@ export default function ApiKeyPage() {
     </Box>
   );
 }
+
+export default ApiKeyPage

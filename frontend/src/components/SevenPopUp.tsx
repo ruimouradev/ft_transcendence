@@ -1,15 +1,15 @@
 import { useEffect } from 'react';
 import { Box, Card, CardMedia, IconButton, ThemeProvider, Typography } from '@mui/material';
 import { unoTheme } from '../ui/unoTheme.ts';
-import { getGameContext } from '../core/GameWebSocket.tsx';
-import { getPopUpContext } from '../core/GamePopUps.tsx';
+import { useGameContext } from '../core/GameWebSocketContext';
+import { usePopUpContext } from '../core/GamePopUpsContext.tsx';
 import ClearSharpIcon from '@mui/icons-material/ClearSharp';
 import { bot_easy, bot_medium, bot_hard } from '../ui/ImagesUtils.ts';
 
 function SevenPopUp()
 {
-	const { gameState, sendMessage } = getGameContext();
-	const { identifierID, resetPopUpStates } = getPopUpContext();
+	const { gameState, sendMessage } = useGameContext();
+	const { identifierID, resetPopUpStates } = usePopUpContext();
 
 	const message = {"type": "play", "card": identifierID}
 	const align = {display: 'flex', justifyContent: 'center', alignItems: 'center'};
@@ -17,14 +17,14 @@ function SevenPopUp()
 	useEffect(() => {
 		if (gameState?.turn !== gameState?.you.id)
 			resetPopUpStates();
-	}, [gameState?.turn]);
+	}, [gameState?.turn, gameState?.you.id, resetPopUpStates]);
 
 	const players = gameState?.players;
 
 	return (
 		<ThemeProvider theme={unoTheme}>
-			<Box sx={{ width: '40vw', aspectRatio: '3 / 1', ...align, border: '0.1vw solid', borderColor: 'divider', 
-				borderRadius: 2, bgcolor: 'background.default', gap: '5vw', position: 'relative' }}>
+			<Box sx={{ width: 'clamp(280px, 40vw, 52rem)', aspectRatio: '3 / 1', ...align, border: '0.1vw solid', borderColor: 'divider', 
+				borderRadius: 2, bgcolor: 'background.default', gap: 'clamp(1rem, 5vw, 6.5rem)', position: 'relative' }}>
 				{players?.map((player) => {
 						const avatar = player.bot ? 
 							(player?.bot_level === 'easy' ? bot_easy

@@ -30,7 +30,7 @@ from app.robots_manager import robots_user_manager
 
 # email local part -> nick name shown on the site
 NAMES = {"ana": "ana", "joana": "joana", "vinicius": "Vinicius",
-         "maria": "Maria João do Porto"}
+         "maria": "Maria João"}
 DOMAIN = "@test.pt"
 PASSWORD = "11111111"
 
@@ -46,6 +46,7 @@ GAMES = [
      "losers": {"joana": 9, "vinicius": 33, "maria": 21}},
     {"days": 1, "winner": "maria", "losers": {"bot1": 40, "bot2": 12}},
 ]
+
 
 FRIENDSHIPS = [
     ("ana", "joana", FriendshipStatus.ACCEPTED),

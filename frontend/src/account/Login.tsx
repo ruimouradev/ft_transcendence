@@ -1,35 +1,38 @@
 import React, { useState, useEffect } from 'react';
 import { Box, Button, Container, Divider, IconButton, InputAdornment, Link, Paper, TextField, Typography, Alert, Avatar, } from '@mui/material';
 import { Visibility, VisibilityOff } from '@mui/icons-material';
-
+import axios from 'axios';
 import icon42 from '../assets/i42.ico';
 import avatarUno from '../assets/avatar/a_default.svg';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams, useLocation } from 'react-router-dom';
 import { api, getErrorMessage } from '../core/client';
 import { useAuth } from '../core/AuthContext';
 
-// O ecrã de entrada. Duas portas: email e password contra o backend,
-// ou a conta 42 por OAuth. O token de sessão volta num cookie httponly,
-// por isso aqui não se guarda token nenhum.
-export default function Login() {
+function Login()
+{
     const [formData, setFormData] = useState({
         email: '',
         password: '',
     });
     const [showPassword, setShowPassword] = useState(false);
-    const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
     const { user, login } = useAuth();
 
-    const navigate = useNavigate();
-    const [searchParams] = useSearchParams();
 
-    // O backend comunica connosco por parâmetros no endereço: a
-    // verificação de email e o OAuth redirecionam para /login com
-    // ?info= ou ?error=. Derivam-se aqui na renderização, sem estado
-    // à parte, e o erro do formulário tem prioridade sobre o do URL.
-    const info = searchParams.get('info') || '';
-    const errorParam = searchParams.get('error');
+	const [searchParams] = useSearchParams();
+	const info = searchParams.get('info') || '';
+	const errorParam = searchParams.get('error');
+
+	const [error, setError] = useState(() => {
+		const errorParameter = searchParams.get('error');
+
+		if (errorParameter === 'oauth2_error')
+			return ('Login failed: OAuth2 error.');
+		return errorParam || '';
+	});
+
+    const navigate = useNavigate();
+	const location = useLocation();
     const urlError = errorParam === 'oauth2_error' ? 'Login failed: OAuth2 error.' : (errorParam || '');
     const shownError = error || urlError;
 
@@ -41,31 +44,32 @@ export default function Login() {
 
     useEffect(() => {
         if (!loading && user) {
-            navigate('/', { replace: true });
+			const sessionUrl = sessionStorage.getItem('returnTo');
+			const oldUrl = location.state?.from?.pathname
+		
+			const finalURL = sessionUrl || oldUrl || '/';
+			sessionStorage.removeItem('returnTo');
+			
+            navigate(finalURL, { replace: true });
         }
-    }, [user, loading, navigate]);
+    }, [user, loading, navigate, location]);
 
     useEffect(() => {
-        setError('');
-        const errorParam = searchParams.get('error');
-        // const infoParam = searchParams.get('info');
-        // if (infoParam) {
-        // 	setInfo(infoParam);
-        // }
-        if (errorParam === 'oauth2_error') {
-            setError('Login failed: OAuth2 error.');
-        } else {
-            setError(errorParam || '');
-        }
         window.history.replaceState({}, document.title, window.location.pathname);
     }, [searchParams]);
 
-    const handleSubmit = async (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.SubmitEvent<HTMLFormElement>) => {
         e.preventDefault();
         if (!formData.email || !formData.password) {
             setError('Please fill in all fields.');
             return;
         }
+
+		if (!/^\S+@\S+\.\S+$/.test(formData.email)) {
+			setError('Please enter a valid email address.');
+			return;
+		}
+		
         setLoading(true);
         try {
             // o endpoint segue o formato clássico do OAuth2: um form
@@ -91,7 +95,7 @@ export default function Login() {
         }
     };
 
-    const handlePasswordReset = async ( e: React.MouseEvent<HTMLAnchorElement> ) => {
+    const handlePasswordReset = async (e: React.MouseEvent<HTMLAnchorElement>) => {
         e.preventDefault();
         if (!formData.email) {
             setError('Please enter your email to reset your password.');
@@ -100,12 +104,14 @@ export default function Login() {
         try {
             const response = await api.post('/request-password-reset', { email: formData.email });
             navigate(`/login?info=${encodeURIComponent(response.data.message)}`, { replace: true });
-        } catch (err: any) {
-            if(err.response?.status === 429) {
-                setError('Requests are limited to 1 per minute. Please try again later.');
-            } else {
-                setError(getErrorMessage(err));
-            }
+        } catch (err) {
+			if (axios.isAxiosError(err)) {
+				if(err.response?.status === 429) {
+					setError('Requests are limited to 1 per minute. Please try again later.');
+				} else {
+					setError(getErrorMessage(err));
+				}
+			}
         }
     };
     
@@ -184,3 +190,5 @@ export default function Login() {
         </Box>
     );
 }
+
+export default Login

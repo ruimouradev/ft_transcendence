@@ -1,24 +1,9 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-
 import { api } from './client';
+import type { User, AuthContextType } from './types.ts'
 
 // A conta com sessão aberta, tal como o backend a devolve em /users/me.
-export interface User {
-  id: string;
-  email: string;
-  nick_name: string;
-  avatar: string;
-  card_back: string | null;
-  use2fa: boolean;
-}
 
-interface AuthContextType {
-  user: User | null;
-  isAuthenticated: boolean;
-  isLoading: boolean;
-  logout: () => void;
-  login: (userData: User) => void;
-}
 
 // Este contexto é a única fonte de verdade sobre "quem está logado".
 // O token em si nunca passa por aqui: vive num cookie http only que o

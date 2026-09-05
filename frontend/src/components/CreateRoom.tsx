@@ -1,14 +1,14 @@
 import { useState } from 'react';
 import { Box, Button, Typography } from '@mui/material';
 import { useAuth } from '../core/AuthContext';
-import { getGameContext } from '../core/GameWebSocket';
+import { useGameContext } from '../core/GameWebSocketContext';
 import { menu_text } from '../game/macrosConfig.ts';
 import HandCountSettings from './HandCountSettings';
 import StackingSettings  from './StackingSettings';
 import PlayerCountSettings  from './PlayerCountSettings';
 import SevenZeroSettings  from './SevenZeroSettings';
 import PrivacySettings  from './PrivacySettings';
-import type { Room } from '../game/types.ts';
+import type { Room } from '../core/types.ts';
 
 // Generates a 5 character Uppercase Hash
 function createRoomID({ rooms }: { rooms: Room[]})
@@ -42,7 +42,7 @@ function CreateRoom({ rooms }: { rooms: Room[]})
 
 	const { user } = useAuth();
 
-	const { joinRoom } = getGameContext();
+	const { joinRoom } = useGameContext();
 
 	function CreateRoom()
 	{

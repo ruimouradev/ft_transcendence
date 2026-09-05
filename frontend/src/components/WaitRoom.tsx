@@ -4,16 +4,17 @@ import StarOutlinedIcon from '@mui/icons-material/StarOutlined';
 import WifiOffOutlinedIcon from '@mui/icons-material/WifiOffOutlined';
 import ExitToAppOutlinedIcon from '@mui/icons-material/ExitToAppOutlined';
 import DisabledByDefaultOutlinedIcon from '@mui/icons-material/DisabledByDefaultOutlined';
+import ThumbUpOffAltOutlinedIcon from '@mui/icons-material/ThumbUpOffAltOutlined';
 import { unoTheme } from '../ui/unoTheme';
-import { getGameContext } from '../core/GameWebSocket';
+import { useGameContext } from '../core/GameWebSocketContext';
 import {easy_bot, medium_bot, hard_bot, start_game} from '../game/macrosConfig.ts';
 import { bot_easy, bot_medium, bot_hard } from '../ui/ImagesUtils.ts';
 
 function WaitRoom()
 {
-	const { roomID, gameState, sendMessage, leaveRoom } = getGameContext();
+	const { roomID, gameState, sendMessage, leaveRoom } = useGameContext();
 
-	const host = gameState?.you.id !== gameState?.host_id;
+	const not_host = gameState?.you.id !== gameState?.host_id;
 	const room_full = gameState?.players.length !== gameState?.settings?.max_players;
 	const text = room_full ? `WAITING FOR PLAYERS ${gameState?.players.length} / ${gameState?.settings?.max_players}` : 'START';
 
@@ -21,7 +22,7 @@ function WaitRoom()
 
 	return (
 		<ThemeProvider theme={unoTheme}>
-			<Container sx={{ height: '65dvh', width: { xs: '100%', md: '50%' }, display: 'flex', flexDirection: 'column', my: 2, p: 0.5,
+			<Container sx={{ height: '65dvh', width: { xs: '95%', md: '80%' }, display: 'flex', flexDirection: 'column', my: 2, p: 0.5,
 				position: 'relative', border: '1px solid', borderColor: 'divider', borderRadius: 2, bgcolor: 'background.paper' }}>
 				<Box sx={{height: '10%', width: '100%'}}>
 					<Typography variant="h5" sx={{  height: '100%', width: '100%', display: 'flex', justifyContent: 'center',
@@ -44,16 +45,21 @@ function WaitRoom()
 										<CardMedia draggable={false} component="img" sx={{ width: '12%', height: 'auto', display: 'flex', alignItems: 'center' }} image={avatar}/>
 										<CardContent sx={{display: 'flex', gap: 2}}>
 											<Typography variant="h6">{player.name}</Typography>
-											{player.connected 
+											{player.connected
 												? <></> 
 												: <Chip icon={<WifiOffOutlinedIcon />} label="Reconnecting" sx={{ backgroundColor: 'transparent',
 													color: 'text.secondary', border: '1px dashed', borderColor: 'text.secondary', opacity: 0.55,
 													fontSize: '0.95rem', py: 2.2, px: 0.5, '& .MuiChip-icon': { color: 'text.secondary' },}}/>}
+											{not_host || !player.ready
+												? <></> 
+												: <Chip icon={<ThumbUpOffAltOutlinedIcon />} label="Ready" sx={{ backgroundColor: 'transparent',
+													color: 'success.main', border: '1px solid', borderColor: 'success.main', opacity: 0.55,
+													fontSize: '0.95rem', py: 2.2, px: 0.5, '& .MuiChip-icon': { color: 'success.main' },}}/>}
 										</CardContent>
-										<CardContent>
+										<CardContent sx={{display: 'flex', alignItems: 'center', }}>
 											{
 												(player.id !== gameState?.host_id)
-												?	<IconButton hidden={host} size="large" sx={{ position: 'absolute', right: 2, zIndex: 1, color: 'primary.main' }}
+												?	<IconButton hidden={not_host} size="large" sx={{ position: 'absolute', right: 2, zIndex: 1, color: 'primary.main' }}
 												onClick={() => sendMessage({"type": "kick", "target": `${player.id}`})} >
 														<DisabledByDefaultOutlinedIcon fontSize="inherit"/>
 													</IconButton>
@@ -68,13 +74,13 @@ function WaitRoom()
 								<Card sx={{ height: '100%', width: '100%', display: 'flex', position: 'relative', alignItems: 'center' }}>
 									<Typography sx={{ p: { xs: 1, md: 3 }, ...button_text }}>ADD BOT</Typography>
 									<CardContent sx={{ display: 'flex', position: 'absolute', alignItems: 'center', right: 0 }}>
-											<Button disabled={host || !room_full} variant="contained" sx={{ mx: '2%', bgcolor: '#708c08' }} onClick={() => sendMessage(easy_bot)}>
+											<Button disabled={not_host || !room_full} variant="contained" sx={{ mx: '2%', bgcolor: '#708c08' }} onClick={() => sendMessage(easy_bot)}>
 												<Typography sx={{...button_text}}>EASY</Typography>
 											</Button>
-											<Button disabled={host || !room_full} variant="contained" sx={{ mx: '2%', bgcolor: '#c7950e' }} onClick={() => sendMessage(medium_bot)}>
+											<Button disabled={not_host || !room_full} variant="contained" sx={{ mx: '2%', bgcolor: '#c7950e' }} onClick={() => sendMessage(medium_bot)}>
 												<Typography sx={{...button_text}}>MEDIUM</Typography>
 											</Button>
-											<Button disabled={host || !room_full} variant="contained" sx={{ mx: '2%', bgcolor: '#cf5900' }} onClick={() => sendMessage(hard_bot)}>
+											<Button disabled={not_host || !room_full} variant="contained" sx={{ mx: '2%', bgcolor: '#cf5900' }} onClick={() => sendMessage(hard_bot)}>
 												<Typography sx={{...button_text}}>HARD</Typography>
 											</Button>
 									</CardContent> 
@@ -83,7 +89,7 @@ function WaitRoom()
 						</List>
 					</Box>
 					<Box sx={{ height: '15%', width: '100%' }}>
-						<Button variant="contained" disabled={room_full || host} onClick={() => sendMessage(start_game)}
+						<Button variant="contained" disabled={room_full || not_host} onClick={() => sendMessage(start_game)}
 						sx={{ height: '100%', width: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
 							<Typography>{text}</Typography>
 						</Button>

@@ -4,11 +4,11 @@ import Section from './Section';
 // Se algum comportamento mudar (dados novos, partilhas novas), esta
 // página tem de acompanhar. O texto é teu para ajustar.
 
-export default function Privacy() {
+function Privacy() {
     return (
         <div className="max-w-3xl mx-auto px-6 py-12">
             <h1 className="text-3xl font-black text-white mb-2">Privacy Policy</h1>
-            <p className="text-gray-400 text-sm mb-10">Last updated: August 21, 2026</p>
+            <p className="text-gray-400 text-sm mb-10">Last updated: September 03, 2026</p>
 
             <Section title="Who we are">
                 <p>
@@ -24,6 +24,9 @@ export default function Privacy() {
                     <li>Your email address, used to activate and identify the account.</li>
                     <li>Your nickname and, if you upload one, your avatar image.</li>
                     <li>Your password, stored only as a secure hash, never in plain text.</li>
+					<li>If 2FA is used, the secret is stored so the codes can be checked, and the recovery codes are saved as a secure hash.</li>
+					<li>If an API key is created, only a secure hash of the key is saved.</li>
+					<li>If 42 login is used, the ID, email, login and profile picture provided by 42 are saved, along with the 42 access token.</li>
                 </ul>
                 <p>While you use the site, we also store:</p>
                 <ul className="list-disc pl-6 space-y-1">
@@ -46,7 +49,7 @@ export default function Privacy() {
             <Section title="Cookies">
                 <p>
                     The site uses a single session cookie so you stay signed in. It
-                    expires after 30 minutes and the browser scripts cannot read it.
+                    expires after 8 days and the browser scripts cannot read it.
                     There are no advertising or tracking cookies.
                 </p>
             </Section>
@@ -62,7 +65,7 @@ export default function Privacy() {
 
             <Section title="Your rights">
                 <p>
-                    You can see and edit your profile data (nickname, avatar, email,
+                    You can see and edit your profile data (nickname, avatar,
                     password) at any time from the profile page. If you want your
                     account and its data deleted, contact the team and we will remove
                     it.
@@ -78,3 +81,5 @@ export default function Privacy() {
         </div>
     );
 }
+
+export default Privacy

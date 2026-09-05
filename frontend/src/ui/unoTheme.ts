@@ -1,7 +1,5 @@
 import { createTheme } from '@mui/material';
 
-// O tema escuro das páginas MUI (estatísticas, amigos), nas quatro
-// cores do baralho. Vive aqui para todas vestirem exatamente o mesmo.
 export const unoTheme = createTheme({
     palette: {
         mode: 'dark',
@@ -20,7 +18,6 @@ export const unoTheme = createTheme({
     },
     typography: {
         fontFamily: '"Roboto", "Helvetica", "Arial", sans-serif',
-        // letra base maior que o default do MUI, tudo escala com ela
         fontSize: 16,
         h4: { fontWeight: 800 },
         h5: { fontWeight: 700 },

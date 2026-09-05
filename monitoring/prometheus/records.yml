@@ -1,6 +1,6 @@
-# The postgres exporter names its counters without the _total suffix,
-# so prometheus warns on every rate() over them. These rules republish
-# them under the conventional name and the dashboards use that.
+# the postgres exporter names its counters without the _total suffix,
+# so prometheus warns on every rate() over them, these rules republish
+# them under the conventional name and the dashboards use that
 
 groups:
   - name: renames

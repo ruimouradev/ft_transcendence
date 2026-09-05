@@ -1,55 +1,47 @@
 import axios from 'axios';
 
-// O eixo de todas as chamadas HTTP ao backend. Importa-se `api` em vez
-// de usar axios diretamente, para todos os pedidos partilharem três
-// comportamentos: o prefixo /api/v1, o cookie de sessão (withCredentials)
-// e a reação a sessões expiradas.
 export const api = axios.create({
-  baseURL: '/api/v1',
-  withCredentials: true,
-  // headers: {
-  //   // Impede o browser de servir respostas antigas da cache dele
-  //   'Cache-Control': 'no-cache, no-store, must-revalidate',
-  //   'Pragma': 'no-cache',
-  //   'Expires': '0',
-  // },
+	baseURL: '/api/v1',
+	withCredentials: true,
 });
 
-// Acrescenta um parâmetro único a cada GET pela mesma razão: dois GETs
-// iguais em momentos diferentes devem ir mesmo ao servidor.
+// Unique parameter on each GET so the browser never serves it from cache
 api.interceptors.request.use((config) => {
-  if (config.method?.toLowerCase() === 'get') {
-    config.params = { ...config.params, _t: Date.now() };
-  }
-  return config;
+	if (config.method?.toLowerCase() === 'get') {
+		config.params = { ...config.params, _t: Date.now() };
+	}
+	return config;
 });
 
-// Sessão caducou (o cookie tem 30 minutos): qualquer 401 fora do ecrã
-// de login manda a pessoa para o login. As páginas não precisam de
-// tratar este caso uma a uma.
+// Expired session, any 401 outside the login screen goes to /login
 api.interceptors.response.use(
-  (response) => response,
-  (error) => {
+	(response) => response,
+	(error) => {
     if (error.response?.status === 401 && !error.config?.url?.includes('/users/me')) {
-      if (window.location.pathname !== '/login') {
-        window.location.href = '/login';
-      }
+    	if (window.location.pathname !== '/login') {
+        // Login reads returnTo after a successful sign in
+    		sessionStorage.setItem('returnTo', window.location.pathname);
+    		window.location.href = '/login?error=Session expired, please log in again.';
+    	}
     }
     return Promise.reject(error);
   },
 );
-
 
 export function getErrorMessage(error: unknown): string {
     if (!axios.isAxiosError(error)) {
         return 'An unknown error occurred';
     }
     if (error.response) {
-        const message = error.response.data?.message|| error.response.data?.detail;
+        let message = error.response.data?.message || error.response.data?.detail;
+        if (Array.isArray(message)) {
+            // A 422 sends detail as a list of objects, one per field
+            message = message.map((item) => item?.msg ?? String(item)).join(', ');
+        }
         if (message === 'Inactive user') {
             return 'Inactive user. Please check your email for the activation link.';
         }
-        return message || 'Unknown server error';
+        return typeof message === 'string' && message ? message : 'Unknown server error';
     }
     if (error.request) {
         return 'No response from server';

@@ -1,52 +1,32 @@
-import { useEffect, useState } from 'react';
-import { Alert, Box, Button, Checkbox, CircularProgress, Dialog, DialogActions, DialogContent, DialogTitle, Divider, FormControlLabel, IconButton, InputAdornment, Paper, Step, StepLabel, Stepper, TextField, Typography, } from '@mui/material';
+import { useState } from 'react';
+import { Alert, Box, Button, Checkbox, CircularProgress, Dialog, DialogActions, DialogContent, DialogTitle, Divider, FormControlLabel,
+	IconButton, InputAdornment, Paper, Step, StepLabel, Stepper, TextField, Typography, } from '@mui/material';
 import { CheckCircle, Close, ContentCopy, Download, Visibility, VisibilityOff, } from '@mui/icons-material';
 import {QRCodeSVG} from 'qrcode.react';
 import {api} from '../core/client';
 import { useAuth } from '../core/AuthContext';
+import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
-
-
-interface Reset2FADialogProps {
-    open: boolean;
-    onClose: () => void;
-    onSuccess: () => void;
-}
-
-interface Setup2FAResponse {
-    otpauth_url: string;
-    secret: string;
-}
-
-interface Verify2FAResponse {
-    recovery_codes: string[];
-}
+import type { Reset2FADialogProps, Setup2FAResponse, Verify2FAResponse } from '../core/types.ts'
 
 const steps = [ 'Reset Confirm', 'Verify', 'Authenticator', 'Verify code', 'Recovery codes', ];
 
-export default function Reset2FA({
-    open,
-    onClose,
-    onSuccess,
-}: Reset2FADialogProps) {
-    const [activeStep, setActiveStep] = useState(0);
+function Reset2FA({ open, onClose, onSuccess }: Reset2FADialogProps)
+{
+	const { user, login } = useAuth();
     const navigate = useNavigate();
-    const { user, login } = useAuth();
-
-    const [password, setPassword] = useState('');
-    const [showPassword, setShowPassword] = useState(false);
-    const [recoverCode, setRecoverCode] = useState('');
-
+	
     const [code, setCode] = useState('');
-
     const [secret, setSecret] = useState('');
+    const [password, setPassword] = useState('');
+    const [loading, setLoading] = useState(false);
+    const [activeStep, setActiveStep] = useState(0);
     const [otpauthUrl, setOtpauthUrl] = useState('');
-
+    const [recoverCode, setRecoverCode] = useState('');
+    const [showPassword, setShowPassword] = useState(false);
+    const [error, setError] = useState<string | null>(null);
     const [recoveryCodes, setRecoveryCodes] = useState<string[]>([]);
     const [savedRecoveryCodes, setSavedRecoveryCodes] = useState(false);
-
-    const [loading, setLoading] = useState(false);
-    const [error, setError] = useState<string | null>(null);
 
     const resetWizard = () => {
         setActiveStep(0);
@@ -66,12 +46,15 @@ export default function Reset2FA({
         setError(null);
     };
 
-    useEffect(() => { if (open) { resetWizard(); } }, [open]);
+	const handleOpen = () => {
+		resetWizard();
+	}
 
-    const handleClose = (event: React.MouseEvent<HTMLButtonElement>, reason: 'backdropClick' | 'escapeKeyDown') => {
-        event.preventDefault();
-        if (loading) { return; }
-        if (reason === 'backdropClick' || reason === 'escapeKeyDown') { return; }
+    const handleClose = (_event?: object, reason?: 'backdropClick' |'escapeKeyDown') => {
+        if (loading)
+			return ;
+        if (reason === 'backdropClick' || reason === 'escapeKeyDown')
+			return ;
         resetWizard();
         onClose();
     };
@@ -98,12 +81,14 @@ export default function Reset2FA({
             const userResponse = await api.get('/users/me');
             login(userResponse.data);
             setActiveStep(2);
-        } catch (error: any) {
-            if (error.response?.status === 401) {
-                setError('Your password is incorrect. Please try again.',);
-            } else {
-                setError(error.response?.data?.message ?? 'Failed to initialize two-factor authentication.',);
-            }
+        } catch (error) {
+            if (axios.isAxiosError(error)) {
+				if (error.response?.status === 401) {
+                	setError('Your password is incorrect. Please try again.',);
+				} else {
+					setError(error.response?.data?.message ?? 'Failed to initialize two-factor authentication.',);
+				}
+			}
         } finally {
             setLoading(false);
         }
@@ -122,17 +107,21 @@ export default function Reset2FA({
         }
         setLoading(true);
         setError(null);
+		if (!user)
+			return ;
         try {
             const response = await api.post<Verify2FAResponse>('/2fa/verify-setup', { code, },);
             setRecoveryCodes(response.data.recovery_codes,);
-            login({ ...user, use2fa: true, },);
+            login({ ...user, use2fa: true });
             setActiveStep(4);
-        } catch (error: any) {
-            if (error.response?.status === 400) {
-                setError('The verification code is invalid or expired.',);
-            } else {
-                setError(error.response?.data?.message ?? 'Failed to verify the authentication code.',);
-            }
+        } catch (error) {
+			if (axios.isAxiosError(error)) {
+				if (error.response?.status === 400) {
+					setError('The verification code is invalid or expired.',);
+				} else {
+					setError(error.response?.data?.message ?? 'Failed to verify the authentication code.',);
+				}
+			}
         } finally {
             setLoading(false);
         }
@@ -170,8 +159,8 @@ export default function Reset2FA({
     };
 
     return (
-        <Dialog open={open} onClose={handleClose} fullWidth maxWidth="sm" aria-labelledby="enable-2fa-dialog-title" aria-describedby="enable-2fa-dialog-description" slotProps={{ transition: { unmountOnExit: true, }, }}>
-
+        <Dialog open={open} onClose={handleClose} fullWidth maxWidth="sm" aria-labelledby="enable-2fa-dialog-title" aria-describedby="enable-2fa-dialog-description"
+			slotProps={{ transition: { unmountOnExit: true, onEnter: handleOpen} }}>
             <DialogTitle id="enable-2fa-dialog-title" sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', pb: 1, }}>
                 <Typography variant="h6" component="span" sx={{ fontWeight: 600 }}>
                     Reset Two-Factor Authentication
@@ -228,7 +217,7 @@ export default function Reset2FA({
                                 input: {
                                     endAdornment: (
                                         <InputAdornment position="end">
-                                            <IconButton onClick={() => setShowPassword((visible) => !visible,)} edge="end" aria-label={showPassword ? 'Hide password' : 'Show password'}>
+                                            <IconButton onClick={() => setShowPassword((visible) => !visible)} edge="end" aria-label={showPassword ? 'Hide password' : 'Show password'}>
                                                 {showPassword ? <VisibilityOff /> : <Visibility />}
                                             </IconButton>
                                         </InputAdornment>
@@ -252,7 +241,7 @@ export default function Reset2FA({
                         </Typography>
                         <Box sx={{ display: 'flex', justifyContent: 'center', mb: 3, }}>
                             <Paper elevation={2} sx={{ p: 2, display: 'inline-flex', }}>
-                                <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', alt: "Two-factor authentication QR code" }}>
+                                <Box sx={{ display: 'flex', justifyConten: 'center', alignItems: 'center' }}>
                                     <QRCodeSVG value={otpauthUrl} size={220} level="M" />
                                 </Box>
                             </Paper>
@@ -352,3 +341,5 @@ export default function Reset2FA({
         </Dialog>
     );
 }
+
+export default Reset2FA

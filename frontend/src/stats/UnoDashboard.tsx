@@ -1,67 +1,11 @@
 import { useState, useEffect } from 'react';
-import {
-    ThemeProvider,
-    Box,
-    Container,
-    Grid,
-    Paper,
-    Typography,
-    Avatar,
-    LinearProgress,
-    Table,
-    TableBody,
-    TableCell,
-    TableContainer,
-    TableHead,
-    TableRow,
-    Chip,
-    Stack,
-    Tabs,
-    Tab,
-    Tooltip,
-} from '@mui/material';
-
+import { Box, Container, Grid, Paper, Typography, Avatar, LinearProgress, Table,
+	TableBody, TableCell, TableContainer, TableHead, TableRow, Chip, Stack, Tabs, Tab, Tooltip } from '@mui/material';
 import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
-
 import { api } from '../core/client';
-import LeaderboardTable, { type LeaderboardRow } from './LeaderboardTable';
+import LeaderboardTable from './LeaderboardTable';
 import { useNotification } from '../ui/useNotification';
-import { unoTheme } from '../ui/unoTheme';
-
-// As formas dos dados, como o backend as devolve nos endpoints /static.
-interface PlayerData {
-    user: {
-        id: string;
-        email: string;
-        nick_name: string;
-        avatar: string;
-    };
-    total_games: number;
-    wins: number;
-    losses: number;
-    total_score: number;
-    level_info: {
-        current_level: number;
-        total_xp: number;
-        xp_in_current_level: number;
-        xp_required_for_next_level: number;
-        progress_percentage: number;
-        total_xp_for_next_level: number;
-        title: string;
-    };
-}
-
-interface MatchRecord {
-    game_id: string;
-    is_winner: boolean;
-    score: number;
-    finished_at: string;
-    opponents: string[];
-}
-
-// As conquistas: calculadas aqui no ecrã a partir dos contadores que
-// o maininfo já traz. Desbloqueadas acendem, as outras ficam a cinza.
-type BadgeKind = 'wins' | 'games' | 'score' | 'level';
+import type { BadgeKind, LeaderboardRow, MatchRecord, PlayerData } from '../core/types.ts'
 
 const BADGES: { name: string; need: number; kind: BadgeKind; color: string }[] = [
     { name: 'First Game', need: 1, kind: 'games', color: '#2196f3' },
@@ -143,7 +87,7 @@ export default function UnoDashboard() {
     }, [showNotification]);
 
     return (
-        <ThemeProvider theme={unoTheme}>
+        <>
             {notificationNode}
             <Container maxWidth="xl" sx={{ py: 4 }}>
 
@@ -352,7 +296,7 @@ export default function UnoDashboard() {
                                                                 {match.score}
                                                             </TableCell>
                                                             <TableCell>
-                                                                {match.opponents}
+                                                                {match.opponents || '-'}
                                                                 {/* {match.opponents?.length ? match.opponents.join(', ') : '-'} */}
                                                             </TableCell>
                                                             {/* a base guarda em UTC, o browser mostra na hora local */}
@@ -393,7 +337,7 @@ export default function UnoDashboard() {
                     </Grid>
                 </Grid>
             </Container>
-        </ThemeProvider>
+        </>
     );
 }
 

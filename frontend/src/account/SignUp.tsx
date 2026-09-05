@@ -1,19 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import { Box, Button, Checkbox, Container, CssBaseline, FormControl, FormControlLabel, FormHelperText, Grid, IconButton, InputAdornment, Link, Paper, TextField, Typography, Alert, Avatar, } from '@mui/material';
+import { Box, Button, Checkbox, Container, CssBaseline, FormControl, FormControlLabel, FormHelperText, Grid,
+	IconButton, InputAdornment, Link, Paper, TextField, Typography, Alert, Avatar, } from '@mui/material';
 import { Visibility, VisibilityOff, PersonAddOutlined as PersonAddIcon, } from '@mui/icons-material';
-
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../core/AuthContext';
 import { api, getErrorMessage } from '../core/client.ts';
+import type { ValidationError } from '../core/types.ts' 
 
-interface ValidationError {
-    loc: (string | number)[];
-    msg: string;
-    type: string;
-    input?: unknown;
-}
-export default function SignUp() {
+function SignUp()
+{
     const [showPassword, setShowPassword] = useState(false);
     const [formData, setFormData] = useState({
         nick_name: '',
@@ -48,15 +44,15 @@ export default function SignUp() {
         }));
     };
 
-    const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-        e.preventDefault();
+    const handleSubmit = async (e: React.SubmitEvent<HTMLFormElement>) => {
+        e.preventDefault(); 
         if (!e.currentTarget.checkValidity()) {
             e.currentTarget.reportValidity();
             return;
         }
 
         if (formData.nick_name.length < 3 || formData.nick_name.length > 12) {
-            setErrors({ nick_name: 'Nick name must be between 3 and 12 characters long.' });
+            setErrors({ nick_name: 'Nickname must be between 3 and 12 characters long.' });
             return;
         }
 
@@ -92,12 +88,9 @@ export default function SignUp() {
     const handleResendActivationEmail = async (e: React.MouseEvent) => {
         e.preventDefault();
         setError('');
-        setErrors(() => {
-            const next = {};
-            return next;
-        });
+        setErrors({});
         if (formData.nick_name.length < 3 || formData.nick_name.length > 12) {
-            setErrors({ nick_name: 'Nick name must be between 3 and 12 characters long.' });
+            setErrors({ nick_name: 'Nickname must be between 3 and 12 characters long.' });
             return;
         }
 
@@ -147,7 +140,7 @@ const returnErrorMessageHandler = (error: unknown) => {
                 if (error.response.data?.code === 'USER_EXISTS') {
                     setErrors({ email: error.response.data?.msg || 'This email is already registered. Please try a different one.' });
                 } else if (error.response.data?.code === 'NICKNAME_EXISTS') {
-                    setErrors({ nick_name: error.response.data?.msg || 'This nick name is already taken. Please try a different one.' });
+                    setErrors({ nick_name: error.response.data?.msg || 'This nickname is already taken. Please try a different one.' });
                 } else {
                     setError(getErrorMessage(error));
                 }
@@ -174,7 +167,7 @@ const returnErrorMessageHandler = (error: unknown) => {
                 <Box component="form" onSubmit={handleSubmit} sx={{ mt: 1 }}>
                     <Grid container spacing={2}>
                         <Grid size={{ xs: 12 }}>
-                            <TextField name="nick_name" autoFocus required fullWidth id="nick_name" label="Nick Name" error={!!errors.nick_name} helperText={errors.nick_name} value={formData.nick_name} onChange={handleChange} />
+                            <TextField name="nick_name" autoFocus required fullWidth id="nick_name" label="Nickname" error={!!errors.nick_name} helperText={errors.nick_name} value={formData.nick_name} onChange={handleChange} />
                         </Grid>
                         <Grid size={{ xs: 12 }}>
                             <TextField required fullWidth id="email" label="Email Address" type="email" name="email" autoComplete="email" value={formData.email} onChange={handleChange} error={!!errors.email} helperText={errors.email} />
@@ -238,3 +231,5 @@ const returnErrorMessageHandler = (error: unknown) => {
         </Container>
     );
 }
+
+export default SignUp
