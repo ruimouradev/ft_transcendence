@@ -1,3 +1,4 @@
+from jwt import api_jws
 import asyncio
 import re
 import time
@@ -596,12 +597,20 @@ async def seat_player(ws: WebSocket, room: Room, name: str, avatar: str,
     room.humans_made += 1
     player = Player(id=f"p{room.humans_made}", name=name,
                     ws=ws, user=user, avatar=avatar)
-    # the welcome goes first, a socket that dies here takes no chair
-    await ws.send_text(
-        Welcome(id=player.id).model_dump_json()
-    )
+    # Reserve the seat synchronously BEFORE yielding to the event loop
     room.players.append(player)
     metrics.players_connected.inc()
+    try:
+        await ws.send_text(
+            Welcome(id=player.id).model_dump_json()
+        )
+    except Exception:
+        # If the socket dies during the welcome handshake, release the reserved seat
+        if player in room.players:
+            room.players.remove(player)
+        metrics.players_connected.dec()
+        raise
+
     reseat(room)
     await broadcast(room)
     return player
@@ -749,7 +758,10 @@ async def game(ws: WebSocket, room_id: str) -> None:
             error = await apply(room, player, action)
             if error:
                 metrics.rejected.labels(code=error.code.value).inc()
-                await ws.send_text(error.model_dump_json())
+                try:
+                    await ws.send_text(error.model_dump_json())
+                except Exception:
+                    pass  # Socket was already closed (e.g., player kicked); drop the response silently
             else:
                 metrics.moves.labels(kind=action.type).inc()
                 await broadcast(room)
