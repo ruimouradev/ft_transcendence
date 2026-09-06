@@ -172,7 +172,9 @@ async def broadcast(room: Room) -> None:
     # The engine bumps seq itself, here we just send everyone their view
     if room.game is None:
         return
-    for p in room.players:
+    # a kick or a leave can drop a seat while this loop awaits, and the
+    # live list would skip the seat that took its place
+    for p in list(room.players):
         if p.connected and p.ws:
             try:
                 await p.ws.send_text(snapshot_json(room, p.id))
@@ -185,7 +187,7 @@ async def relay(room: Room, notice: Notice) -> None:
     # A notice carries no game state, it is sent to everyone as is, for
     # an uno, a catch or an emote. The frontend shows it and drops it
     payload = notice.model_dump_json()
-    for p in room.players:
+    for p in list(room.players):
         if p.connected and p.ws:
             try:
                 await p.ws.send_text(payload)
@@ -244,10 +246,12 @@ async def room_timer(room_id: str, room: Room) -> None:
                 
         game.timeout_skip(pid)
         metrics.moves.labels(kind="timeout").inc()
-        await broadcast(room)
         # the forced draw can end the game, and a game that ends here
-        # deserves the same row in the database as any other
+        # deserves the same row in the database as any other. It is
+        # written before the broadcast, a start answered at once would
+        # send the room back to the lobby and the row would be lost
         await record_finished_game(room)
+        await broadcast(room)
         mark = None
 
 
@@ -413,6 +417,10 @@ async def ai_timer(room_id: str, room: Room) -> None:
                 elif isinstance(bot_action, Draw):
                     room.game.draw(bot.id)
                 metrics.moves.labels(kind=bot_action.type).inc()
+                # the row goes in before the state leaves, a start
+                # answered at once would send the room back to the
+                # lobby and the finished game would never be written
+                await record_finished_game(room)
                 await broadcast(room)
 
                 # bots announce their uno and catch too, so the frontend
@@ -425,7 +433,6 @@ async def ai_timer(room_id: str, room: Room) -> None:
                     await relay(room, Notice(sender=bot.id, kind="catch",
                                              target=bot_action.target))
 
-                await record_finished_game(room)
                 break  # Apply max one bot action per tick to avoid race conditions
             except GameError as e:
                 logging.error(f"AI attempted illegal move: {e.msg}")
@@ -564,11 +571,11 @@ router = APIRouter()
 
 
 @router.get("/api/rooms")
-def list_rooms(current_user: CurrentUser) -> list[dict[str, object]]:
+async def list_rooms(current_user: CurrentUser) -> list[dict[str, object]]:
     # The join screen list: public rooms still waiting in their lobby.
     # Playing needs an account, so reading the table does too
     out: list[dict[str, object]] = []
-    for code, room in rooms.items():
+    for code, room in list(rooms.items()):
         if not room.settings.public or room.game is None:
             continue
         if room.game.phase != "lobby":

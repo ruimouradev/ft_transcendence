@@ -239,6 +239,12 @@ async def callback_42(session: SessionDep, request: Request, code: str | None = 
             user = userservice.get_user_by_email(session=session, email=user42_email)
             nick_user = userservice.get_user_by_nick_name(session=session, nick_name=user42_login)
 
+            # The 42 login proves the email, so an account that never got
+            # its activation mail is activated here, otherwise the cookie
+            # would be issued for a user every request refuses
+            if user and not user.is_active:
+                userservice.update_user(session=session, db_user=user, user_in=UserUpdate(is_active=True))
+
             if not user:
                 # Download the user's avatar image and save it to the static folder
                 try:

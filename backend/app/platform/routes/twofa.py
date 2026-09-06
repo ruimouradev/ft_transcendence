@@ -57,6 +57,9 @@ async def reset_two_factor(session: SessionDep, request: TwoFactorSetupRequest, 
     """
     current_user = twofa_service.get_user_from_tfa_token(session=session, token=token)
 
+    if not request.recovery_code:
+        raise APIError(status_code=400, code=APIErrorCode.BAD_REQUEST, msg="Recovery code is required to reset Two-Factor Authentication.")
+
     if not twofa_service.check_user_password(current_user, request.password):
         raise APIError(status_code=400, code=APIErrorCode.BAD_REQUEST, msg="Invalid password")
 

@@ -13,7 +13,7 @@ import Disable2FADialog from './Disable2FADialog';
 import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
 import type { NotificationState } from '../core/types.ts';
 
-const MAX_SIZE = 3 * 1024 * 1024; // 3MB
+const MAX_SIZE = 2 * 1024 * 1024; // 2MB, the same limit as the backend
 const cardBackUrls = Object.values(cardBacks);
 
 function ProfileCard()
@@ -45,7 +45,7 @@ function ProfileCard()
 			return;
 
 		if (file.size > MAX_SIZE) {
-			setNotification(({ open: true, message: 'Avatar maximum size is 3MB.', severity: 'error', }))
+			setNotification(({ open: true, message: 'Avatar maximum size is 2MB.', severity: 'error', }))
 			return ;
 		}
 			
