@@ -74,7 +74,7 @@ async def setup_two_factor(session: SessionDep, request: TwoFactorSetupRequest, 
     secret = twofa_service.generate_secret()
     otpauth_url = twofa_service.get_otpauth_url(secret=secret, username=current_user.email)
 
-    userservice.update_user(session=session, db_user=current_user, user_in=UserUpdate(user2fa=False, two_factor_secret=secret))
+    userservice.update_user(session=session, db_user=current_user, user_in=UserUpdate(use2fa=False, two_factor_secret=secret))
 
     access_token=security.create_access_token(current_user.id, expires_delta=timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES))
 

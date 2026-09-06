@@ -3,7 +3,7 @@ from fastapi import APIRouter
 
 from app.platform.service import userStatisticService
 from app.platform.deps import CurrentUser, SessionDep
-from app.models.all import Game, GamePlayer, GamePlayerDetail, UserGameDetail, UserStatisticInfo, UserStatisticLeaderboardEntry
+from app.models.all import APIErrorCode, Game, GamePlayer, GamePlayerDetail, UserGameDetail, UserStatisticInfo, UserStatisticLeaderboardEntry, APIError, uuid_check
 
 router = APIRouter(prefix="/static", tags=["static"], include_in_schema=False)
 logger = logging.getLogger("uvicorn.error")
@@ -20,6 +20,7 @@ async def get_static_details(session: SessionDep, current_user: CurrentUser):
 
 @router.get("/game/{game_id}/players",response_model=list[GamePlayerDetail])
 async def get_game_players(session: SessionDep, current_user: CurrentUser, game_id: str):
+    uuid_check(game_id, msg_str="Invalid game ID format. Must be a valid UUID.")
     return userStatisticService.get_game_player_records(session=session, current_user=current_user, game_id=game_id)
 
 

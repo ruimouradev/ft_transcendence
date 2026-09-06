@@ -1,6 +1,7 @@
 import asyncio
+from collections import defaultdict
 import time
-from typing import Any, Dict
+from typing import Any, Dict, Set
 from app.models.all import UserOnLineStatus
 from fastapi import WebSocket
 import logging
@@ -9,53 +10,28 @@ logger = logging.getLogger("uvicorn.error")
 
 class InMemoryPresenceManager:
     def __init__(self):
-        self.active_connections: Dict[str, WebSocket] = {}
+        self.active_connections: Dict[str, Set[WebSocket]] = defaultdict(set)
         self.statuses: Dict[str, str] = {}
-        # self.last_seen: Dict[str, float] = {}
-        # self.cleanup_tasks: Dict[str, asyncio.Task] = {}
 
     async def connect(self, user_id: str, websocket: WebSocket):
         await websocket.accept()
-        # task = self.cleanup_tasks.pop(user_id, None)
-        # if task:
-        #     task.cancel()
-        
-        self.active_connections[user_id] = websocket
+        self.active_connections[user_id].add(websocket)
         self.statuses[user_id] = "ONLINE"
-        logger.info(f"=======================> User {user_id} connected.")
+        logger.info(f"=======================> User {user_id} connected.Current connections: {len(self.active_connections[user_id])}")
 
-    # def update_heartbeat(self, user_id: str):
-    #     self.last_seen[user_id] = time.time()
-    #     self.statuses[user_id] = "ONLINE"
-
-    async def disconnect(self, user_id: str, websocket: WebSocket | None=None, grace_period: int = 15):
-        # if user_id in self.active_connections:
-        #     del self.active_connections[user_id]
-        current_websocket = self.active_connections.get(user_id)
-        if websocket is not None and current_websocket is not websocket:
+    async def disconnect(self, user_id: str, websocket: WebSocket | None=None):
+        current_websockets = self.active_connections.get(user_id)
+        if websocket is not None and websocket not in current_websockets:
             logger.warning(f"=======================> User {user_id} attempted to disconnect with a different websocket.")
             return
-        if current_websocket is not None:
-            del self.active_connections[user_id]
+        if current_websockets is not None:
+            current_websockets.discard(websocket)
+            logger.info(f"=======================> User {user_id} disconnected a websocket. Remaining connections: {len(current_websockets)}")
+            if not current_websockets:
+                del self.active_connections[user_id]
+                self.statuses[user_id] = "OFFLINE"
+                logger.info(f"=======================> User {user_id} disconnected.")
         
-        self.statuses[user_id] = "OFFLINE"
-        # old_task = self.cleanup_tasks.pop(user_id, None)
-        # if old_task:
-        #     old_task.cancel()
-        # task = asyncio.create_task(self._wait_and_mark_offline(user_id, grace_period))
-        # self.cleanup_tasks[user_id] = task
-        logger.info(f"=======================> User {user_id} disconnected.")
-
-    # async def _wait_and_mark_offline(self, user_id: str, delay: int):
-    #     try:
-    #         await asyncio.sleep(delay)
-    #         self.statuses[user_id] = "OFFLINE"
-    #         if user_id in self.last_seen:
-    #             del self.last_seen[user_id]
-    #     except asyncio.CancelledError:
-    #         pass
-    #     finally:
-    #         self.cleanup_tasks.pop(user_id, None)
 
     def get_status(self, user_id: str) -> str:
         return self.statuses.get(user_id, "OFFLINE")
@@ -84,20 +60,9 @@ class InMemoryPresenceManager:
             logger.warning(f"logger=======================>Unknown message type received from {user_id}: {data}")
 
     async def send_personal_message(self, user_id: str, message: Dict[str, Any]):
-        websocket = self.active_connections.get(user_id)
-        if websocket:
-            await websocket.send_json(message)
+        websockets = self.active_connections.get(user_id)
+        if websockets:
+            for websocket in websockets:
+                await websocket.send_json(message)
 
 presence_manager = InMemoryPresenceManager()
-
-# Background task to check for frontend player's heartbeat timeouts and mark them as offline if necessary
-async def check_heartbeat_timeouts():
-    try:
-        while True:
-            await asyncio.sleep(10)
-            now = time.time()
-            for user_id, last_ping in list(presence_manager.last_seen.items()):
-                if presence_manager.get_status(user_id) == "ONLINE" and (now - last_ping) > 25:
-                    await presence_manager.disconnect(user_id, grace_period=10)
-    except asyncio.CancelledError:
-        raise

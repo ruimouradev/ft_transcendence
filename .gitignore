@@ -7,3 +7,7 @@ docs
 dbdata/
 
 data/
+
+nginx/dist/*
+
+frontend/dist

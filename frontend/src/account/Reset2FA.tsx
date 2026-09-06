@@ -6,6 +6,7 @@ import {QRCodeSVG} from 'qrcode.react';
 import {api} from '../core/client';
 import { useAuth } from '../core/AuthContext';
 import axios from 'axios';
+import { useNavigate } from 'react-router-dom';
 import type { Reset2FADialogProps, Setup2FAResponse, Verify2FAResponse } from '../core/types.ts'
 
 const steps = [ 'Reset Confirm', 'Verify', 'Authenticator', 'Verify code', 'Recovery codes', ];
@@ -13,6 +14,7 @@ const steps = [ 'Reset Confirm', 'Verify', 'Authenticator', 'Verify code', 'Reco
 function Reset2FA({ open, onClose, onSuccess }: Reset2FADialogProps)
 {
 	const { user, login } = useAuth();
+    const navigate = useNavigate();
 	
     const [code, setCode] = useState('');
     const [secret, setSecret] = useState('');
@@ -81,6 +83,8 @@ function Reset2FA({ open, onClose, onSuccess }: Reset2FADialogProps)
             
 			setSecret(response.data.secret);
             setOtpauthUrl(response.data.otpauth_url);
+            const userResponse = await api.get('/users/me');
+            login(userResponse.data);
             setActiveStep(2);
         } catch (error) {
             if (axios.isAxiosError(error)) {
@@ -101,6 +105,7 @@ function Reset2FA({ open, onClose, onSuccess }: Reset2FADialogProps)
     };
 
     const handleVerifyCode = async () => {
+        if (!user) { return; }
         if (code.length !== 6) {
             setError('Please enter the 6-digit verification code.');
             return;
@@ -157,8 +162,9 @@ function Reset2FA({ open, onClose, onSuccess }: Reset2FADialogProps)
     const handleFinish = () => {
         if (!savedRecoveryCodes) { return; }
         onSuccess();
-        resetWizard();
+        // resetWizard();
         onClose();
+        navigate('/', { replace: true });
     };
 
 	const handleSubmit = async (e: React.SubmitEvent<HTMLFormElement>) => {

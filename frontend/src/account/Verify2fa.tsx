@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useAuth } from '../core/AuthContext';
-import { Box, Container, Paper, Button, Link, Typography, TextField } from '@mui/material';
+import { Box, Container, Paper, Button, Typography, TextField } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import { api, getErrorMessage } from '../core/client';
 import Reset2FA from './Reset2FA';
@@ -22,7 +22,7 @@ function Verify2fa()
         }
         setLoading(true);
         try {
-            const response = await api.post(`/login/verify-2fa`,{ code });
+            const response = await api.post(`/login/verify-2fa`, { code });
             if (response.data.code === 'success') {
                 const userResponse = await api.get('/users/me');
                 login(userResponse.data);
@@ -70,9 +70,11 @@ function Verify2fa()
                     <Box sx={{ mt: 1, textAlign: 'center' }}>
                         <Typography variant="body2" color="text.secondary">
                             Forgot your authenticator?{' '}
-                            <Link href="#" onClick={handleAuthenticatorReset} underline="hover" sx={{ fontWeight: 600 }}>
+                            {/* <Link href="#" onClick={handleAuthenticatorReset} underline="hover" sx={{ fontWeight: 600 }}>
                                 Reset authenticator
-                            </Link>
+                            </Link> */}
+                            <Button type="button" onClick={handleAuthenticatorReset} variant="text" sx={{ p: 0, minWidth: 0, fontWeight: 600, textTransform: 'none', verticalAlign: 'baseline', }}>Reset authenticator</Button>
+
                         </Typography>
                     </Box>
                     <Reset2FA open={userecoverCode} onClose={() => setUserRecoverCode(false)} onSuccess={() => {}} />

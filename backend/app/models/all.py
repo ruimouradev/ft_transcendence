@@ -3,23 +3,48 @@ from uuid import UUID, uuid4
 from datetime import datetime, timezone
 
 from sqlmodel import SQLModel, Field, Relationship
-from pydantic import EmailStr, BaseModel
+from pydantic import EmailStr, BaseModel, field_validator
 from sqlalchemy import DateTime
 from enum import Enum
 
 def get_datetime_utc() -> datetime:
     return datetime.now(timezone.utc)
 
+def uuid_check(value: str,msg_str: str) -> UUID:
+    try:
+        return UUID(value)
+    except ValueError:
+        raise APIError(status_code=400, code=APIErrorCode.BAD_REQUEST, msg=msg_str)
+
+def nickname_validator(value: str) -> str:
+    value = value.strip()
+    if not value:
+        raise ValueError("Nickname cannot be empty or whitespace")
+    if len(value) < 3 or len(value) > 12:
+        raise ValueError("Nickname must be between 3 and 12 characters")
+    if value.lower() in ["admin", "root", "system"]:
+        raise ValueError("Nickname cannot be a reserved word")
+    if value.lower().startswith("bot") and value not in ["Bot1", "Bot2", "Bot3"]:
+        raise ValueError("Nickname cannot start with 'bot'")
+    if "<" in value or ">" in value:
+        raise ValueError("Nickname cannot contain HTML")
+    return value
+
 # Shared properties
 class UserBase(SQLModel):
     email: EmailStr = Field(unique=True, index=True, max_length=255)
     is_active: bool = False
     is_superuser: bool = False
-    nick_name: str = Field(default=None, max_length=20)
+    nick_name: str = Field(unique=True, index=True, max_length=12)
     avatar: str | None = Field(default="/static/a00.jpeg", max_length=255)
-    card_back: str | None = Field(default="/static/cardback.jpeg", max_length=255)
+    card_back: str | None = Field(default="back00", max_length=255)
     use2fa: bool = False
 
+    @field_validator("nick_name")
+    @classmethod
+    def validate_nick_name(cls, value: str) -> str:
+        value = nickname_validator(value)
+        return value
 
 # Properties to receive via API on creation
 class UserCreate(UserBase):
@@ -29,19 +54,20 @@ class UserCreate(UserBase):
 class UserRegister(BaseModel):
     email: EmailStr = Field(max_length=255)
     password: str = Field(min_length=8, max_length=32)
-    nick_name: str = Field(min_length=3, max_length=20)
+    nick_name: str = Field(min_length=3, max_length=12)
 
 # This class can not be used for a request body;
 class UserUpdate(UserBase):
+    nick_name: str | None = Field(default=None, min_length=3, max_length=12)
     email: EmailStr | None = Field(default=None, max_length=255)
     password: str | None = Field(default=None, min_length=8, max_length=32)
     two_factor_secret: str | None = Field(default=None, max_length=512)
 
 
 class UserUpdateMe(BaseModel):
-    nick_name: str | None = Field(default=None,min_length=3, max_length=20)
+    nick_name: str | None = Field(default=None,min_length=3, max_length=12)
     card_back: str | None = Field(default=None, max_length=255)
-    email: EmailStr | None = Field(default=None, max_length=255)
+    # email: EmailStr | None = Field(default=None, max_length=255)
 
 
 class UpdatePassword(BaseModel):
