@@ -123,7 +123,7 @@ function ProfileCard()
 
     const handleCardBackChange = async (newCardBackUrl: string) => {
         if (!user) return;
-        // o seletor devolve o caminho da imagem; traduz-se para o nome
+        //  o seletor devolve o caminho da imagem; traduz-se para o nome 
         // de código antes de gravar, que é o que a base deve conhecer
         const key = Object.keys(cardBacks).find((k) => cardBacks[k] === newCardBackUrl,) ?? 'back00';
         try {
