@@ -100,7 +100,7 @@ export type FriendEntry = {
 
 
 // PopUp Types
-export type PopUpTypes = 'wildcard' | 'seven' | 'game_end' | 'error' | 'disabled'
+export type PopUpTypes = 'wildcard' | 'seven' | 'game_end' | 'error' | 'plus4' | 'disabled'
 
 export type PopUpBackup = {
 	popUp: PopUpTypes,
@@ -128,6 +128,7 @@ export type GameContextType = {
 
 	leaveRoom: () => void,
 	resetGameState: () => void,
+	getWinnerName: () => string,
 	closeRoomConnection: () => void,
 	resetNotices: (id: string) => void,
 	sendMessage: (message: object) => void,

@@ -1,6 +1,6 @@
 import { Avatar, Badge, Box, Chip, Grid, IconButton, Paper, Tooltip, Typography, } from '@mui/material';
 import BlockIcon from '@mui/icons-material/Block';
-import type { FriendEntry } from '../core/types.ts'
+import type { FriendEntry } from '../core/types.ts';
 
 function FriendsTab({filteredFriends, freshAvatar, handleBlockFriend}:
 	{filteredFriends: FriendEntry[], freshAvatar: (url: string | null) => string, handleBlockFriend: (friend: FriendEntry) => void})

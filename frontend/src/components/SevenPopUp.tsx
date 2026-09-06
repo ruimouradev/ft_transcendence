@@ -1,6 +1,5 @@
 import { useEffect } from 'react';
-import { Box, Card, CardMedia, IconButton, ThemeProvider, Typography } from '@mui/material';
-import { unoTheme } from '../ui/unoTheme.ts';
+import { Box, Card, CardMedia, IconButton, Typography } from '@mui/material';
 import { useGameContext } from '../core/GameWebSocketContext';
 import { usePopUpContext } from '../core/GamePopUpsContext.tsx';
 import ClearSharpIcon from '@mui/icons-material/ClearSharp';
@@ -22,7 +21,6 @@ function SevenPopUp()
 	const players = gameState?.players;
 
 	return (
-		<ThemeProvider theme={unoTheme}>
 			<Box sx={{ width: 'clamp(280px, 40vw, 52rem)', aspectRatio: '3 / 1', ...align, border: '0.1vw solid', borderColor: 'divider', 
 				borderRadius: 2, bgcolor: 'background.default', gap: 'clamp(1rem, 5vw, 6.5rem)', position: 'relative' }}>
 				{players?.map((player) => {
@@ -51,7 +49,6 @@ function SevenPopUp()
 						fontSize: 'clamp(0.7rem, 2vw, 2.5rem)' }}/>
 				</IconButton>
 			</Box>
-		</ThemeProvider>
 	)
 }
 
