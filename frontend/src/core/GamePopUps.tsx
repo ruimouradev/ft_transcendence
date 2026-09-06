@@ -29,8 +29,23 @@ function GamePopUps({ children }: { children: React.ReactNode })
 		setPopUp('error');
 	}
 	
-	function resetPopUpStates()
-	{
+	// function resetPopUpStates()
+	// {
+	// 	if (popUpBackup.popUp !== 'disabled')
+	// 	{
+	// 		setPopUp(popUpBackup.popUp);
+	// 		setIdentifierID(popUpBackup.identifierID);
+	// 		setErrorMessage(null);
+	// 		setPopUpBackup({popUp: 'disabled', identifierID: null});
+	// 		return ;
+	// 	}
+	// 	setPopUp('disabled');
+	// 	setIdentifierID(null);
+	// 	setErrorMessage(null);
+	// }
+
+	// Trying this !!!! Maybe DEL !!!
+	const resetPopUpStates = useCallback(() => {
 		if (popUpBackup.popUp !== 'disabled')
 		{
 			setPopUp(popUpBackup.popUp);
@@ -42,7 +57,7 @@ function GamePopUps({ children }: { children: React.ReactNode })
 		setPopUp('disabled');
 		setIdentifierID(null);
 		setErrorMessage(null);
-	}
+	},[popUpBackup])
 
 	return (
 		<PopUpContext.Provider value={{ popUp, identifierID, errorMessage, handleGameEnd, handleNewID, handleNewError, resetPopUpStates }}>
