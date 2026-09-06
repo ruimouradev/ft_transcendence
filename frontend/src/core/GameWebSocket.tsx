@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useAuth } from './AuthContext';
 import { usePopUpContext } from '../core/GamePopUpsContext';
 import { GameContext } from './GameWebSocketContext'
-import type { GameState, Notice, Notices } from './types.ts'
+import type { GameState, LastAction, Notice, Notices } from './types.ts'
 
 const originalSetItem = sessionStorage.setItem;
 
@@ -15,6 +15,8 @@ function GameWebSocket({ children }: { children: React.ReactNode }) {
 	const [gameState, setGameState] = useState<GameState | null>(null);
 	const [connected, setConnected] = useState<boolean>(false);
 	const [notices, setNotices] = useState<Notices>({});
+	// const [lastAction, setLastAction] = useState<LastAction | null>(null);
+	// const [oldGameState, setOldGameState] = useState<GameState | null>(null);
 
 	const socketRef = useRef<WebSocket | null>(null);
 	const pendingRoomRef = useRef<string | null>(null);
@@ -148,6 +150,7 @@ function GameWebSocket({ children }: { children: React.ReactNode }) {
 
 	function handleNewGameState(gamestate: GameState)
 	{
+//		handleSpecialAction();
 		gameStateRef.current = gamestate;
 		setGameState(gamestate);
 		if (gamestate.plus4_by)
@@ -225,6 +228,28 @@ function GameWebSocket({ children }: { children: React.ReactNode }) {
 			return (winnerRef.current);
 		return ('No Winner');
 	}
+
+	// function handleSpecialAction()
+	// {
+	// 	if (!gameState)
+	// 			return;
+
+	// 	/* 
+	// 		Valid lastActions
+	// 		value: +2 | reverse | skip | +4 | wild
+	// 		if settings.seven_zero && (value === '7' || value === '0')
+
+	// 		if (!Valid lastActions)
+	// 			return ;
+
+	// 		oldGameState = gameState;
+
+	// 		setLastAction(gameState.last_action);
+	// 		setOldGameState(gameState);
+
+	// 	*/
+	// }
+
 
 	return (
 		<GameContext.Provider value={{ roomID, connected, gameState, notices, leaveRoom, resetNotices, getWinnerName, resetGameState, joinRoom, closeRoomConnection, sendMessage }}>
