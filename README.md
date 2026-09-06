@@ -1,4 +1,4 @@
-*This project has been created as part of the 42 curriculum by acaldeir, bliu, vloureir and rusilva-.*
+*This project has been created as part of the 42 curriculum by acaldeir, bliu, vloureir, rusilva-.*
 
 # ft_transcendence, Uno
 
@@ -30,14 +30,17 @@ port.
    Important variables:
 
    - `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_DB`
-   - `DBDATAPATH`: host path used for the database volume
    - `SECRET_KEY`: JWT signing key
-   - `O42_CLIENT_ID`, `O42_CLIENT_SECRET`: requested from the 42 intra,
-     needed for the 42 login
-   - `MAIL_USERNAME`, `MAIL_PASSWORD`: the account that sends the
-     verification and recovery emails
+   - `O42_CLIENT_ID`, `O42_CLIENT_SECRET`: from an application registered
+     on the 42 intra with the redirect URI
+     `https://localhost:8443/api/v1/auth/42/callback`, without them the
+     42 login button does not work
+   - `MAIL_USERNAME`, `MAIL_PASSWORD`: a Gmail account and its app
+     password, used for the activation and recovery emails, without
+     them a new account never gets its activation email and cannot log in
    - `FIRST_SUPERUSER`, `FIRST_SUPERUSER_PASSWORD`: admin account
-     created on the first start
+     created on the first start, it can log in right away with the
+     sample values
    - `GRAFANA_ADMIN_USER`, `GRAFANA_ADMIN_PASSWORD`: Grafana login
    - `WATCHPACK_POLLING`: useful for frontend hot reload inside Docker
 
@@ -72,12 +75,12 @@ responsibility each one also holds.
 | Member | Role | Area | Responsibilities |
 | --- | --- | --- | --- |
 | Vinicius | Product Owner | Frontend | Lobby, game room, card rendering, WebSocket client, settings panel, card backs, design system |
-| Rui | Project Manager | Game core and monitoring | Rules engine (official rules, +4 challenge), game customization, engine-realtime contract, Prometheus and Grafana monitoring, testing across the project |
+| Rui | Project Manager | Game core and monitoring | Rules engine (official rules, +4 challenge), game customization, engine-realtime contract, Prometheus and Grafana monitoring, live testing across the project |
 | Bin | Tech Lead | Platform | Repo skeleton, one-command Docker, DB schema and ORM, auth, OAuth, 2FA, public API, stats and match history |
 | Alexandre | Developer | Real-time and AI | WebSocket layer, per-client views, reconnection, remote players, AI opponent |
 
 Shared by all four: Docker one-command startup, Privacy Policy and
-Terms pages, tests, and the multi-user testing.
+Terms pages, and the multi-user testing.
 
 ## Project Management
 
@@ -121,20 +124,21 @@ the SQLModel ORM. The tables:
   to the hashed API key.
 - **Friendship**: a request between two users and its status, pending,
   accepted, rejected or blocked.
-- **Game**: one finished match, with its settings and the time it ended.
-- **GamePlayer**: one row per seat in a game, the score, the rank and
-  the cards left, joining a user to a game.
+- **Game**: one finished match, its status and when it started and ended.
+- **GamePlayer**: one row per seat in a game, the seat, the score, the
+  winner flag and the cards left, joining a user to a game.
 - **UserStatistic**: the running totals per user, games, wins, losses
   and score, that feed the leaderboards.
 - **RecoveryCode**: the single-use codes handed out when 2FA is armed.
 
-A user has many games through GamePlayer, one UserStatistic row, many
+A user has many games through GamePlayer, a UserStatistic row from the
+first finished game on, many
 friendships, and its OAuth and recovery links:
 
 ```mermaid
 erDiagram
     User ||--o{ OAuthAccount : "42 login and API key"
-    User ||--|| UserStatistic : "running totals"
+    User ||--o| UserStatistic : "running totals"
     User ||--o{ RecoveryCode : "2FA backup codes"
     User ||--o{ GamePlayer : "one per seat taken"
     Game ||--o{ GamePlayer : "one row per seat"
@@ -206,8 +210,8 @@ One line each, for the defense:
 ## Individual Contributions
 
 **Rui, game core and monitoring.** Wrote the rules engine
-(`backend/app/game/engine.py`): every Uno rule in one pure, seedable,
-fully tested module, including the +4 bluff/challenge and the house
+(`backend/app/game/engine.py`): every Uno rule in one pure, seedable
+module, including the +4 bluff/challenge and the house
 rules. Defined the wire contract (`backend/app/game/contract.py`) that
 the realtime layer and the frontend both build on, and the per-player
 snapshot design that keeps hands secret. Built the monitoring stack:

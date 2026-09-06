@@ -1,10 +1,8 @@
-import logging
 from typing import Any
 from sqlmodel import Session, select
-from app.models.all import OAuthAccount, OAuthAccountCreate, OAuthAccountRead, ProviderType, User, UserCreate, UserUpdate, get_datetime_utc
+from app.models.all import OAuthAccount, OAuthAccountCreate, ProviderType, User, UserCreate, UserUpdate, get_datetime_utc
 from app.platform.security import get_password_hash, verify_password
 
-logger = logging.getLogger("uvicorn.error")
 
 def create_user(*, session: Session, user_create: UserCreate) -> User:
     db_obj = User.model_validate(

@@ -1,5 +1,3 @@
-include ./.env
-
 all: vinit
 	docker compose -f ./docker-compose.yml build frontend_prod
 	docker compose -f ./docker-compose.yml run --rm frontend_prod
@@ -16,7 +14,6 @@ build: vinit
 re: down all
 
 vinit:
-	@mkdir -p ${DBDATAPATH}
 	@mkdir -p ./nginx/dist
 
 dev: vinit
@@ -60,11 +57,6 @@ clean_host_data: clean_compose
 	@if [ -n "$$(docker volume ls -q)" ]; then \
 		docker volume rm $$(docker volume ls -q); \
 	fi
-	@if [ -z "${DBDATAPATH}" ]; then \
-		echo "[ERROR] DBDATAPATH is empty, refusing to delete."; \
-		exit 1; \
-	fi
-	sudo rm -rf ${DBDATAPATH}
 	@echo "[INFO] All persistent data on the host deleted."
 
 clean: clean_compose clean_images clean_host_data

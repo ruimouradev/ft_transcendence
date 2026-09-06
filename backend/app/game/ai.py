@@ -1,7 +1,7 @@
 import random
 from app.game.contract import (
     Card, Color, GameState, PlayerAction,
-    Play, Draw, Catch, Challenge, SayUno
+    Play, Draw, Catch, Challenge
 )
 
 NON_WILD_COLORS: list[Color] = ["red", "yellow", "green", "blue"]

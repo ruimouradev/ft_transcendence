@@ -1,7 +1,7 @@
 from app.platform.deps import SessionDep, verify_api_key
 from app.platform.service import userservice,userStatisticService
 from app.models.all import APIError, APIErrorCode, UserGameDetail, UserOnLineStatus, UserStatisticInfo, UserStatisticLeaderboardEntry, uuid_check
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends
 from app.presence_manager import presence_manager
 
 router = APIRouter(prefix="/secured", tags=["api"], dependencies=[Depends(verify_api_key)])

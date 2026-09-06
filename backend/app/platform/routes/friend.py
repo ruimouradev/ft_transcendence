@@ -1,4 +1,3 @@
-import logging
 
 from app.platform.service import friendservice
 from fastapi import APIRouter, Query
@@ -6,7 +5,6 @@ from app.platform.deps import CurrentUser, SessionDep
 from app.models.all import APIError, APIErrorCode, Friends, Suggestions, Requests, FriendshipStatus, Friendship, uuid_check
 
 router = APIRouter(prefix="/friends", tags=["friends"] ,include_in_schema=False)
-logger = logging.getLogger("uvicorn.error")
 
 @router.get("/suggested", response_model=Suggestions)
 async def get_suggested_friends(session: SessionDep, current_user: CurrentUser):

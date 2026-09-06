@@ -237,7 +237,7 @@ export type LeaderboardRow = {
 }
 
 export type LeaderboardTableProps = {
-    // texto simples ou um nó (as tabs do ecrã das estatísticas)
+    // Plain text or a node, the statistics tabs pass a node
     title: React.ReactNode;
     rows: LeaderboardRow[];
     currentUserId: string;

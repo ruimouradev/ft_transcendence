@@ -1,4 +1,3 @@
-from jwt import api_jws
 import asyncio
 import re
 import time
@@ -413,9 +412,6 @@ async def ai_timer(room_id: str, room: Room) -> None:
                     room.game.challenge(bot.id)
                 elif isinstance(bot_action, Draw):
                     room.game.draw(bot.id)
-                elif isinstance(bot_action, SayUno):
-                    room.game.say_uno(bot.id)
-                    
                 metrics.moves.labels(kind=bot_action.type).inc()
                 await broadcast(room)
 
@@ -425,8 +421,6 @@ async def ai_timer(room_id: str, room: Room) -> None:
                     hand = next((h for h in room.game.hands if h.id == bot.id), None)
                     if hand and hand.said_uno and len(hand.cards) == 1:
                         await relay(room, Notice(sender=bot.id, kind="uno"))
-                elif isinstance(bot_action, SayUno):
-                    await relay(room, Notice(sender=bot.id, kind="uno"))
                 elif isinstance(bot_action, Catch):
                     await relay(room, Notice(sender=bot.id, kind="catch",
                                              target=bot_action.target))

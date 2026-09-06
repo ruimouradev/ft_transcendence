@@ -16,7 +16,7 @@ from app.platform import security
 from app.platform.config import settings
 
 from app.platform.service.mailservice import create_verification_token_used_in_mail, send_password_reset_email, verify_token_in_email
-from app.models.all import EmailVerificationType, ErrorResponse, Message, OAuthAccountCreate, ProviderType, UserCreate, UserUpdate, User, APIError, APIErrorCode
+from app.models.all import EmailVerificationType, ErrorResponse, Message, OAuthAccountCreate, ProviderType, UserCreate, UserUpdate, APIError, APIErrorCode
 
 from fastapi.responses import RedirectResponse, Response
 
@@ -271,10 +271,9 @@ async def callback_42(session: SessionDep, request: Request, code: str | None = 
                     provider=(ProviderType.t42.value),
                     provider_user_id=str(user42_id),
                     provider_user_email=user42_email,
-                    # access_token=access_token42,
                     user_id=str(user.id)
                 ))
-            response = RedirectResponse(url=f"/", status_code=status.HTTP_302_FOUND)
+            response = RedirectResponse(url="/", status_code=status.HTTP_302_FOUND)
             
             response.set_cookie(
                 key="access_token",

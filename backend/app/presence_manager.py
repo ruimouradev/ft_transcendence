@@ -1,6 +1,4 @@
-import asyncio
 from collections import defaultdict
-import time
 from typing import Any, Dict, Set
 from app.models.all import UserOnLineStatus
 from fastapi import WebSocket
@@ -39,10 +37,6 @@ class InMemoryPresenceManager:
     def is_online(self, user_id: str) -> bool:
         return self.get_status(user_id) == "ONLINE"
 
-    def log_user_statuses(self) -> Dict[str, str]:
-        for user_id, status in self.statuses.items():
-            logger.info(f"log user status=======================> User {user_id} status: {status}")
-
     def get_online_players(self) -> list[UserOnLineStatus]:
         online_players = [UserOnLineStatus(user_id=user_id, online="ONLINE") for user_id, status in self.statuses.items() if status == "ONLINE"]
         logger.info(f"=======================> Online players: {online_players}")
@@ -58,11 +52,5 @@ class InMemoryPresenceManager:
 
         else:
             logger.warning(f"logger=======================>Unknown message type received from {user_id}: {data}")
-
-    async def send_personal_message(self, user_id: str, message: Dict[str, Any]):
-        websockets = self.active_connections.get(user_id)
-        if websockets:
-            for websocket in websockets:
-                await websocket.send_json(message)
 
 presence_manager = InMemoryPresenceManager()
