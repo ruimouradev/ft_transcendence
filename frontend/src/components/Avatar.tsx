@@ -21,7 +21,7 @@ function Avatar({player, position}: {player: PublicPlayer, position: string})
 	}, [cooldown]);
 
 	function handleEmoticon(event: React.MouseEvent<HTMLElement>)
-	{    
+	{
 		if (cooldown === true)
         	return;
 		setAnchor(event.currentTarget);

@@ -5,7 +5,6 @@ import PersonIcon from '@mui/icons-material/Person';
 import { useGameContext } from '../core/GameWebSocketContext';
 import { icons_text, menu_text } from '../game/macrosConfig.ts';
 import type { Room } from '../core/types.ts';
-
 import LayersIcon from '@mui/icons-material/Layers';
 import ViewCarouselIcon from '@mui/icons-material/ViewCarousel';
 import Rotate90DegreesCwOutlinedIcon from '@mui/icons-material/Rotate90DegreesCwOutlined';
@@ -19,7 +18,9 @@ function PrintRoom({room, room_flag, onSelect}: {room: Room, room_flag: boolean 
 		<Card onClick={onSelect} sx={{ margin: 0.4, width: '97%', height: '10vh', bgcolor: `${bg}`, borderTop: '3px solid white'}}>
 			<Box sx={{width: '100%', height: '50%', position: 'relative'}}>
 				<Box sx={{position: 'absolute', top: '1%', left: '3%', width: '50%', height: '100%', ...menu_text}}>Room ID: {room.code}</Box>
-				<Typography className="align" sx={{ position: 'absolute', right: "3%", top: '1%', ...icons_text }}><PersonIcon />{room.players.length} / {room.max_players}</Typography>
+				<Typography className="align" sx={{ position: 'absolute', right: "3%", top: '1%', ...icons_text }}>
+					<PersonIcon />{room.players.length} / {room.max_players}
+				</Typography>
 			</Box>
 			<Box sx={{ width: '100%', height: '50%', display: 'flex', alignItems: 'center', position: 'relative', gap: '-1vw', left: '3%'}}>
 				<Tooltip title={'Initial Hand Size'} arrow>
@@ -28,12 +29,14 @@ function PrintRoom({room, room_flag, onSelect}: {room: Room, room_flag: boolean 
 				</Tooltip>
 				{room.settings.stacking && 
 					<Tooltip title={'Stacking Option'} arrow>
-						<Chip icon={<LayersIcon sx={{ ...icons_font }} />} sx={{ backgroundColor: 'transparent', '& .MuiChip-icon': { color: 'success.main', m: 0, p: 0 } }} />
+						<Chip icon={<LayersIcon sx={{ ...icons_font }} />}
+							sx={{ backgroundColor: 'transparent', '& .MuiChip-icon': { color: 'success.main', m: 0, p: 0 } }} />
 					</Tooltip>
 				}
 				{room.settings.seven_zero &&  
 					<Tooltip title={'Seven-Zero Option'} arrow>
-						<Chip icon={<Rotate90DegreesCwOutlinedIcon sx={{ ...icons_font }} />} sx={{ backgroundColor: 'transparent', '& .MuiChip-icon': { color: 'success.main', m: 0, p: 0 } }}  />
+						<Chip icon={<Rotate90DegreesCwOutlinedIcon sx={{ ...icons_font }} />}
+							sx={{ backgroundColor: 'transparent', '& .MuiChip-icon': { color: 'success.main', m: 0, p: 0 } }}  />
 					</Tooltip>					
 				}
 			</Box>

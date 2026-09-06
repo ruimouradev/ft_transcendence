@@ -16,15 +16,19 @@ function PlayerCountSettings({playerCount, setPlayerCount, defaultTooltip, setOp
 			<Box sx={{...align_noJustify, width: '50%'}}>
 				<Typography sx={{ fontWeight: 'bold', mx: 2, ...menu_text }}>Player Count: </Typography>
 			</Box>
-			<Box onMouseEnter={() => setOptionsTooltip(text)} onMouseLeave={() => setOptionsTooltip(defaultTooltip)} sx={{...align_noJustify, width: '50%'}}>
+			<Box onMouseEnter={() => setOptionsTooltip(text)} onMouseLeave={() => setOptionsTooltip(defaultTooltip)}
+				sx={{...align_noJustify, width: '50%'}}>
 				<IconButton >
-					<RemoveSharpIcon onClick={() => setPlayerCount(prev => prev > 2 ? prev - 1 : prev)} sx={{ color: 'gray', border: 3, borderRadius: 1, ...buttons_text }}/>
+					<RemoveSharpIcon onClick={() => setPlayerCount(prev => prev > 2 ? prev - 1 : prev)}
+						sx={{ color: 'gray', border: 3, borderRadius: 1, ...buttons_text }}/>
 				</IconButton>
-				<Box sx={{ color: '#ececec', border: 3, borderRadius: 1, width: 'clamp(1.3rem, 3.5vw, 2rem)', aspectRatio: '1 / 1', flexShrink: 0, ...align_noJustify, justifyContent: 'center' }}>
+				<Box sx={{ color: '#ececec', border: 3, borderRadius: 1, width: 'clamp(1.3rem, 3.5vw, 2rem)',
+					aspectRatio: '1 / 1', flexShrink: 0, ...align_noJustify, justifyContent: 'center' }}>
 					<Typography sx={{ textAlign: 'center', ...icons_text }}>{playerCount}</Typography>
 				</Box>
 				<IconButton >
-					<AddSharpIcon onClick={() => setPlayerCount(prev => prev < 4 ? prev + 1 : prev)} sx={{ color: 'gray', border: 3, borderRadius: 1, ...buttons_text }}/>
+					<AddSharpIcon onClick={() => setPlayerCount(prev => prev < 4 ? prev + 1 : prev)}
+						sx={{ color: 'gray', border: 3, borderRadius: 1, ...buttons_text }}/>
 				</IconButton>
 			</Box>
 		</Box>

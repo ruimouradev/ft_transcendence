@@ -18,10 +18,12 @@ function StackingSettings({stacking, setStacking, defaultTooltip, setOptionsTool
 			</Box>
 			<Box onMouseEnter={() => setOptionsTooltip(text)} onMouseLeave={() => setOptionsTooltip(defaultTooltip)} sx={{...align_noJustify, width: '50%'}}>
 				<IconButton >
-					<ClearSharpIcon onClick={() => setStacking(false)} sx={{ color: [!stacking ? 'primary.main' : 'gray'], border: 3, borderRadius: 1, ...buttons_text }}/>
+					<ClearSharpIcon onClick={() => setStacking(false)}
+						sx={{ color: [!stacking ? 'primary.main' : 'gray'], border: 3, borderRadius: 1, ...buttons_text }}/>
 				</IconButton>
 				<IconButton >
-					<CheckSharpIcon onClick={() => setStacking(true)} sx={{ color: [stacking ? 'success.main' : 'gray'], border: 3, borderRadius: 1, ...buttons_text }}/>
+					<CheckSharpIcon onClick={() => setStacking(true)}
+						sx={{ color: [stacking ? 'success.main' : 'gray'], border: 3, borderRadius: 1, ...buttons_text }}/>
 				</IconButton>
 			</Box>
 		</Box>

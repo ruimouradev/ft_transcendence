@@ -15,8 +15,6 @@ function GameWebSocket({ children }: { children: React.ReactNode }) {
 	const [gameState, setGameState] = useState<GameState | null>(null);
 	const [connected, setConnected] = useState<boolean>(false);
 	const [notices, setNotices] = useState<Notices>({});
-	// const [lastAction, setLastAction] = useState<LastAction | null>(null);
-	// const [oldGameState, setOldGameState] = useState<GameState | null>(null);
 
 	const socketRef = useRef<WebSocket | null>(null);
 	const pendingRoomRef = useRef<string | null>(null);
@@ -63,10 +61,6 @@ function GameWebSocket({ children }: { children: React.ReactNode }) {
 			try {
 				const message = JSON.parse(event.data);
 				const { type } = message;
-
-				// DEL
-				console.log('state:')
-				console.log(message);
 
 				switch (type) {
 					case 'welcome':
@@ -150,7 +144,6 @@ function GameWebSocket({ children }: { children: React.ReactNode }) {
 
 	function handleNewGameState(gamestate: GameState)
 	{
-		// handleSpecialAction();
 		gameStateRef.current = gamestate;
 		setGameState(gamestate);
 		if (gamestate.plus4_by)
@@ -229,28 +222,6 @@ function GameWebSocket({ children }: { children: React.ReactNode }) {
 		return ('No Winner');
 	}
 
-	// function handleSpecialAction()
-	// {
-	// 	if (!gameState)
-	// 			return;
-
-	// 	/* 
-	// 		Valid lastActions
-	// 		value: +2 | reverse | skip | +4 | wild
-	// 		if settings.seven_zero && (value === '7' || value === '0')
-
-	// 		if (!Valid lastActions)
-	// 			return ;
-
-	// 		oldGameState = gameState;
-
-	// 		setLastAction(gameState.last_action);
-	// 		setOldGameState(gameState);
-
-	// 	*/
-	// }
-
-
 	return (
 		<GameContext.Provider value={{ roomID, connected, gameState, notices, leaveRoom, resetNotices, getWinnerName, resetGameState, joinRoom, closeRoomConnection, sendMessage }}>
 			{ children }
@@ -259,32 +230,3 @@ function GameWebSocket({ children }: { children: React.ReactNode }) {
 }
 
 export default  GameWebSocket
-
-
-/*
-	HANDLE
-		ALREADY_IN_ROOM = "ALREADY_IN_ROOM"
-
-	JUST PROMPT
-		NOT_YOUR_TURN = "NOT_YOUR_TURN"
-		INVALID_CARD = "INVALID_CARD"
-		COLOR_REQUIRED = "COLOR_REQUIRED"
-		TARGET_REQUIRED = "TARGET_REQUIRED"
-		CARD_NOT_IN_HAND = "CARD_NOT_IN_HAND"
-		INVALID_CATCH = "INVALID_CATCH"
-		INVALID_UNO = "INVALID_UNO"
-		INVALID_CHALLENGE = "INVALID_CHALLENGE"
-		GAME_NOT_STARTED = "GAME_NOT_STARTED"
-
-	SPECIAL
-		INVALID_MESSAGE = "INVALID_MESSAGE"
-
-		GameState ? (JUST PROMPT) : (FULL CLEAR)
-
-	BACKEND CLOSE (FULL CLEAR)
-		KICKED = "KICKED"
-		ROOM_FULL = "ROOM_FULL"
-		AUTH_REQUIRED = "AUTH_REQUIRED"
-		ROOM_NOT_FOUND = "ROOM_NOT_FOUND"
-		GAME_ALREADY_STARTED = "GAME_ALREADY_STARTED"
-*/

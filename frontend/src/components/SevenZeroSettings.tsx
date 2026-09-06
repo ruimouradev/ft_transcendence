@@ -16,12 +16,15 @@ function SevenZeroSettings({sevenZero, setSevenZero, defaultTooltip, setOptionsT
 			<Box sx={{...align_noJustify, width: '50%' }}>
 				<Typography sx={{ fontWeight: 'bold', mx: 2, ...menu_text }}>Seven-Zero: </Typography>
 			</Box>
-			<Box onMouseEnter={() => setOptionsTooltip(text)} onMouseLeave={() => setOptionsTooltip(defaultTooltip)} sx={{ ...align_noJustify, width: '50%', height: '100%', flexShrink: 0 }}>
+			<Box onMouseEnter={() => setOptionsTooltip(text)} onMouseLeave={() => setOptionsTooltip(defaultTooltip)}
+				sx={{ ...align_noJustify, width: '50%', height: '100%', flexShrink: 0 }}>
 				<IconButton>
-					<ClearSharpIcon onClick={() => setSevenZero(false)} sx={{ color: [!sevenZero ? 'primary.main' : 'gray'], border: 3, borderRadius: 1, ...buttons_text }}/>
+					<ClearSharpIcon onClick={() => setSevenZero(false)}
+						sx={{ color: [!sevenZero ? 'primary.main' : 'gray'], border: 3, borderRadius: 1, ...buttons_text }}/>
 				</IconButton>
 				<IconButton >
-					<CheckSharpIcon onClick={() => setSevenZero(true)} sx={{ color: [sevenZero ? 'success.main' : 'gray'], border: 3, borderRadius: 1, ...buttons_text }}/>
+					<CheckSharpIcon onClick={() => setSevenZero(true)}
+						sx={{ color: [sevenZero ? 'success.main' : 'gray'], border: 3, borderRadius: 1, ...buttons_text }}/>
 				</IconButton>
 			</Box>
 		</Box>

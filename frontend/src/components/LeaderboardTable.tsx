@@ -1,6 +1,6 @@
 import { Avatar, Box, Chip, Paper, Table, TableBody, TableCell,
 	TableContainer, TableHead, TableRow, Typography, } from '@mui/material';
-import type { LeaderboardTableProps } from '../core/types.ts'
+import type { LeaderboardTableProps } from '../core/types.ts';
 
 function LeaderboardTable({ title, rows, currentUserId, currentUserAvatar, tag }: LeaderboardTableProps)
 {

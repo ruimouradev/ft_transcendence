@@ -3,7 +3,6 @@ import { useGameContext } from '../core/GameWebSocketContext';
 import Avatar from '../components/Avatar';
 import Emoticons from '../components/Emoticons';
 import type { Notice, PublicPlayer } from '../core/types.ts';
-
 import DrawHands from '../components/DrawHands';
 
 function PlayerOneHand({player, notice}: {player: PublicPlayer, notice: Notice | undefined})

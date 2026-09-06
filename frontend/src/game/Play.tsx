@@ -17,7 +17,6 @@ function Play()
 			joinRoom(room, message);
 	}, [joinRoom, user?.nick_name]);
 
-	// if player in room, connect to room
 	return (connected === true ? <GameRoom /> : <Lobby />);
 }
 

@@ -3,10 +3,6 @@ export const easy_bot = {"type": "add_bot", "level": "easy"};
 export const medium_bot = {"type": "add_bot", "level": "medium"};
 export const hard_bot = {"type": "add_bot", "level": "hard"};
 
-
-
-
-
 // Lobby macros
 export const align = {display: 'flex', alignItems: 'center', justifyContent: 'center'};
 export const align_noJustify = {display: 'flex', alignItems: 'center'};

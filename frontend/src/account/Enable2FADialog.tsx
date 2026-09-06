@@ -109,7 +109,8 @@ function Enable2FADialog({ open, onClose, onSuccess }: Enable2FADialogProps)
     };
 
     const handleVerifyCode = async () => {
-        if (!user) return;
+        if (!user)
+			return;
         if (code.length !== 6) {
             setError('Please enter the 6-digit verification code.');
             return;

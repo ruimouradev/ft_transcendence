@@ -18,10 +18,12 @@ function PrivacySettings({privacy, setPrivacy, defaultTooltip, setOptionsTooltip
 			</Box>
 			<Box onMouseEnter={() => setOptionsTooltip(text)} onMouseLeave={() => setOptionsTooltip(defaultTooltip)} sx={{...align_noJustify, width: '50%'}}>
 				<IconButton >
-					<ClearSharpIcon onClick={() => setPrivacy(false)} sx={{ color: [!privacy ? 'primary.main' : 'gray'], border: 3, borderRadius: 1, ...buttons_text }}/>
+					<ClearSharpIcon onClick={() => setPrivacy(false)} sx={{ color: [!privacy ? 'primary.main' : 'gray'],
+						border: 3, borderRadius: 1, ...buttons_text }}/>
 				</IconButton>
 				<IconButton >
-					<CheckSharpIcon onClick={() => setPrivacy(true)} sx={{ color: [privacy ? 'success.main' : 'gray'], border: 3, borderRadius: 1, ...buttons_text }}/>
+					<CheckSharpIcon onClick={() => setPrivacy(true)} sx={{ color: [privacy ? 'success.main' : 'gray'],
+						border: 3, borderRadius: 1, ...buttons_text }}/>
 				</IconButton>
 			</Box>
 		</Box>

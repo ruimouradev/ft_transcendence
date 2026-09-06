@@ -3,7 +3,6 @@ import { useGameContext } from '../core/GameWebSocketContext';
 import Avatar from '../components/Avatar';
 import Emoticons from '../components/Emoticons';
 import type { PublicPlayer } from '../core/types.ts';
-
 import PlayerOneHand from '../components/PlayerOneHand';
 import DrawHidden from '../components/DrawHidden';
 
