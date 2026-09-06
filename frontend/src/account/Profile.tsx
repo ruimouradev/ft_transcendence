@@ -82,8 +82,10 @@ function ProfileCard()
         }
     };
 
-    const handleNameSave = async () => {
-        if (!user) return;
+    const handleNameSave = async (e: React.SubmitEvent<HTMLFormElement>) => {
+		e.preventDefault();
+        if (!user)
+			return;
 
         const newNickName = nickName.trim();
 		if (newNickName.length > 12 || newNickName.length < 3) {
@@ -122,9 +124,8 @@ function ProfileCard()
     };
 
     const handleCardBackChange = async (newCardBackUrl: string) => {
-        if (!user) return;
-        //  o seletor devolve o caminho da imagem; traduz-se para o nome 
-        // de código antes de gravar, que é o que a base deve conhecer
+        if (!user)
+			return;
         const key = Object.keys(cardBacks).find((k) => cardBacks[k] === newCardBackUrl,) ?? 'back00';
         try {
             await api.patch('/users/me', { card_back: key });
@@ -155,25 +156,28 @@ function ProfileCard()
     };
 
     const handle2FADisabled = () => {
-        if (!user) return;
+        if (!user)
+			return;
         login({ ...user, use2fa: false });
         setNotification({ open: true, message: '2FA disabled successfully.', severity: 'success', });
 
     }
 
     const handle2FAEnabled = () => {
-        if (!user) return;
+        if (!user)
+			return;
         login({ ...user, use2fa: true });
         setNotification({ open: true, message: '2FA enabled successfully.', severity: 'success', });
     }
 
-    if (!user) return null;
+    if (!user)
+		return (null);
 
     return (
         <Container maxWidth="sm" sx={{ mt: 6, mb: 6 }}>
             <NotificationSnackbar open={notification.open} message={notification.message} severity={notification.severity} onClose={handleSnackbarClose} />
 
-            <Card elevation={3} sx={{ borderRadius: 3, overflow: 'hidden' }}>
+            <Card component="form" onSubmit={handleNameSave} elevation={3} sx={{ borderRadius: 3, overflow: 'hidden' }}>
 
                 <Tooltip title="Click to change card back" arrow>
                     <Box sx={{ position: 'relative', top: 0, display: 'flex', justifyContent: 'left' }}>
@@ -200,7 +204,7 @@ function ProfileCard()
                                 <TextField label="Nickname" size="small" value={nickName}
 									onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNickName(e.target.value)} sx={{ minWidth: 140 }} />
                                 <Stack direction="row" spacing={1}>
-                                    <Button variant="contained" size="small" onClick={handleNameSave}>
+                                    <Button type="submit" variant="contained" size="small">
                                         Save
                                     </Button>
                                     <Button variant="outlined" size="small" onClick={handleNameCancel}>

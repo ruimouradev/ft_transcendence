@@ -64,10 +64,6 @@ function GameWebSocket({ children }: { children: React.ReactNode }) {
 				const message = JSON.parse(event.data);
 				const { type } = message;
 
-				// DEL
-				console.log('state:')
-				console.log(message);
-
 				switch (type) {
 					case 'welcome':
 						setRoomID(roomID);
@@ -259,32 +255,3 @@ function GameWebSocket({ children }: { children: React.ReactNode }) {
 }
 
 export default  GameWebSocket
-
-
-/*
-	HANDLE
-		ALREADY_IN_ROOM = "ALREADY_IN_ROOM"
-
-	JUST PROMPT
-		NOT_YOUR_TURN = "NOT_YOUR_TURN"
-		INVALID_CARD = "INVALID_CARD"
-		COLOR_REQUIRED = "COLOR_REQUIRED"
-		TARGET_REQUIRED = "TARGET_REQUIRED"
-		CARD_NOT_IN_HAND = "CARD_NOT_IN_HAND"
-		INVALID_CATCH = "INVALID_CATCH"
-		INVALID_UNO = "INVALID_UNO"
-		INVALID_CHALLENGE = "INVALID_CHALLENGE"
-		GAME_NOT_STARTED = "GAME_NOT_STARTED"
-
-	SPECIAL
-		INVALID_MESSAGE = "INVALID_MESSAGE"
-
-		GameState ? (JUST PROMPT) : (FULL CLEAR)
-
-	BACKEND CLOSE (FULL CLEAR)
-		KICKED = "KICKED"
-		ROOM_FULL = "ROOM_FULL"
-		AUTH_REQUIRED = "AUTH_REQUIRED"
-		ROOM_NOT_FOUND = "ROOM_NOT_FOUND"
-		GAME_ALREADY_STARTED = "GAME_ALREADY_STARTED"
-*/

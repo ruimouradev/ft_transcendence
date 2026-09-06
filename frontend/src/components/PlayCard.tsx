@@ -11,10 +11,6 @@ function PlayCard({card, gameState, sendMessage, handleNewID}:
 		|| !gameState?.you.playable?.includes(card.id))
 		return null;
 
-	// NEEDED FOR TESTING !!!! DEL LATER
-	// handleNewID('plus4', '');
-	// return ;
-
 	const play_message = {type: 'play', card: `${card.id}`};
 
 	if (gameState?.settings?.seven_zero === true && card.value == '7')

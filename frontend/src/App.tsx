@@ -7,7 +7,7 @@ import ApiKeyPage from './account/ApiKeyPage'
 import ChangePasswordCard from './account/ChangePasswordCard'
 import HomePage from './pages/HomePage'
 import FriendsPage from './pages/FriendsPage'
-import UnoDashboard from './stats/UnoDashboard'
+import UnoDashboard from './pages/UnoDashboard'
 import Privacy from './legal/Privacy'
 import Terms from './legal/Terms'
 import Rules from './legal/Rules'
@@ -18,7 +18,8 @@ import ProtectedRoute from './core/ProtectedRoute'
 import Verify2fa from './account/Verify2fa'
 import ResetPassword from './account/ResetPassword'
 
-function App() {
+function App()
+{
     return (
         <Routes>
             <Route path="/" element={<MainLayout />}>

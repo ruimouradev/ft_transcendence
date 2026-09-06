@@ -72,13 +72,16 @@ function WaitRoom()
 								<Card sx={{ height: '100%', width: '100%', display: 'flex', position: 'relative', alignItems: 'center' }}>
 									<Typography sx={{ p: { xs: 1, md: 3 }, ...button_text }}>ADD BOT</Typography>
 									<CardContent sx={{ display: 'flex', position: 'absolute', alignItems: 'center', right: 0 }}>
-											<Button disabled={not_host || !room_full} variant="contained" sx={{ mx: '2%', bgcolor: '#708c08' }} onClick={() => sendMessage(easy_bot)}>
+											<Button disabled={not_host || !room_full} variant="contained" sx={{ mx: '2%', bgcolor: '#708c08' }}
+												onClick={() => sendMessage(easy_bot)}>
 												<Typography sx={{...button_text}}>EASY</Typography>
 											</Button>
-											<Button disabled={not_host || !room_full} variant="contained" sx={{ mx: '2%', bgcolor: '#c7950e' }} onClick={() => sendMessage(medium_bot)}>
+											<Button disabled={not_host || !room_full} variant="contained" sx={{ mx: '2%', bgcolor: '#c7950e' }}
+												onClick={() => sendMessage(medium_bot)}>
 												<Typography sx={{...button_text}}>MEDIUM</Typography>
 											</Button>
-											<Button disabled={not_host || !room_full} variant="contained" sx={{ mx: '2%', bgcolor: '#cf5900' }} onClick={() => sendMessage(hard_bot)}>
+											<Button disabled={not_host || !room_full} variant="contained" sx={{ mx: '2%', bgcolor: '#cf5900' }}
+												onClick={() => sendMessage(hard_bot)}>
 												<Typography sx={{...button_text}}>HARD</Typography>
 											</Button>
 									</CardContent> 

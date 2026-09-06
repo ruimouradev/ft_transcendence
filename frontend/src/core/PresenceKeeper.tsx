@@ -2,7 +2,6 @@ import { useEffect, useRef } from 'react';
 import { useAuth } from './AuthContext';
 
 // Presence socket, lights the green dot of the friends list
-
 const MAX_RECONNECT_ATTEMPTS = 8;
 const BASE_RECONNECT_DELAY = 1000;
 const MAX_RECONNECT_DELAY = 30000;

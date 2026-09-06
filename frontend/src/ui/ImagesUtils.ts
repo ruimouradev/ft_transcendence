@@ -26,11 +26,7 @@ import bot_md from '../assets/avatar/bot_medium.png';
 import bot_hd from '../assets/avatar/bot_hard.png';
 import offline from '../assets/avatar/offline.png';
 
-// A tabela dos versos de carta. Na base de dados guarda-se o nome de
-// código (back00, back01...), nunca o caminho do ficheiro: caminhos
-// mudam quando um ficheiro é renomeado e mudam sempre na build de
-// produção, os nomes de código sobrevivem a tudo. Quem mexer nas
-// imagens só precisa de atualizar esta tabela.
+// Cardbacks
 export const cardBacks: Record<string, string> = {
     back00,
     back01,
@@ -39,16 +35,13 @@ export const cardBacks: Record<string, string> = {
     back04,
 };
 
-// O verso usado quando a conta tem um valor antigo ou desconhecido
 export const defaultCardBack = back00;
 
+// Utils images
 export const bg_image = bg;
 export const winner_image = winner;
 export const direction_plus = arrow_01;
 export const direction_minus = arrow_02;
-export const emoticon_uno = uno;
-export const emoticon_catch = _catch;
-
 
 // Square Colors
 export const color_red = red;
@@ -57,6 +50,8 @@ export const color_green = green;
 export const color_yellow = yellow;
 
 // Emoticons
+export const emoticon_uno = uno;
+export const emoticon_catch = _catch;
 export const emoticon_sad = sad;
 export const emoticon_angry = angry;
 export const emoticon_happy = happy;
@@ -64,6 +59,7 @@ export const emoticon_nervous = nervous;
 export const emoticon_surprised = surprised;
 export const emoticon_confidence = confidence;
 
+// Avatars
 export const bot_easy = bot_ez;
 export const bot_medium = bot_md;
 export const bot_hard = bot_hd;

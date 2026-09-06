@@ -21,7 +21,8 @@ function WildCardPopUp()
 	}, [gameState, gameState?.turn, gameState?.you.id, resetPopUpStates]);
 
 	return (
-			<Box sx={{ width: '40vw', aspectRatio: '3 / 1', ...align, border: '0.1vw solid', borderColor: 'divider', borderRadius: 2, bgcolor: 'background.default', gap: '3vw', position: 'relative' }}>
+			<Box sx={{ width: '40vw', aspectRatio: '3 / 1', ...align, border: '0.1vw solid', borderColor: 'divider',
+				borderRadius: 2, bgcolor: 'background.default', gap: '3vw', position: 'relative' }}>
 				<Box onClick={() => {resetPopUpStates(); sendMessage({...message, "color": "red"})}} sx={{ ...box_options, ...align }}>
 					<img src={color_red} draggable={false} style={image_styles}/>
 				</Box>

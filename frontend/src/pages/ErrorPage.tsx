@@ -8,7 +8,8 @@ function ErrorPage()
 
 	return (
 		<>
-			<Box sx={{ bgcolor: 'gray', width: 'min(70%, 100dvh)', aspectRatio: '1.5 / 1', mx: 'auto', mt: '2%', ...align, flexDirection: 'column', borderRadius: '1%' }}>
+			<Box sx={{ bgcolor: 'gray', width: 'min(70%, 100dvh)', aspectRatio: '1.5 / 1', mx: 'auto', mt: '2%', ...align,
+				flexDirection: 'column', borderRadius: '1%' }}>
 				<Box sx={{ bgcolor: '#070707', height: '90%', width: '95%', my: '2%', overflow: 'hidden' }}>
 					<Box sx={{ height: '20%', width: '100%'}}>
 						<Typography sx={{ m: '1%', ...menu_text }}>

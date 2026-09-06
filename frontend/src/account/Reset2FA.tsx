@@ -105,7 +105,8 @@ function Reset2FA({ open, onClose, onSuccess }: Reset2FADialogProps)
     };
 
     const handleVerifyCode = async () => {
-        if (!user) { return; }
+        if (!user) 
+			return;
         if (code.length !== 6) {
             setError('Please enter the 6-digit verification code.');
             return;
@@ -238,7 +239,8 @@ function Reset2FA({ open, onClose, onSuccess }: Reset2FADialogProps)
 									input: {
 										endAdornment: (
 											<InputAdornment position="end">
-												<IconButton onClick={() => setShowPassword((visible) => !visible)} edge="end" aria-label={showPassword ? 'Hide password' : 'Show password'}>
+												<IconButton onClick={() => setShowPassword((visible) => !visible)}
+													edge="end" aria-label={showPassword ? 'Hide password' : 'Show password'}>
 													{showPassword ? <VisibilityOff /> : <Visibility />}
 												</IconButton>
 											</InputAdornment>

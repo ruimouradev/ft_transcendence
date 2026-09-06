@@ -1,7 +1,3 @@
-/* Estilos globais. O tailwind e importado aqui uma vez e as classes
-   utilitarias dele ficam disponiveis em todos os componentes. O resto
-   do estilo base (margens a zero, fundo, tipografia) vem do proprio
-   tailwind e do CssBaseline do MUI, por isso este ficheiro e curto. */
 @import "tailwindcss";
 
 .rainbow-button {

@@ -5,7 +5,6 @@ import { usePopUpContext } from '../core/GamePopUpsContext';
 import { bg_image } from '../ui/ImagesUtils.ts';
 import WaitRoom from '../components/WaitRoom';
 import type { PublicPlayer } from '../core/types.ts';
-
 import DeckArea from '../components/DeckArea';
 import PlayersUI from '../components/PlayersUI';
 

@@ -10,8 +10,8 @@ function FriendsTab({filteredFriends, freshAvatar, handleBlockFriend}:
 			{filteredFriends.map((friend) => (
 				<Grid key={friend.id} size={{ xs: 12, sm: 6, md: 4 }}>
 					<Paper sx={{ p: 2, display: 'flex', alignItems: 'center', gap: 2 }}>
-						{/* o ponto de presença, aceso pelo websocket do servidor */}
-						<Badge overlap="circular" anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }} variant="dot" sx={{ '& .MuiBadge-badge': { backgroundColor: friend.online ? '#4caf50' : '#64748b', width: 14, height: 14, borderRadius: '50%', border: '2px solid #1e293b', }, }}>
+						<Badge overlap="circular" anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }} variant="dot"
+							sx={{ '& .MuiBadge-badge': { backgroundColor: friend.online ? '#4caf50' : '#64748b', width: 14, height: 14, borderRadius: '50%', border: '2px solid #1e293b', }, }}>
 							<Avatar src={freshAvatar(friend.avatar)} alt={friend.nick_name} sx={{ width: 56, height: 56, filter: friend.status === 'blocked' ? 'grayscale(1)' : 'none' }} />
 						</Badge>
 						<Box sx={{ flexGrow: 1, minWidth: 0 }}>

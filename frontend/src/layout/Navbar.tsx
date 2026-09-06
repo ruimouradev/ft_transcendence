@@ -13,16 +13,16 @@ import { align_noJustify } from '../game/macrosConfig.ts'
 
 function Navbar() 
 {
-  const [open, setOpen] = useState(false);
+	const [open, setOpen] = useState(false);
 
-  const links = (
-    <>
-      <NavItem to="/play" icon={<SportsEsportsOutlinedIcon />} text="Play" onPick={() => setOpen(false)} />
-      <NavItem to="/statistics" icon={<EmojiEventsOutlinedIcon />} text="Statistics" onPick={() => setOpen(false)} />
-      <NavItem to="/profile" icon={<PermIdentityOutlinedIcon />} text="Profile" onPick={() => setOpen(false)} />
-      <NavItem to="/friends" icon={<PeopleOutlinedIcon />} text="Friends" onPick={() => setOpen(false)} />
-    </>
-  );
+	const links = (
+    	<>
+      	<NavItem to="/play" icon={<SportsEsportsOutlinedIcon />} text="Play" onPick={() => setOpen(false)} />
+      	<NavItem to="/statistics" icon={<EmojiEventsOutlinedIcon />} text="Statistics" onPick={() => setOpen(false)} />
+      	<NavItem to="/profile" icon={<PermIdentityOutlinedIcon />} text="Profile" onPick={() => setOpen(false)} />
+      	<NavItem to="/friends" icon={<PeopleOutlinedIcon />} text="Friends" onPick={() => setOpen(false)} />
+   		</>
+  	);
 
 	return (
 		<header style={{ borderBottom: '1px solid rgba(255, 255, 255, 0.1)' }}>
@@ -44,7 +44,7 @@ function Navbar()
 					{links}
 				</Box>)}
 		</header>
-  );
+  	);
 }
 
 function NavItem({ to, icon, text, onPick }:

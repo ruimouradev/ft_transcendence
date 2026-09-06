@@ -56,7 +56,8 @@ function ResetPassword()
                     {success && (<Alert severity="success" sx={{ mb: 2 }}>{success}</Alert>)}
                     <form onSubmit={handleSubmit}>
                         <Stack spacing={3}>
-                            <TextField label="New Password" type="password" variant="outlined" fullWidth required value={newPassword} onChange={(e) => setNewPassword(e.target.value)} helperText="Must be at least 8 characters and less than 33 characters" />
+                            <TextField label="New Password" type="password" variant="outlined" fullWidth required value={newPassword}
+								onChange={(e) => setNewPassword(e.target.value)} helperText="Must be at least 8 characters and less than 33 characters" />
 
                             <TextField label="Confirm New Password" type="password" variant="outlined" fullWidth required value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} />
 

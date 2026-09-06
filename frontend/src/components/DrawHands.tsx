@@ -2,7 +2,6 @@ import { Box, List, ListItem } from '@mui/material';
 import { useGameContext } from '../core/GameWebSocketContext';
 import { usePopUpContext } from '../core/GamePopUpsContext';
 import type { GameCard } from '../core/types.ts';
-
 import DrawHidden from '../components/DrawHidden';
 import PlayCard from '../components/PlayCard';
 

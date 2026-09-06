@@ -2,7 +2,6 @@ import { useEffect } from 'react';
 import { Box, Button, Typography } from '@mui/material';
 import { useGameContext } from '../core/GameWebSocketContext';
 import { usePopUpContext } from '../core/GamePopUpsContext';
-
 import  { tab_text } from '../game/macrosConfig.ts'
 
 function Plus4PopUp()
@@ -23,7 +22,8 @@ function Plus4PopUp()
 	}, [gameState, gameState?.turn, gameState?.you.id, resetPopUpStates]);
 
 	return (
-			<Box sx={{ width: '60vw', aspectRatio: '3 / 1', ...align, border: '0.1vw solid', borderColor: 'divider', borderRadius: 2, bgcolor: 'background.default', position: 'relative' }}>
+			<Box sx={{ width: '60vw', aspectRatio: '3 / 1', ...align, border: '0.1vw solid', borderColor: 'divider', borderRadius: 2,
+				bgcolor: 'background.default', position: 'relative' }}>
 				<Box sx={{ width: '50%', height: '100%', ...align }}>
 					<Typography sx={{ position: 'absolute', top: '10%', ...tab_text }}>CHALLENGE</Typography>
 					<Button variant="contained" onClick={() => {resetPopUpStates(); sendMessage({"type": "challenge"})}}

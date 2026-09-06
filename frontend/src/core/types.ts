@@ -310,3 +310,6 @@ export type NotificationState = {
     message: string;
     severity: 'success' | 'error' | 'info' | 'warning';
 };
+
+// Statistics
+export type ActiveView = 'summary' | 'all' | 'wins' | 'losses';
