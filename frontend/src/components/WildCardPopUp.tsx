@@ -16,9 +16,9 @@ function WildCardPopUp()
 	const image_styles: React.CSSProperties = {width: '100%', aspectRatio: '1 / 1', objectFit: 'fill', border: '0.1vw solid black', borderRadius: '10%'};
 
 	useEffect(() => {
-		if (gameState?.turn !== gameState?.you.id)
+		if (!gameState || gameState?.turn !== gameState?.you.id)
 			resetPopUpStates();
-	}, [gameState?.turn, gameState?.you.id, resetPopUpStates]);
+	}, [gameState, gameState?.turn, gameState?.you.id, resetPopUpStates]);
 
 	return (
 			<Box sx={{ width: '40vw', aspectRatio: '3 / 1', ...align, border: '0.1vw solid', borderColor: 'divider', borderRadius: 2, bgcolor: 'background.default', gap: '3vw', position: 'relative' }}>

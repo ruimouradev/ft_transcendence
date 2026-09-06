@@ -3,7 +3,7 @@ import { Container, Card, CardContent, Box, Avatar, Typography, Stack, Chip, Too
 import { Email as EmailIcon, CheckCircle as ActiveIcon, Cancel as InactiveIcon, } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../core/AuthContext';
-import { api } from '../core/client';
+import { api, getErrorMessage } from '../core/client';
 import axios from 'axios';
 import NotificationSnackbar from '../ui/NotificationSnackbar';
 import CardBackSelector from './CardBackSelector';
@@ -94,17 +94,21 @@ function ProfileCard()
             await api.patch('/users/me', { nick_name: newNickName });
         } catch (error)
 		{
-			if (axios.isAxiosError(error)) {
-				if (axiosStatus(error) === 409) {
-					setNotification({ open: true, message: 'Nickname is already taken. Choose a different one.', severity: 'error', });
-					return;
-				}
-				else if (axiosStatus(error) === 422) {
-					setNotification({ open: true, message: 'Nickname must be between 3 and 12 characters long.', severity: 'error', });
-					return;
-				}
-			}
-            setNotification({ open: true, message: 'Failed to update the nickname. Please try again.', severity: 'error', });
+			setNotification({ open: true, message: getErrorMessage(error), severity: 'error', });
+
+			// if (axios.isAxiosError(error)) {
+			// 	if (axiosStatus(error) === 409) {
+			// 		setNotification({ open: true, message: 'Nickname is already taken. Choose a different one.', severity: 'error', });
+			// 		return;
+			// 	}
+			// 	else if (axiosStatus(error) === 422) {
+			// 		setNotification({ open: true, message: 'Nickname must be between 3 and 12 characters long.', severity: 'error', });
+			// 		return;
+			// 	}
+			// }
+			// console.log(getErrorMessage(error));
+
+            // setNotification({ open: true, message: 'Failed to update the nickname. Please try again.', severity: 'error', });
             return;
         }
         login({ ...user, nick_name: newNickName || user.nick_name });
@@ -119,7 +123,7 @@ function ProfileCard()
 
     const handleCardBackChange = async (newCardBackUrl: string) => {
         if (!user) return;
-        // o seletor devolve o caminho da imagem; traduz-se para o nome
+        //  o seletor devolve o caminho da imagem; traduz-se para o nome 
         // de código antes de gravar, que é o que a base deve conhecer
         const key = Object.keys(cardBacks).find((k) => cardBacks[k] === newCardBackUrl,) ?? 'back00';
         try {

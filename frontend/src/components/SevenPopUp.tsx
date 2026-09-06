@@ -14,9 +14,9 @@ function SevenPopUp()
 	const align = {display: 'flex', justifyContent: 'center', alignItems: 'center'};
 
 	useEffect(() => {
-		if (gameState?.turn !== gameState?.you.id)
+		if (!gameState || gameState?.turn !== gameState?.you.id)
 			resetPopUpStates();
-	}, [gameState?.turn, gameState?.you.id, resetPopUpStates]);
+	}, [gameState, gameState?.turn, gameState?.you.id, resetPopUpStates]);
 
 	const players = gameState?.players;
 
@@ -33,7 +33,7 @@ function SevenPopUp()
 					else {
 						return (
 							<Box key={player.id} sx={{ width: '5vw', aspectRatio: '1 / 1', position: 'relative', ...align }}>
-								<Card elevation={0} onClick={() => sendMessage({...message, "target": player.id})} sx={{ width: '100%', aspectRatio: '1 / 1',
+								<Card elevation={0} onClick={() => { resetPopUpStates(); sendMessage({...message, "target": player.id}) }} sx={{ width: '100%', aspectRatio: '1 / 1',
 								overflow: 'visible', bgcolor: 'rgba(255, 255, 255, 0)', display: 'flex', justifyContent: 'center', border: 0, position: 'relative', zIndex: 5 }}>
 									<CardMedia component="img" sx={{ border: 1, width: '100%', height: '100%', aspectRatio: '1 / 1',
 										borderRadius: '50%', objectFit: 'cover' }} image={avatar} draggable={false}/>
