@@ -70,7 +70,7 @@ function CreateRoom({ rooms }: { rooms: Room[]})
 				<PrivacySettings privacy={privacy} setPrivacy={setPrivacy} defaultTooltip={defaultTooltip} setOptionsTooltip={setOptionsTooltip} />
 			</Box>
 				<Button onClick={CreateRoom} variant="contained" sx={{ my:'-0.5%', width: '100%', height: '15%', mx: 'auto' }}>
-					<Typography sx={{ ...menu_text }}>CREATE ROOM</Typography>
+					<Typography sx={{ ...menu_text, fontWeight: 700 }}>CREATE ROOM</Typography>
 				</Button>
 		</Box>
 	)
