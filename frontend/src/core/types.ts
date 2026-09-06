@@ -272,6 +272,7 @@ export type Enable2FADialogProps = {
     open: boolean;
     onClose: () => void;
     onSuccess: () => void;
+    onClosed?: () => void;
 }
 
 export type Verify2FAResponse = {
@@ -288,6 +289,7 @@ export type Disable2FADialogProps = {
     open: boolean;
     onClose: () => void;
     onSuccess: () => void;
+    onClosed?: () => void;
 }
 
 export type Setup2FAResponse = {

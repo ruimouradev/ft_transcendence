@@ -6,7 +6,7 @@ import App from './App.tsx'
 import { BrowserRouter } from 'react-router-dom'
 import { AuthProvider } from './core/AuthContext'
 import PresenceKeeper from './core/PresenceKeeper'
-import { unoTheme } from './ui/unoTheme'
+import {unoTheme} from './ui/unoTheme.ts'
 
 createRoot(document.getElementById('root')!).render(
     <StrictMode>

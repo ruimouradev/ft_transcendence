@@ -35,7 +35,7 @@ function ResetPassword()
             .then(() => {
                 navigate('/login?info=Password reset successfully');
             })
-            .catch((err) => {
+            .catch((err: unknown) => {
                 setError(getErrorMessage(err));
             }).finally(() => {
                 setLoading(false);

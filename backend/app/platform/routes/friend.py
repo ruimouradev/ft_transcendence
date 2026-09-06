@@ -1,10 +1,9 @@
 import logging
-from uuid import UUID
 
 from app.platform.service import friendservice
-from fastapi import APIRouter
+from fastapi import APIRouter, Query
 from app.platform.deps import CurrentUser, SessionDep
-from app.models.all import APIError, APIErrorCode, Friends, Suggestions, Requests, FriendshipStatus, Friendship
+from app.models.all import APIError, APIErrorCode, Friends, Suggestions, Requests, FriendshipStatus, Friendship, uuid_check
 
 router = APIRouter(prefix="/friends", tags=["friends"] ,include_in_schema=False)
 logger = logging.getLogger("uvicorn.error")
@@ -22,7 +21,7 @@ async def get_suggested_friends(session: SessionDep, current_user: CurrentUser):
 
 
 @router.get("/all", response_model=Friends)
-async def get_all_friends(session: SessionDep, current_user: CurrentUser, skip: int = 0, limit: int = 10):
+async def get_all_friends(session: SessionDep, current_user: CurrentUser, skip: int = Query(default=0, ge=0), limit: int = Query(default=10, ge=1, le=100)):
     '''
     Get a list of all friends for the current user.
     '''
@@ -32,7 +31,7 @@ async def get_all_friends(session: SessionDep, current_user: CurrentUser, skip: 
     return {"friends": friends, "count": len(friends)}
 
 @router.get("/pending", response_model=Requests)
-async def get_pending_friends(session: SessionDep, current_user: CurrentUser, skip: int = 0, limit: int = 10):
+async def get_pending_friends(session: SessionDep, current_user: CurrentUser, skip: int = Query(default=0, ge=0), limit: int = Query(default=10, ge=1, le=100)):
     '''
     Get a list of all pending friend requests for the current user.
     '''
@@ -52,10 +51,7 @@ async def add_friend(friend_id: str, session: SessionDep, current_user: CurrentU
     4. Check if there is an existing friendship requested by the other user. If not, create a new friendship with status pending. If yes, accept the friendship and set the status to accepted.
     5. Return the friendship object.
     '''
-    try:
-        uuid_friend_id = UUID(friend_id)
-    except ValueError:
-        raise APIError(status_code=400, code=APIErrorCode.BAD_REQUEST, msg="Invalid friend ID format. Must be a valid UUID.")
+    uuid_friend_id=uuid_check(friend_id, msg_str="Invalid friend ID format. Must be a valid UUID.")
 
     friendship = friendservice.add_friend(friend_id=uuid_friend_id, session=session, current_user=current_user)
 
@@ -71,10 +67,7 @@ async def accept_friend(friend_id: str, status: FriendshipStatus, session: Sessi
     3. Call the friendservice.accept_friend function to update the friendship status.
     4. Return the updated friendship object
     '''
-    try:
-        uuid_friend_id = UUID(friend_id)
-    except ValueError:
-        raise APIError(status_code=400, code=APIErrorCode.BAD_REQUEST, msg="Invalid friend ID format. Must be a valid UUID.")
+    uuid_friend_id=uuid_check(friend_id, msg_str="Invalid friend ID format. Must be a valid UUID.")
     
     if status not in [FriendshipStatus.ACCEPTED, FriendshipStatus.BLOCKED, FriendshipStatus.REJECTED]:
         raise APIError(status_code=400, code=APIErrorCode.BAD_REQUEST, msg="Invalid friendship status.")

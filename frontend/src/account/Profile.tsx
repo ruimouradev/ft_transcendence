@@ -33,6 +33,7 @@ function ProfileCard()
     const [disable2FADialogOpen, setDisable2FADialogOpen] = useState(false);
 	
     const fileInputRef = useRef<HTMLInputElement | null>(null);
+    const twoFAChipRef = useRef<HTMLDivElement | null>(null);
 
     const handleAvatarClick = () => {
         fileInputRef.current?.click();
@@ -143,10 +144,17 @@ function ProfileCard()
         }
     };
 
+    const restore2FAChipFocus = () => {
+        requestAnimationFrame(() => {
+            twoFAChipRef.current?.focus();
+        });
+    };
+
     const handle2FADisabled = () => {
         if (!user) return;
         login({ ...user, use2fa: false });
         setNotification({ open: true, message: '2FA disabled successfully.', severity: 'success', });
+
     }
 
     const handle2FAEnabled = () => {
@@ -220,12 +228,13 @@ function ProfileCard()
                                         <Chip icon={<InactiveIcon />} label="2FA Disabled" color="warning" onClick={handle2FAClick} variant="outlined" size="small" />
                                     )}
                             </Tooltip>
-                            <Enable2FADialog open={enable2FADialogOpen} onClose={() => setEnable2FADialogOpen(false)} onSuccess={handle2FAEnabled} />
-                            <Disable2FADialog open={disable2FADialogOpen} onClose={() => setDisable2FADialogOpen(false)} onSuccess={handle2FADisabled} />
+                            
                         </Stack>
                     </Stack>
                 </CardContent>
             </Card>
+            <Enable2FADialog open={enable2FADialogOpen} onClose={() => { setEnable2FADialogOpen(false); }} onSuccess={handle2FAEnabled} onClosed={restore2FAChipFocus} />
+            <Disable2FADialog open={disable2FADialogOpen} onClose={() => { setDisable2FADialogOpen(false); }} onSuccess={handle2FADisabled} onClosed={restore2FAChipFocus} />
         </Container>
     );
 }

@@ -71,6 +71,7 @@ function Disable2FADialog({ open, onClose, onSuccess }: Disable2FADialogProps)
 			return ;
         try {
             await api.post<Message>('/2fa/disable', { password, code },);
+            if (!user) return;
             login({ ...user, use2fa: false });
             onSuccess();
             resetWizard();
