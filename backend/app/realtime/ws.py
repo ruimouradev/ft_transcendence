@@ -243,7 +243,7 @@ async def room_timer(room_id: str, room: Room) -> None:
                 pass
             else:
                 metrics.moves.labels(kind="draw").inc()
-                
+
         game.timeout_skip(pid)
         metrics.moves.labels(kind="timeout").inc()
         # the forced draw can end the game, and a game that ends here
@@ -280,7 +280,7 @@ async def async_save_game_result(db_game: DBGame, game_players: list[GamePlayer]
             except Exception as e:
                 logging.error(f"Failed to save game result: {e}")
                 metrics.rejected.labels(code="RECORD_FAILED").inc()
-    
+
     await asyncio.to_thread(_sync_save)
 
 
@@ -301,11 +301,11 @@ async def record_finished_game(room: Room) -> None:
                          finished_at=now)
         game_players = []
         bot_count = 0
-        
+
         total_remain_points = sum(
             sum(points(c) for c in h.cards) for h in room.game.hands
         )
-        
+
         for i, p in enumerate(room.players):
             user_id = None
             if p.bot:
@@ -321,18 +321,18 @@ async def record_finished_game(room: Room) -> None:
                     user_id = UUID(p.user)
                 except ValueError:
                     pass
-            
+
             if user_id is None:
                 continue
-                
+
             hand = next((h for h in room.game.hands if h.id == p.id), None)
             if not hand:
                 continue
-                
+
             remain_points = sum(points(card) for card in hand.cards)
             is_winner = (p.id == room.game.winner)
             score = total_remain_points if is_winner else 0
-            
+
             gp = GamePlayer(
                 game_id=db_game.id,
                 user_id=user_id,
@@ -344,7 +344,7 @@ async def record_finished_game(room: Room) -> None:
                 is_connected=p.connected
             )
             game_players.append(gp)
-            
+
         if len(game_players) == len(room.players):
             await async_save_game_result(db_game, game_players)
         else:

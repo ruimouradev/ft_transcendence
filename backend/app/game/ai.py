@@ -6,6 +6,7 @@ from app.game.contract import (
 
 NON_WILD_COLORS: list[Color] = ["red", "yellow", "green", "blue"]
 
+
 def decide_bot_action(state: GameState, bot_id: str) -> PlayerAction | None:
     """
     Evaluates the GameState and returns a valid PlayerAction.
@@ -19,7 +20,7 @@ def decide_bot_action(state: GameState, bot_id: str) -> PlayerAction | None:
     if catch_action:
         return catch_action
 
-    # 2. Handle Wild +4 Challenge 
+    # 2. Handle Wild +4 Challenge
     if state.plus4_by and state.turn == bot_id:
         return _handle_plus4_challenge(difficulty)
 
@@ -29,7 +30,7 @@ def decide_bot_action(state: GameState, bot_id: str) -> PlayerAction | None:
             drawn_card = next((c for c in state.you.hand if c.id == state.you.drawn), None)
             if drawn_card:
                 return _build_play_action(drawn_card, state, bot_id, difficulty)
-        return None 
+        return None
 
     # 4. Normal Turn
     if state.turn != bot_id:
@@ -53,7 +54,7 @@ def _check_catch_opportunity(state: GameState, bot_id: str, difficulty: str) -> 
     # Medium: 15% per tick (usually takes 1.5 to 3 seconds to notice, ~60% success rate overall)
     # Hard: 40% per tick (~1.25s average reaction time + grace window)
     catch_prob = {"easy": 0.02, "medium": 0.15, "hard": 0.4}.get(difficulty, 0.6)
-    
+
     if random.random() > catch_prob:
         return None
 
@@ -62,12 +63,14 @@ def _check_catch_opportunity(state: GameState, bot_id: str, difficulty: str) -> 
             return Catch(target=p.id)
     return None
 
+
 def _handle_plus4_challenge(difficulty: str) -> PlayerAction:
     if difficulty == "hard" and random.random() < 0.4:
         return Challenge()
     if difficulty == "medium" and random.random() < 0.2:
         return Challenge()
     return Draw()
+
 
 def _select_card_by_difficulty(cards: list[Card], state: GameState, bot_id: str, difficulty: str) -> Card:
     if difficulty == "easy":
@@ -78,12 +81,12 @@ def _select_card_by_difficulty(cards: list[Card], state: GameState, bot_id: str,
         p_ids = [p.id for p in state.players]
         idx = p_ids.index(bot_id)
         next_p = state.players[(idx + state.direction) % len(p_ids)]
-        
+
         if next_p.cards <= 2:
             attacks = [c for c in cards if c.value in ["+2", "skip", "reverse", "+4"]]
             if attacks:
                 return random.choice(attacks)
-                
+
         if state.settings and state.settings.seven_zero:
             sevens = [c for c in cards if c.value == "7"]
             if sevens and any(p.cards < len(state.you.hand) for p in state.players if p.id != bot_id):
@@ -92,10 +95,11 @@ def _select_card_by_difficulty(cards: list[Card], state: GameState, bot_id: str,
     numbers = [c for c in cards if c.value.isdigit()]
     return random.choice(numbers) if numbers else random.choice(cards)
 
+
 def _build_play_action(card: Card, state: GameState, bot_id: str, difficulty: str) -> Play:
     will_have_one_card = (len(state.you.hand) - 1 == 1)
     uno_call = False
-    
+
     # Easy: 10% chance to remember (forgets mostly)
     # Medium: 60% chance to remember
     # Hard: 100% chance to remember
