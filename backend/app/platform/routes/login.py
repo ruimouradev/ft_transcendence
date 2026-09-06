@@ -20,7 +20,7 @@ from app.models.all import EmailVerificationType, ErrorResponse, Message, OAuthA
 
 from fastapi.responses import RedirectResponse, Response
 
-router = APIRouter(tags=["login"], include_in_schema=True)
+router = APIRouter(tags=["login"], include_in_schema=False)
 logger = logging.getLogger("uvicorn.error")
 
 
