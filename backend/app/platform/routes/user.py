@@ -35,13 +35,7 @@ def update_user_me(*, session: SessionDep, user_in: UserUpdateMe, current_user: 
     """
     Update own user. only nickname and card back can be updated. Email update is not allowed.
     """
-    # if user_in.email:
-    #     existing_user = userservice.get_user_by_email(session=session, email=user_in.email)
-    #     if existing_user and existing_user.id != current_user.id:
-    #         raise HTTPException(
-    #             status_code=409, detail="User with this email already exists"
-    #         )
-    if user_in.nick_name:
+    if user_in.nick_name is not None:
         try:
             user_in.nick_name = nickname_validator(user_in.nick_name)
         except ValueError as e:
@@ -53,12 +47,16 @@ def update_user_me(*, session: SessionDep, user_in: UserUpdateMe, current_user: 
             raise HTTPException(
                 status_code=409, detail="User with this nick name already exists"
             )
-    if user_in.card_back:
+    if user_in.card_back is not None:
         if user_in.card_back not in ["back00", "back01", "back02", "back03", "back04"]:
             raise HTTPException(
                 status_code=400, detail="Invalid card back URL"
             )
-    user_data = user_in.model_dump(exclude_unset=True)
+        
+    user_data = user_in.model_dump(exclude_unset=True, exclude_none=True)
+
+    if user_data is None or len(user_data) == 0:
+        raise HTTPException(status_code=400, detail="No data provided for update")
     current_user.sqlmodel_update(user_data)
     session.add(current_user)
     session.commit()
