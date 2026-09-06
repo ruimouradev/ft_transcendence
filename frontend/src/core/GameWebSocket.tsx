@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useAuth } from './AuthContext';
 import { usePopUpContext } from '../core/GamePopUpsContext';
 import { GameContext } from './GameWebSocketContext'
-import type { GameState, LastAction, Notice, Notices } from './types.ts'
+import type { GameState, Notice, Notices } from './types.ts'
 
 const originalSetItem = sessionStorage.setItem;
 
