@@ -20,7 +20,7 @@ from app.models.all import EmailVerificationType, ErrorResponse, Message, OAuthA
 
 from fastapi.responses import RedirectResponse, Response
 
-router = APIRouter(tags=["login"], include_in_schema=False)
+router = APIRouter(tags=["login"], include_in_schema=True)
 logger = logging.getLogger("uvicorn.error")
 
 
@@ -110,6 +110,11 @@ async def reset_password_me(*, session: SessionDep, password: str = Body(..., em
     """
     Use a verification token to set a new password.
     """
+    if len(password) < 8:
+        raise APIError(status_code=400, code=APIErrorCode.BAD_REQUEST, msg="Password must be at least 8 characters long.")
+    if len(password) > 32:
+        raise APIError(status_code=400, code=APIErrorCode.BAD_REQUEST, msg="Password must be at most 32 characters long.")
+
     email = verify_token_in_email(token, EmailVerificationType.PASSWORD_RESET)
     current_user = userservice.get_user_by_email(session=session, email=email)
     if not current_user:
