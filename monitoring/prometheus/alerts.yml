@@ -42,7 +42,7 @@ groups:
         # dead or a table nobody plays at
         expr: >
           uno_players_connected > 0
-          and (sum(rate(uno_moves_total[15m])) or vector(0)) == 0
+          and on() (sum(rate(uno_moves_total[15m])) or vector(0)) == 0
         for: 15m
         labels:
           severity: warning

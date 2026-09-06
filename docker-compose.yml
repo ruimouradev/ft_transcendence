@@ -2,6 +2,7 @@ services:
   db:
     image: postgres:18-alpine
     container_name: db
+    restart: unless-stopped
     environment:
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
@@ -37,6 +38,7 @@ services:
     image: backend
     pull_policy: never
     container_name: backend
+    restart: unless-stopped
     volumes:
       - ./backend:/app
     environment:
@@ -158,7 +160,8 @@ services:
       dockerfile: Dockerfile
     image: nginx_prod
     pull_policy: never
-    container_name: nginx_prod   
+    container_name: nginx_prod
+    restart: unless-stopped
     ports:
       - "80:80"
       - "8443:443"
@@ -173,6 +176,7 @@ services:
   prometheus:
     image: prom/prometheus:v2.53.0
     container_name: prometheus
+    restart: unless-stopped
     command:
       - "--config.file=/etc/prometheus/prometheus.yml"
       - "--storage.tsdb.path=/prometheus"
@@ -186,6 +190,7 @@ services:
   grafana:
     image: grafana/grafana:11.1.0
     container_name: grafana
+    restart: unless-stopped
     ports:
       - "127.0.0.1:3001:3000"
     volumes:
@@ -203,6 +208,7 @@ services:
   postgres-exporter:
     image: prometheuscommunity/postgres-exporter:v0.15.0
     container_name: postgres-exporter
+    restart: unless-stopped
     environment:
       - DATA_SOURCE_NAME=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}?sslmode=disable
     depends_on:

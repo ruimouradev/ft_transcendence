@@ -16,7 +16,7 @@ from app.platform import security
 from app.platform.config import settings
 
 from app.platform.service.mailservice import create_verification_token_used_in_mail, send_password_reset_email, verify_token_in_email
-from app.models.all import EmailVerificationType, ErrorResponse, Message, OAuthAccountCreate, ProviderType, UserCreate, UserUpdate, APIError, APIErrorCode
+from app.models.all import EmailVerificationType, ErrorResponse, Message, OAuthAccountCreate, ProviderType, UserCreate, UserUpdate, APIError, APIErrorCode, nickname_validator
 
 from fastapi.responses import RedirectResponse, Response
 
@@ -253,11 +253,20 @@ async def callback_42(session: SessionDep, request: Request, code: str | None = 
                 if nick_user:
                     # If the nick_name is already taken, append a random string to it
                     user42_login = f"{user42_login[:3]}_{secrets.token_hex(4)}"
+                nick_name = user42_login[:12]  # Truncate to 12 characters
+                try:
+                    nick_name = nickname_validator(nick_name)
+                except ValueError:
+                    # A 42 login can break the nickname rules, a bot prefix or
+                    # a reserved word, so fall back to a generated one
+                    nick_name = f"player_{secrets.token_hex(2)}"
+                    while userservice.get_user_by_nick_name(session=session, nick_name=nick_name):
+                        nick_name = f"player_{secrets.token_hex(2)}"
                 user_create = UserCreate(
                     email=user42_email,
                     password=security.generate_password(8),
                     is_active=True,
-                    nick_name=f"{user42_login[:12]}",  # Truncate to 12 characters
+                    nick_name=nick_name,
                     avatar=avatar_path
                 )
                 user = userservice.create_user(session=session, user_create=user_create)

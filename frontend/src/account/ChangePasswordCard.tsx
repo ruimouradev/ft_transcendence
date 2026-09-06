@@ -42,12 +42,12 @@ function ChangePasswordCard()
         setLoading(true);
 
         api.patch('/users/me/password', { current_password: currentPassword, new_password: newPassword, })
-            .then((response) => {
+            .then(async (response) => {
                 setSuccess(response.data.message || 'Password changed successfully!');
                 setCurrentPassword('');
                 setNewPassword('');
                 setConfirmPassword('');
-                logout();
+                await logout();
                 navigate('/login?info=Password changed successfully. Please log in again.');
             })
             .catch((err) => {

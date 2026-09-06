@@ -38,28 +38,9 @@ down:
 	docker compose -f ./docker-compose.yml down
 	@echo "[INFO] Docker containers stopped and removed."
 
-clean_compose:
-	docker compose -f ./docker-compose.yml down --rmi all -v
-
-clean_images:
-	docker image rm $$(docker image ls -q) || true
-	@echo "[INFO] Docker images cleaned."
-
-clean_host_data: clean_compose
-	@echo "[WARNING] This will delete all persistent data on the host! Are you sure? (y/N)"
-	@read ans; \
-	if [ "$$ans" != "y" ] && [ "$$ans" != "Y" ]; then \
-		echo "Aborted."; \
-		exit 1; \
-	fi
-	@echo "[CONFIRM] Deleting persistent data..."
-
-	@if [ -n "$$(docker volume ls -q)" ]; then \
-		docker volume rm $$(docker volume ls -q); \
-	fi
-	@echo "[INFO] All persistent data on the host deleted."
-
-clean: clean_compose clean_images clean_host_data
+clean:
+	docker compose -f ./docker-compose.yml down --rmi local -v
+	@echo "[INFO] Containers, images and data of this project removed."
 
 ps:
 	docker compose -f ./docker-compose.yml ps
@@ -75,11 +56,8 @@ help:
 	@echo "  dev            - Start part of the stack in the foreground, for development."
 	@echo "  vinit          - Initialize host directories for persistent data."
 	@echo "  down           - Stop and remove the containers."
-	@echo "  clean          - Stop services, remove containers, images, and volumes, and delete all persistent data on the host."
-	@echo "  clean_compose  - Stop services, remove containers, images, and volumes."
-	@echo "  clean_images   - Remove all Docker images."
-	@echo "  clean_host_data- Remove all persistent data on the host, use with caution."
+	@echo "  clean          - Stop services and remove the containers, images and data of this project."
 	@echo "  ps             - List the running containers."
 	@echo "  log            - View the logs of every service."
 
-.PHONY: all build vinit dev re down clean_compose clean_images clean_host_data ps log help clean
+.PHONY: all build vinit dev re down clean ps log help

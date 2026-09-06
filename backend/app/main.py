@@ -47,8 +47,7 @@ This API provides functionality for:
 
 ### Authentication
 
-#### All endpoints require authentication via an API key.
-This endpoint requires a valid API key and client ID to access.
+#### Every endpoint requires a valid API key and client ID.
 
 To obtain an API key and client ID, get the apikey through the [API key] page. Include the following headers in your request:
 - `X-API-Key`: Your API key (get from apikey request page)
@@ -56,11 +55,11 @@ To obtain an API key and client ID, get the apikey through the [API key] page. I
 
 #### Example:
 ``` shell
-curl -X 'GET' \n
-  'Endpoint URL as https://localhost:8443/api/v1/xxxx/xxxx' \n
-  -H 'accept: application/json' \n
-  -H 'X-Client-ID: your_client_id_here' \n
-  -H 'X-API-Key: your_api_key_here\''
+curl -X 'GET' \
+  'https://localhost:8443/api/v1/secured/onlineplayers' \
+  -H 'accept: application/json' \
+  -H 'X-Client-ID: your_client_id_here' \
+  -H 'X-API-Key: your_api_key_here'
 ```
 
 """,)

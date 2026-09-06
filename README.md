@@ -30,7 +30,8 @@ port.
    Important variables:
 
    - `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_DB`
-   - `SECRET_KEY`: JWT signing key
+   - `SECRET_KEY`: JWT signing key, generate your own with
+     `openssl rand -hex 32`
    - `O42_CLIENT_ID`, `O42_CLIENT_SECRET`: from an application registered
      on the 42 intra with the redirect URI
      `https://localhost:8443/api/v1/auth/42/callback`, without them the

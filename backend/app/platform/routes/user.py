@@ -94,6 +94,7 @@ def register_user(session: SessionDep, user_in: UserRegister, background_tasks: 
     """
     Create new user without the need to be logged in.
     """
+    user_in.nick_name = user_in.nick_name.strip()
     same_nick_name_user = userservice.get_user_by_nick_name(session=session, nick_name=user_in.nick_name)
     if same_nick_name_user:
         raise APIError(status_code=400, code="NICKNAME_EXISTS", msg="This nick name is already taken. Please try a different one.")

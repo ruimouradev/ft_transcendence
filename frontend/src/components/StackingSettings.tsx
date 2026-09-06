@@ -9,7 +9,7 @@ function StackingSettings({stacking, setStacking, defaultTooltip, setOptionsTool
 	defaultTooltip: string,
 	setOptionsTooltip: React.Dispatch<React.SetStateAction<string>>})
 {
-	const text = "Allows +2 and +4 cards to be stacked, passing the punishment to the next player.";
+	const text = "Allows +2 cards to be stacked, passing the punishment to the next player.";
 
 	return (
 		<Box sx={{...align_noJustify, height: '15%', width: '100%' }}>
