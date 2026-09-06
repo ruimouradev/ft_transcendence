@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { Box, Button, Typography } from '@mui/material';
 import { useGameContext } from '../core/GameWebSocketContext';
 import { usePopUpContext } from '../core/GamePopUpsContext';
@@ -7,6 +8,12 @@ function GameEndPopUp()
 {
 	const { gameState, leaveRoom, sendMessage, getWinnerName } = useGameContext();
 	const { resetPopUpStates } = usePopUpContext();
+
+	useEffect(() => {
+		if (gameState === null)
+			resetPopUpStates();
+		
+	}, [gameState, resetPopUpStates])
 
 	if (gameState === null)
 		return (null);

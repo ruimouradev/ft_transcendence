@@ -18,6 +18,8 @@ function JoinPrivate()
 		const room_id = code.trim();
 		if (room_id.length === 0)
 			handleNewError("invalid code");
+		else if (!room_id.match(/^[0-9A-Za-z]+$/))
+			handleNewError("invalid character in code");
 		else
 			joinRoom(code.trim(), message)
 		setCode('');

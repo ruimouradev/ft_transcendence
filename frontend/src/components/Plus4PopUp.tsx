@@ -18,9 +18,9 @@ function Plus4PopUp()
 	const button_font = {fontSize: 'clamp(0.2rem, 1.4vh, 1rem)'};
 
 	useEffect(() => {
-		if (gameState?.turn !== gameState?.you.id)
+		if (!gameState || gameState?.turn !== gameState?.you.id)
 			resetPopUpStates();
-	}, [gameState?.turn, gameState?.you.id, resetPopUpStates]);
+	}, [gameState, gameState?.turn, gameState?.you.id, resetPopUpStates]);
 
 	return (
 			<Box sx={{ width: '60vw', aspectRatio: '3 / 1', ...align, border: '0.1vw solid', borderColor: 'divider', borderRadius: 2, bgcolor: 'background.default', position: 'relative' }}>

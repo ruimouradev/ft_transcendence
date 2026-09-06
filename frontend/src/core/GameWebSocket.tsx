@@ -31,7 +31,7 @@ function GameWebSocket({ children }: { children: React.ReactNode }) {
 		{
 			pendingRoomRef.current = null;
 			sessionStorage.removeItem('roomID');
-			socketRef.current.close();
+			socketRef.current?.close();
 		}
 	}, [isAuthenticated])
 
@@ -150,7 +150,7 @@ function GameWebSocket({ children }: { children: React.ReactNode }) {
 
 	function handleNewGameState(gamestate: GameState)
 	{
-//		handleSpecialAction();
+		// handleSpecialAction();
 		gameStateRef.current = gamestate;
 		setGameState(gamestate);
 		if (gamestate.plus4_by)
