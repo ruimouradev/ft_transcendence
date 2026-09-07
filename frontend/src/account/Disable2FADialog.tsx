@@ -37,8 +37,10 @@ function Disable2FADialog({ open, onClose, onSuccess }: Disable2FADialogProps)
 	}
 
     const handleClose = (_event?: object, reason?: 'backdropClick' |'escapeKeyDown') => {
-        if (loading) { return; }
-        if (reason === 'backdropClick' || reason === 'escapeKeyDown') { return; }
+        if (loading) 
+			return;
+        if (reason === 'backdropClick' || reason === 'escapeKeyDown') 
+			return;
         resetWizard();
         onClose();
     };

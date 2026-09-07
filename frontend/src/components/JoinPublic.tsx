@@ -11,18 +11,20 @@ import Rotate90DegreesCwOutlinedIcon from '@mui/icons-material/Rotate90DegreesCw
 
 function PrintRoom({room, room_flag, onSelect}: {room: Room, room_flag: boolean | null, onSelect: () => void })
 {
-	const bg = room_flag ? '#0f172a' : 'primary.color';
+	const selected_border = room_flag 
+		? { border: '2px solid', borderColor: 'primary.main', outline: '2px solid', outlineColor: 'primary.main' } 
+		: { borderTop: '3px solid white' };
 	const icons_font = { fontSize: 'clamp(25px, 3vw, 35px)' };
-
+ 
 	return (
-		<Card onClick={onSelect} sx={{ margin: 0.4, width: '97%', height: '10vh', bgcolor: `${bg}`, borderTop: '3px solid white'}}>
+		<Card onClick={onSelect} sx={{ margin: 0.4, width: '97%', height: '10vh', bgcolor: '#0f172a', ...selected_border }}>
 			<Box sx={{width: '100%', height: '50%', position: 'relative'}}>
 				<Box sx={{position: 'absolute', top: '1%', left: '3%', width: '50%', height: '100%', ...menu_text}}>Room ID: {room.code}</Box>
-				<Typography className="align" sx={{ position: 'absolute', right: "3%", top: '1%', ...icons_text }}>
+				<Typography className="align no-select" sx={{ position: 'absolute', right: "3%", top: '1%', ...icons_text }}>
 					<PersonIcon />{room.players.length} / {room.max_players}
 				</Typography>
 			</Box>
-			<Box sx={{ width: '100%', height: '50%', display: 'flex', alignItems: 'center', position: 'relative', gap: '-1vw', left: '3%'}}>
+			<Box className="no-select" sx={{ width: '100%', height: '50%', display: 'flex', alignItems: 'center', position: 'relative', gap: '-1vw', left: '3%'}}>
 				<Tooltip title={'Initial Hand Size'} arrow>
 					<Chip icon={<ViewCarouselIcon sx={{ ...icons_font }} />} label={room.settings.hand_size} sx={{ ...icons_text, backgroundColor: 'transparent',
 						'& .MuiChip-icon': { color: 'success.main',  mr: 0.5, }, '& .MuiChip-label': {pl: 0 } }} />
@@ -72,7 +74,7 @@ function JoinPublic({rooms}: {rooms: Room[]})
 				</ul>
 			</Box>
 			<Button onClick={PublicClick} variant="contained" disabled={selected === null} sx={{ my: 1, width: '99%', height: '15%' }}>
-				<Typography sx={{ ...menu_text }}>JOIN</Typography>
+				<Typography sx={{ ...menu_text, fontWeight: 700 }}>JOIN</Typography>
 			</Button>
 		</Box>
 	)
