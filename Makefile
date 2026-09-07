@@ -1,9 +1,27 @@
-all: envcheck vinit
+ENV_KEYS := POSTGRES_PASSWORD O42_CLIENT_ID O42_CLIENT_SECRET \
+ MAIL_PASSWORD SECRET_KEY GRAFANA_ADMIN_PASSWORD
+
+ENV_PROBLEM := $(shell \
+ if [ ! -f .env ]; then \
+  echo "No .env found, copy .env.example to .env and fill it in"; \
+ else \
+  left=$$(for k in $(ENV_KEYS); do \
+   grep -Eq "^$$k=(change-me|request .*)$$" .env && echo $$k; \
+  done); \
+  [ -n "$$left" ] && echo "Set a real value in .env for:" $$left; \
+ fi)
+
+
+all: vinit
+ifneq ($(ENV_PROBLEM),)
+	@echo "$(ENV_PROBLEM)"
+else
 	docker compose -f ./docker-compose.yml build frontend_prod
 	docker compose -f ./docker-compose.yml run --rm frontend_prod
 	docker image rm frontend_prod:latest
 	docker compose -f ./docker-compose.yml build nginx_prod backend
 	docker compose -f ./docker-compose.yml up -d db redis backend nginx_prod postgres-exporter prometheus grafana
+endif
 
 
 build: vinit
@@ -16,21 +34,27 @@ re: down all
 vinit:
 	@mkdir -p ./nginx/dist
 
-envcheck:
-	@test -f .env || { echo "No .env found, copy .env.example to .env and fill it in"; exit 1; }
-	@left=$$(grep -E '^(POSTGRES_PASSWORD|O42_CLIENT_ID|O42_CLIENT_SECRET|MAIL_PASSWORD|SECRET_KEY|GRAFANA_ADMIN_PASSWORD|)=' .env | grep -E '=(change-me|request .*)$$' | cut -d= -f1); \
-	if [ -n "$$left" ]; then echo "Set a real value in .env for:\n$$left"; exit 1 ; fi
 
-dev: envcheck vinit
+dev: vinit
+ifneq ($(ENV_PROBLEM),)
+	@echo "$(ENV_PROBLEM)"
+else
 	docker compose -f ./docker-compose.yml build frontend backend nginx
 	docker compose -f ./docker-compose.yml up db redis backend frontend adminer nginx
+endif
 
-prod: envcheck vinit
+
+prod: vinit
+ifneq ($(ENV_PROBLEM),)
+	@echo "$(ENV_PROBLEM)"
+else
 	docker compose -f ./docker-compose.yml build frontend_prod
 	docker compose -f ./docker-compose.yml run --rm frontend_prod
 	docker image rm frontend_prod:latest
 	docker compose -f ./docker-compose.yml build nginx_prod backend
 	docker compose -f ./docker-compose.yml up db redis backend nginx_prod
+endif
+
 
 test_prod: clean vinit 
 	docker compose -f ./docker-compose.yml build frontend_prod
@@ -54,6 +78,13 @@ clean:
 	docker compose -f ./docker-compose.yml down --rmi local -v
 	@echo "[INFO] Containers, images and data of this project removed."
 
+
+fclean: clean
+	docker run --rm -v $(CURDIR)/frontend:/app -v $(CURDIR)/nginx:/nginx \
+	node:22-alpine rm -rf /app/dist /nginx/dist
+	@echo "[INFO] Frontend build output removed as well."
+
+
 ps:
 	docker compose -f ./docker-compose.yml ps
 
@@ -74,4 +105,4 @@ help:
 	@echo "  ps             - List the running containers."
 	@echo "  log            - View the logs of every service."
 
-.PHONY: all build vinit envcheck dev re down data data_clean clean ps log help
+.PHONY: all build vinit dev re down data data_clean clean ps log help
