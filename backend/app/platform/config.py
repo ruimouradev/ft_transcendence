@@ -19,6 +19,10 @@ def parse_cors(v: Any) -> list[str] | str:
     raise ValueError(v)
 
 
+# the value the sample file ships with, the app refuses to start on it
+PLACEHOLDER = "changethis"
+
+
 class Settings(BaseSettings):
     API_V1_STR: str = "/api/v1"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24 * 8
@@ -54,21 +58,18 @@ class Settings(BaseSettings):
     O42_TOKEN_URL : str = "changethis"
     REDIS_URL : str = "redis://redis:6379/0"
 
-    def _check_default_secret(self, var_name: str, value: str | None) -> None:
-        if value == "changethis":
-            message = (
-                f'The value of {var_name} is "changethis", '
-                "for security, please change it, at least for deployments."
-            )
-            raise ValueError(message)
-
     @model_validator(mode="after")
-    def _enforce_non_default_secrets(self) -> Self:
-        self._check_default_secret("SECRET_KEY", self.SECRET_KEY)
-        self._check_default_secret(
-            "FIRST_SUPERUSER_PASSWORD", self.FIRST_SUPERUSER_PASSWORD
-        )
-
+    def _refuse_placeholders(self) -> Self:
+        secrets = {
+            "SECRET_KEY": self.SECRET_KEY,
+            "FIRST_SUPERUSER_PASSWORD": self.FIRST_SUPERUSER_PASSWORD,
+        }
+        left = [name for name, value in secrets.items() if value == PLACEHOLDER]
+        if left:
+            raise ValueError(
+                f"{', '.join(left)} still {'has' if len(left) == 1 else 'have'} "
+                f"the sample value, set a real one in .env"
+            )
         return self
 
 settings = Settings()

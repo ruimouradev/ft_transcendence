@@ -18,8 +18,8 @@ API, and a full monitoring stack with live game dashboards.
 
 ## Instructions
 
-Prerequisites: Docker with the compose plugin, make, and the ports 80
-and 8443 free, 80 only redirects to 8443.
+Prerequisites: Docker with the compose plugin, make, and the ports 8080
+and 8443 free, 8080 only redirects to 8443.
 
 1. Copy the sample environment file and adjust it for your machine:
 
@@ -277,6 +277,9 @@ The references the team worked from.
 - React Router: <https://reactrouter.com/>, the client-side routes.
 - FastAPI: <https://fastapi.tiangolo.com/>, the backend framework,
   including its WebSocket support.
+- FastAPI full-stack template:
+  <https://github.com/fastapi/full-stack-fastapi-template> (MIT), the
+  starting point of the auth and user layer, grown into our own.
 - Pydantic: <https://docs.pydantic.dev/>, validation of every message
   in the game protocol.
 - SQLModel: <https://sqlmodel.tiangolo.com/>, the ORM over SQLAlchemy.

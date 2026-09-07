@@ -30,7 +30,7 @@ def nickname_validator(value: str) -> str:
         raise ValueError("Nickname cannot contain HTML")
     return value
 
-# Shared properties
+# The fields every user model carries
 class UserBase(SQLModel):
     email: EmailStr = Field(unique=True, index=True, max_length=255)
     is_active: bool = False
@@ -46,7 +46,7 @@ class UserBase(SQLModel):
         value = nickname_validator(value)
         return value
 
-# Properties to receive via API on creation
+# What the signup and the bots hand in to make an account
 class UserCreate(UserBase):
     password: str = Field(min_length=8, max_length=32)
 
