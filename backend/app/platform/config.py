@@ -44,6 +44,7 @@ class Settings(BaseSettings):
 
     EMAILS_ENABLED: bool = True
     ALGORITHM: str = "HS256"
+    POSTGRES_PASSWORD: str
     MAIL_USERNAME: str
     MAIL_PASSWORD: str
     MAIL_FROM: str
@@ -58,9 +59,11 @@ class Settings(BaseSettings):
     @model_validator(mode="after")
     def _refuse_placeholders(self) -> Self:
         secrets = {
-            "SECRET_KEY": self.SECRET_KEY,
-            "O42_CLIENT_SECRET": self.O42_CLIENT_SECRET,
+            "POSTGRES_PASSWORD": self.POSTGRES_PASSWORD,
             "MAIL_PASSWORD": self.MAIL_PASSWORD,
+            "SECRET_KEY": self.SECRET_KEY,
+            "O42_CLIENT_ID": self.O42_CLIENT_ID,
+            "O42_CLIENT_SECRET": self.O42_CLIENT_SECRET,
         }
         left = [name for name, value in secrets.items() if value == PLACEHOLDER]
         if left:
