@@ -9,7 +9,7 @@ from io import BytesIO
 
 from app.presence_manager import presence_manager
 from app.platform import security
-from fastapi import APIRouter, Depends, HTTPException, status, BackgroundTasks, UploadFile, WebSocket, WebSocketDisconnect
+from fastapi import APIRouter, HTTPException, status, BackgroundTasks, UploadFile, WebSocket, WebSocketDisconnect
 from fastapi.responses import RedirectResponse
 from sqlmodel import Session
 from app.models.database import engine
@@ -94,6 +94,7 @@ def register_user(session: SessionDep, user_in: UserRegister, background_tasks: 
     """
     Create new user without the need to be logged in.
     """
+    user_in.nick_name = user_in.nick_name.strip()
     same_nick_name_user = userservice.get_user_by_nick_name(session=session, nick_name=user_in.nick_name)
     if same_nick_name_user:
         raise APIError(status_code=400, code="NICKNAME_EXISTS", msg="This nick name is already taken. Please try a different one.")
@@ -237,8 +238,6 @@ async def upload_file(file: UploadFile, session: SessionDep, current_user: Curre
     MAX_HEIGHT = 4096
     AVATAR_SIZE = (512, 512)
 
-    original_filename = file.filename
-
     content = await file.read(MAX_FILE_SIZE + 1)
 
     if not content:
@@ -277,7 +276,7 @@ async def upload_file(file: UploadFile, session: SessionDep, current_user: Curre
     except (UnidentifiedImageError, OSError, DecompressionBombError) as exc:
         raise HTTPException( status_code=400, detail="Invalid or corrupted image file." ) from exc
 
-    avatar_filename = f"avatar.jpg"
+    avatar_filename = "avatar.jpg"
     avatar_path = uploaddir / avatar_filename
     avatar_path.write_bytes(output.getvalue())
 

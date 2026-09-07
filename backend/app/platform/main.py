@@ -3,7 +3,6 @@ from app.platform.routes import securedapi
 from fastapi import APIRouter
 
 from app.platform.routes import user, login, friend, twofa
-from app.platform.config import settings
 
 api_router = APIRouter()
 api_router.include_router(user.router)

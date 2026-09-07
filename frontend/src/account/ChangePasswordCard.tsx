@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { Container, Card, CardContent, Typography, TextField, Button, Alert, Stack, Box, CircularProgress, } from '@mui/material';
 import LockIcon from '@mui/icons-material/Lock';
 import { api, getErrorMessage } from '../core/client.ts';
@@ -7,7 +6,6 @@ import { useAuth } from '../core/AuthContext';
 
 function ChangePasswordCard() 
 {
-    const navigate = useNavigate();
     const [currentPassword, setCurrentPassword] = useState('');
     const [newPassword, setNewPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
@@ -42,13 +40,15 @@ function ChangePasswordCard()
         setLoading(true);
 
         api.patch('/users/me/password', { current_password: currentPassword, new_password: newPassword, })
-            .then((response) => {
+            .then(async (response) => {
                 setSuccess(response.data.message || 'Password changed successfully!');
                 setCurrentPassword('');
                 setNewPassword('');
                 setConfirmPassword('');
-                logout();
-                navigate('/login?info=Password changed successfully. Please log in again.');
+                await logout();
+                // A full load, the protected route reacts to the lost session
+                // and its own jump to /login would drop the message
+                window.location.href = '/login?info=Password changed successfully. Please log in again.';
             })
             .catch((err) => {
                 setError(getErrorMessage(err));

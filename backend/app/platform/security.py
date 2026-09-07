@@ -9,9 +9,7 @@ import jwt
 from pwdlib import PasswordHash
 from pwdlib.hashers.argon2 import Argon2Hasher
 from pwdlib.hashers.bcrypt import BcryptHasher
-from app.models.all import LoginTokenType, TokenPayload, TokenPayload, APIError, APIErrorCode, EmailVerificationType
-
-from app.platform.config import settings
+from app.models.all import LoginTokenType, APIError, APIErrorCode, EmailVerificationType
 
 password_hash = PasswordHash(
     (
@@ -57,8 +55,8 @@ async def consume_verification_token(token: str, verifyType: EmailVerificationTy
         raise APIError(status_code=400, code=APIErrorCode.BAD_REQUEST, msg="Verification link has expired. Please request a new one.")
     try:
         created = await redis_client.set(key, "true", ex=remaining_seconds, nx=True)
-    except redis.exceptions.RedisError as e:
-        raise APIError(status_code=503, code=APIErrorCode.BAD_REQUEST, msg=f"Error occurred while consuming verification token. Please try again later.")
+    except redis.RedisError:
+        raise APIError(status_code=503, code=APIErrorCode.BAD_REQUEST, msg="Error occurred while consuming verification token. Please try again later.")
     if not created:
         raise APIError(status_code=400, code=APIErrorCode.BAD_REQUEST, msg="This verification link has already been used. Please request a new one.")
 
@@ -79,16 +77,16 @@ async def cache_state(state: str, session_id: str, expires_in: int = 300) -> Non
     """Cache the state parameter for CSRF protection."""
     try:
         await redis_client.set(f"oauth_state:{session_id}", state, ex=expires_in, nx=True)
-    except redis.exceptions.RedisError as e:
-        raise APIError(status_code=503, code=APIErrorCode.BAD_REQUEST, msg=f"Error occurred while caching state. Please try logging in again.")
+    except redis.RedisError:
+        raise APIError(status_code=503, code=APIErrorCode.BAD_REQUEST, msg="Error occurred while caching state. Please try logging in again.")
 
 async def verify_state(state: str, session_id: str) -> None:
     """Verify the state parameter for CSRF protection."""
     key = f"oauth_state:{session_id}"
     try:
         value = await redis_client.getdel(key)
-    except redis.exceptions.RedisError as e:
-        raise APIError(status_code=503, code=APIErrorCode.BAD_REQUEST, msg=f"Error occurred while verifying state. Please try logging in again.Error: {e}")
+    except redis.RedisError:
+        raise APIError(status_code=503, code=APIErrorCode.BAD_REQUEST, msg="Error occurred while verifying state. Please try logging in again.")
     if value is None:
         raise APIError(status_code=400, code=APIErrorCode.BAD_REQUEST, msg="Invalid or expired state parameter. Please try logging in again.")
     if value != state:

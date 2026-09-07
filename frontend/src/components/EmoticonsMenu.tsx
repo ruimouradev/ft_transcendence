@@ -30,7 +30,7 @@ function EmoticonsMenu({anchor, handleClose, startCooldown}:
 					const distance = Math.abs(index - mid);
 					const offset = (distance * 30) - 40;
 					return (
-						<Card key={index} onClick={() => execEmoticon(index)} sx={{ bgcolor: 'white', width: '5vw', aspectRatio: '1 / 1',
+						<Card key={index} onClick={() => execEmoticon(index)} sx={{ bgcolor: 'white', width: 'clamp(40px, 5vw, 80px)', aspectRatio: '1 / 1',
 							display: 'flex', alignItems: 'center', justifyContent: 'center', transform: `translateY(${offset}%)`, border: '0.1vw solid black' }}>
 							<img src={emoticon} draggable={false} />
 						</Card>

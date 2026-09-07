@@ -1,16 +1,12 @@
 from app.models.all import APIError, APIErrorCode, EmailVerificationType
 from fastapi_mail import FastMail, MessageSchema, ConnectionConfig, MessageType
-from pydantic import EmailStr, BaseModel 
-from typing import List 
+from pydantic import EmailStr
 from pathlib import Path
 from datetime import datetime, timedelta, timezone
 import jwt
 from app.platform.config import settings
 
 BASE_DIR = Path(__file__).resolve().parent
-
-class EmailSchema(BaseModel): 
-   email: List[EmailStr]
 
 conf = ConnectionConfig( 
     MAIL_USERNAME=settings.MAIL_USERNAME,

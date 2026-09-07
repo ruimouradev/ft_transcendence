@@ -1,11 +1,9 @@
 from datetime import timedelta
 
-import jwt
-
 from fastapi import APIRouter
 from fastapi.responses import Response
 
-from app.models.all import APIError, APIErrorCode, Message, TokenPayload, TwoFADisableRequest, TwoFactorSetupRequest, TwoFactorSetupResponse, TwoFactorVerifyResponse, TwoFactorVerifyRequest, UserUpdate, LoginTokenType
+from app.models.all import APIError, APIErrorCode, Message, TwoFADisableRequest, TwoFactorSetupRequest, TwoFactorSetupResponse, TwoFactorVerifyResponse, TwoFactorVerifyRequest, UserUpdate
 from app.platform.deps import CurrentUser, SessionDep, TokenDep
 from app.platform.service import twofa_service, userservice
 from app.platform.config import settings
@@ -53,11 +51,14 @@ async def verify_two_factor_setup(request: TwoFactorVerifyRequest, current_user:
     return TwoFactorVerifyResponse(recovery_codes=recovery_codes)
 
 @twofa_router.post("/reset", response_model=TwoFactorSetupResponse)
-async def setup_two_factor(session: SessionDep, request: TwoFactorSetupRequest, token:TokenDep, response: Response):
+async def reset_two_factor(session: SessionDep, request: TwoFactorSetupRequest, token:TokenDep, response: Response):
     """
     Reset Two-Factor Authentication for the current user. This endpoint requires the user's current password and recovery code to reset 2FA.
     """
     current_user = twofa_service.get_user_from_tfa_token(session=session, token=token)
+
+    if not request.recovery_code:
+        raise APIError(status_code=400, code=APIErrorCode.BAD_REQUEST, msg="Recovery code is required to reset Two-Factor Authentication.")
 
     if not twofa_service.check_user_password(current_user, request.password):
         raise APIError(status_code=400, code=APIErrorCode.BAD_REQUEST, msg="Invalid password")

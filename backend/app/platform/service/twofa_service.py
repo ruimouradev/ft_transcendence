@@ -32,14 +32,6 @@ def verify_totp(secret: str, code: str) -> bool:
     totp = pyotp.TOTP(secret)
     return totp.verify(code, valid_window=1)
 
-def store_secret(session, user, secret: str):
-    """
-    Store the secret key for the user in the database.
-    """
-    user.two_factor_secret = secret
-    session.add(user)
-    session.commit()
-
 def generate_recovery_codes(session, user, num_codes: int = 8) -> list[str]:
     """
     Generate a list of recovery codes for the user.
