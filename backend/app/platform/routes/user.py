@@ -57,43 +57,30 @@ def update_user_me(*, session: SessionDep, user_in: UserUpdateMe, current_user: 
 
     if user_data is None or len(user_data) == 0:
         raise HTTPException(status_code=400, detail="No data provided for update")
-    current_user.sqlmodel_update(user_data)
-    session.add(current_user)
-    session.commit()
-    session.refresh(current_user)
-    return current_user
+    for name, value in user_data.items():
+        setattr(current_user, name, value)
+    return userservice.save_row(session, current_user)
 
 
 @router.patch("/me/password", response_model=Message)
-def update_password_me( *, session: SessionDep, body: UpdatePassword, current_user: CurrentUser) -> Any:
-    """
-    Update own password.
-    """
-    verified, _ = verify_password(body.current_password, current_user.hashed_password)
-    if not verified:
+def update_password_me(*, session: SessionDep, body: UpdatePassword, current_user: CurrentUser) -> Any:
+    """Change the password of the signed in account."""
+    still_current, _ = verify_password(body.current_password, current_user.hashed_password)
+    if not still_current:
         raise HTTPException(status_code=400, detail="Incorrect password")
-    if body.current_password == body.new_password:
-        raise HTTPException(
-            status_code=400, detail="New password cannot be the same as the current one"
-        )
-    hashed_password = security.get_password_hash(body.new_password)
-    current_user.hashed_password = hashed_password
-    session.add(current_user)
-    session.commit()
+    if body.new_password == body.current_password:
+        raise HTTPException(status_code=400, detail="New password cannot be the same as the current one")
+    userservice.update_user(session=session, db_user=current_user, user_in=UserUpdate(password=body.new_password))
     return Message(status_code=200, code="success", message="Password updated successfully")
 
 @router.get("/me", response_model=UserPublic)
 def read_user_me(current_user: CurrentUser) -> Any:
-    """
-    Get current user.
-    """
+    """The signed in account, as the frontend shows it."""
     return current_user
 
 @router.post("/signup", response_model=Message)
 def register_user(session: SessionDep, user_in: UserRegister, background_tasks: BackgroundTasks) -> Message:
-    """
-    Create new user without the need to be logged in.
-    """
+    """Open an account, the activation link goes out by email."""
     user_in.nick_name = user_in.nick_name.strip()
     same_nick_name_user = userservice.get_user_by_nick_name(session=session, nick_name=user_in.nick_name)
     if same_nick_name_user:
@@ -209,20 +196,12 @@ def regenerate_api_key(session: SessionDep, current_user: CurrentUser) -> APIKey
 
 @router.get("/{user_id}", response_model=UserPublic)
 def read_user_by_id(user_id: uuid.UUID, session: SessionDep, current_user: CurrentUser) -> Any:
-    """
-    Get a specific user by id.
-    """
-    user = session.get(User, user_id)
-    if user == current_user:
+    """One account by id, your own or any if you are a superuser."""
+    if user_id != current_user.id and not current_user.is_superuser:
+        raise HTTPException(status_code=403, detail="The user doesn't have enough privileges")
+    if user := session.get(User, user_id):
         return user
-    if not current_user.is_superuser:
-        raise HTTPException(
-            status_code=403,
-            detail="The user doesn't have enough privileges",
-        )
-    if user is None:
-        raise HTTPException(status_code=404, detail="User not found")
-    return user
+    raise HTTPException(status_code=404, detail="User not found")
 
 #UploadFile
 @router.post("/uploadfile")

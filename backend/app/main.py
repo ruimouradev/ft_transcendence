@@ -66,13 +66,9 @@ curl -X 'GET' \
 
 Instrumentator().instrument(app).expose(app, include_in_schema=False)
 
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=settings.all_cors_origins,
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+# the browser talks to us through nginx, the cookie must travel with it
+cors = dict(allow_credentials=True, allow_methods=["*"], allow_headers=["*"])
+app.add_middleware(CORSMiddleware, allow_origins=settings.all_cors_origins, **cors)
 
 app.mount("/static", StaticFiles(directory="app/static"), name="static")
 
