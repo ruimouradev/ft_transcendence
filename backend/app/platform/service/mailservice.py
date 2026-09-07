@@ -5,6 +5,10 @@ from pathlib import Path
 from datetime import datetime, timedelta, timezone
 import jwt
 from app.platform.config import settings
+import asyncio
+import logging
+
+logger = logging.getLogger("uvicorn.error")
 
 BASE_DIR = Path(__file__).resolve().parent
 
@@ -39,6 +43,21 @@ def verify_token_in_email(token: str, verifyType: EmailVerificationType) -> str:
     except jwt.PyJWTError:
         raise APIError(status_code=400, code=APIErrorCode.BAD_REQUEST, msg="Invalid verification link. Please check your email and try again.")
 
+async def _send(message: MessageSchema, template: str, tries: int = 3) -> None:
+    """Hand the message to the mail server, trying again when the
+    connection drops on the way, which gmail does now and then."""
+    for attempt in range(1, tries + 1):
+        try:
+            # a fresh copy each time, sending rewrites the template data
+            fresh = message.model_copy(deep=True)
+            await FastMail(conf).send_message(fresh, template_name=template)
+            return
+        except Exception as exc:
+            logger.warning(f"mail to {message.recipients} failed on try {attempt}: {exc}")
+            if attempt == tries:
+                raise
+            await asyncio.sleep(2 * attempt)
+
 async def send_new_account_activation_email(email: EmailStr, username: str, token: str, expire_minutes: int = 15):
     """Send an account activation email to the user with a verification link."""
 
@@ -54,8 +73,7 @@ async def send_new_account_activation_email(email: EmailStr, username: str, toke
         template_body=template_data,
         subtype=MessageType.html
     )
-    fm = FastMail(conf)
-    await fm.send_message(message, template_name="email_verification.html")
+    await _send(message, "email_verification.html")
 
 async def send_password_reset_email(email: EmailStr, username: str, token: str, expire_minutes: int = 15):
     """Send a password reset email to the user with a reset link."""
@@ -71,6 +89,4 @@ async def send_password_reset_email(email: EmailStr, username: str, token: str, 
         template_body=template_data,
         subtype=MessageType.html
     )
-    fm = FastMail(conf)
-    await fm.send_message(message, template_name="password_reset.html")
-
+    await _send(message, "password_reset.html")
