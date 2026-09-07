@@ -20,13 +20,13 @@ def parse_cors(v: Any) -> list[str] | str:
 
 
 # the value the sample file ships with, the app refuses to start on it
-PLACEHOLDER = "changethis"
+PLACEHOLDER = "change-me"
 
 
 class Settings(BaseSettings):
     API_V1_STR: str = "/api/v1"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24 * 8
-    SECRET_KEY: str = "changethis"
+    SECRET_KEY: str = "change-me"
     FRONTEND_HOST: str = "https://localhost:8443"
     DATABASE_URL: str = "need to set"
     DMODE: str = "dev"
@@ -43,8 +43,6 @@ class Settings(BaseSettings):
 
     PROJECT_NAME: str = "UNOpposed"
 
-    # FIRST_SUPERUSER: EmailStr ="not set"
-    # FIRST_SUPERUSER_PASSWORD: str = "changethis"
     EMAILS_ENABLED: bool = True
     ALGORITHM: str = "HS256"
     MAIL_USERNAME: str
@@ -53,16 +51,17 @@ class Settings(BaseSettings):
     MAIL_PORT: int = 587
     MAIL_SERVER: str = "smtp.gmail.com"
     O42_CLIENT_ID: str ="need to be seted"
-    O42_CLIENT_SECRET: str = "changethis" 
-    O42_REDIRECT_URI : str = "changethis" 
-    O42_TOKEN_URL : str = "changethis"
+    O42_CLIENT_SECRET: str = "change-me" 
+    O42_REDIRECT_URI : str = "change-me" 
+    O42_TOKEN_URL : str = "change-me"
     REDIS_URL : str = "redis://redis:6379/0"
 
     @model_validator(mode="after")
     def _refuse_placeholders(self) -> Self:
         secrets = {
             "SECRET_KEY": self.SECRET_KEY,
-            # "FIRST_SUPERUSER_PASSWORD": self.FIRST_SUPERUSER_PASSWORD,
+            "O42_CLIENT_SECRET": self.O42_CLIENT_SECRET,
+            "MAIL_PASSWORD": self.MAIL_PASSWORD,
         }
         left = [name for name, value in secrets.items() if value == PLACEHOLDER]
         if left:
