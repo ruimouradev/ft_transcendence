@@ -92,7 +92,7 @@ function WaitRoom()
 					<Box sx={{ height: '15%', width: '100%' }}>
 						<Button variant="contained" disabled={room_full || not_host} onClick={() => sendMessage(start_game)}
 						sx={{ height: '100%', width: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-							<Typography>{text}</Typography>
+							<Typography sx={{ fontWeight: 700 }}>{text}</Typography>
 						</Button>
 					</Box>
 				</Box>

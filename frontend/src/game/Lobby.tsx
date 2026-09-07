@@ -29,8 +29,8 @@ function JoinCreateLobby({ rooms }: { rooms: Room[]})
 			<Container sx={{ height: '75dvh', width: { xs: '95%', md: '80%' }, display: 'flex', flexDirection: 'column',
 				my: 2, p: 0.5, border: '1px solid', borderColor: 'divider', borderRadius: 2, bgcolor: 'background.paper' }}>
 				<Tabs value={value} onChange={handleChange} sx={{ height: '10%', width:'100%' }} >
-					<Tab sx={{ ...tab_text }} label="JOIN GAME" />
-					<Tab sx={{ ...tab_text }} label="CREATE GAME" />
+					<Tab sx={{ ...tab_text, fontWeight: 700 }} label="JOIN GAME" />
+					<Tab sx={{ ...tab_text, fontWeight: 700 }} label="CREATE GAME" />
 				</Tabs>
 				<Box sx={{height: '90%', display: 'flex', flexDirection: 'column', justifyContent: 'center'}}>
 						{value === 0 ? <JoinRoom rooms={rooms}/> : <CreateRoom rooms={rooms}/>}

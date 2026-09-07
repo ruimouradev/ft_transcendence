@@ -34,7 +34,7 @@ function JoinPrivate()
 				</Box>
 			</Box>
 			<Button onClick={PrivateClick} variant="contained" disabled={code === ''} sx={{ my: 1, width: '99%', height: '15%' }}>
-				<Typography sx={{ ...menu_text }}>JOIN WITH CODE</Typography>
+				<Typography sx={{ ...menu_text, fontWeight: 700 }}>JOIN WITH CODE</Typography>
 			</Button>
 		</Box>
 	)

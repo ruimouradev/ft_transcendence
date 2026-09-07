@@ -34,7 +34,8 @@ function PresenceKeeper()
         };
 
         const scheduleReconnect = () => {
-            if (closedByUsRef.current) { return; }
+            if (closedByUsRef.current) 
+				return;
             if (attemptsRef.current >= MAX_RECONNECT_ATTEMPTS) {
                 return;
             }

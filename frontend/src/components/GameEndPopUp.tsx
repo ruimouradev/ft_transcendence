@@ -42,10 +42,10 @@ function GameEndPopUp()
 				</Box>
 				<Box sx={{ height: '15%', width: '100%', ...align, gap: 3 }}>
 						<Button variant="contained" onClick={() => endGame("start")} sx={{ width: '45%', height: '90%', minWidth: 0   }}>
-							<Typography sx={{ fontSize: 'clamp(0.9rem, 1.2vw, 2rem)' }}>TO LOBBY</Typography>
+							<Typography sx={{ fontSize: 'clamp(0.9rem, 1.2vw, 2rem)', fontWeight: 700 }}>PLAY AGAIN</Typography>
 						</Button>
 						<Button variant="contained" onClick={() => endGame("leave")} sx={{ width: '45%', height: '90%', minWidth: 0 }}>
-							<Typography sx={{ fontSize: 'clamp(0.9rem, 1.2vw, 2rem)' }}>QUIT</Typography>
+							<Typography sx={{ fontSize: 'clamp(0.9rem, 1.2vw, 2rem)', fontWeight: 700 }}>QUIT</Typography>
 						</Button>
 				</Box>
 			</Box>

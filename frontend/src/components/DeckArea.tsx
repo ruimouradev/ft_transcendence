@@ -90,7 +90,7 @@ function DeckArea()
 			<Box sx={{ width: '25%', height: '100%', left: 0, position: 'absolute', display: 'flex', flexDirection: 'column',
 				alignItems: 'flex-start', gap: 2, transform: 'translateX(-20%) translateY(-15%)' }}>
 				{gameState?.stack !== 0 && <Paper elevation={0} sx={{ width: box_width, aspectRatio: '1 / 1', bgcolor: color, borderRadius: 1, ...box_shadow }}>
-					<Typography sx={{ width: '100%', height: '100%', color: 'backgorund.paper', fontSize: 'clamp(0.2rem, 1.4vh, 1rem)',
+					<Typography sx={{ width: '100%', height: '100%', color: 'background.paper', fontSize: 'clamp(0.2rem, 1.4vh, 1rem)',
 						display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column' }}>
 						<span>STACK</span> <span>{gameState?.stack}</span>
 					</Typography>
