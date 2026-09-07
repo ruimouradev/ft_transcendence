@@ -138,7 +138,7 @@ services:
     pull_policy: never
     container_name: nginx
     ports:
-      - "80:80"
+      - "8080:80"
       - "8443:443"
     depends_on:
       backend:
@@ -159,7 +159,7 @@ services:
     container_name: nginx_prod
     restart: unless-stopped
     ports:
-      - "80:80"
+      - "8080:80"
       - "8443:443"
     depends_on:
       backend:
