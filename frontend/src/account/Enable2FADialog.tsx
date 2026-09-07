@@ -52,8 +52,10 @@ function Enable2FADialog({ open, onClose, onSuccess }: Enable2FADialogProps)
 	}
 
     const handleClose = (_event?: object, reason?: 'backdropClick' |'escapeKeyDown') => {
-        if (loading) { return; }
-        if (reason === 'backdropClick' || reason === 'escapeKeyDown') { return; }
+        if (loading)
+			return;
+        if (reason === 'backdropClick' || reason === 'escapeKeyDown') 
+			return;
         resetWizard();
         onClose();
     };
@@ -117,8 +119,6 @@ function Enable2FADialog({ open, onClose, onSuccess }: Enable2FADialogProps)
         }
         setLoading(true);
         setError(null);
-		if (!user)
-			return ;
         try {
             const response = await api.post<Verify2FAResponse>('/2fa/verify-setup', { code, },);
             setRecoveryCodes(response.data.recovery_codes,);
@@ -161,7 +161,8 @@ function Enable2FADialog({ open, onClose, onSuccess }: Enable2FADialogProps)
     };
 
     const handleFinish = () => {
-        if (!savedRecoveryCodes) { return; }
+        if (!savedRecoveryCodes) 
+			return;
         onSuccess();
         resetWizard();
         onClose();

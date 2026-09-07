@@ -61,7 +61,7 @@ function ChangePasswordCard()
         <Container maxWidth="sm" sx={{ mt: 4, mb: 4 }}>
             <Card elevation={3} sx={{ borderRadius: 3, p: 2 }}>
                 <CardContent>
-                    <Box  sx={{ display: 'flex', alignItems: "center", gap: 1.5, mb: 2 }} >
+                    <Box sx={{ display: 'flex', alignItems: "center", gap: 1.5, mb: 2 }} >
                         <LockIcon color="primary" fontSize="large" />
                         <Typography variant="h5" component="h1" sx={{ fontWeight: 'bold' }}>
                             Change Password

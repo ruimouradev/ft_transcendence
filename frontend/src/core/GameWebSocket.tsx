@@ -180,6 +180,9 @@ function GameWebSocket({ children }: { children: React.ReactNode }) {
 
 	function handleNewGameState(gamestate: GameState)
 	{
+		if (gameStateRef.current && gamestate.seq <= gameStateRef.current.seq)
+			return ;
+
 		gameStateRef.current = gamestate;
 		setGameState(gamestate);
 		if (gamestate.plus4_by)

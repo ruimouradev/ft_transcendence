@@ -159,7 +159,8 @@ function Reset2FA({ open, onClose, onSuccess }: Reset2FADialogProps)
     };
 
     const handleFinish = () => {
-        if (!savedRecoveryCodes) { return; }
+        if (!savedRecoveryCodes) 
+			return;
         onSuccess();
         // resetWizard();
         onClose();
