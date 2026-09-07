@@ -3,7 +3,6 @@ from typing import Annotated, Any
 from pydantic import (
     AnyUrl,
     BeforeValidator,
-    EmailStr,
     computed_field,
     model_validator,
 )
