@@ -20,7 +20,7 @@ Phase = Literal["lobby", "playing", "finished"]
 
 
 class Card(BaseModel):
-    # players only ever see the ids of their own cards
+    # a hand is private, but a card that was played is public
     id: str
     color: Color
     value: Value
@@ -57,7 +57,6 @@ class Join(BaseModel):
 class AddBot(BaseModel):
     # host only, in the lobby, seats an AI player on the next free chair
     type: Literal["add_bot"] = "add_bot"
-    # difficulty the host picked
     level: Literal["easy", "medium", "hard"] = "medium"
 
 
@@ -208,7 +207,7 @@ class PublicPlayer(BaseModel):
     # difficulty of an AI seat, None on humans, the room fills this in
     bot_level: Literal["easy", "medium", "hard"] | None = None
     # avatar URL of the account in this seat, the room fills this in
-    # like the bot flag, empty for guests and bots
+    # like the bot flag, empty on bots
     avatar: str = ""
     # what the cards still in this hand are worth, 0 until the game ends
     points: int = 0
@@ -235,10 +234,11 @@ class LastAction(BaseModel):
 class GameState(BaseModel):
     # one player's full view, sent to everyone after each accepted action
     type: Literal["state"] = "state"
-    # grows each update, clients drop anything older than the last seen
+    # grows on every accepted action, so a newer state is told apart
+    # from an older one
     seq: int
     phase: Phase
-    you: PrivateView  # the JSON field stays "you" on the wire
+    you: PrivateView
     players: list[PublicPlayer]  # in play order
     # who may start the game and manage bots, always a human
     host_id: str | None = None

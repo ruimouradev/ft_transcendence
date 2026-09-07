@@ -24,7 +24,7 @@ def decide_bot_action(state: GameState, bot_id: str) -> PlayerAction | None:
     if state.plus4_by and state.turn == bot_id:
         return _handle_plus4_challenge(difficulty)
 
-    # 3. Post-Draw Phase (Pass is removed; force play if playable to avoid timeout)
+    # 3. the drawn card is the only one that may be played now
     if state.you.drawn:
         if state.you.drawn in state.you.playable:
             drawn_card = next((c for c in state.you.hand if c.id == state.you.drawn), None)
@@ -45,8 +45,6 @@ def decide_bot_action(state: GameState, bot_id: str) -> PlayerAction | None:
     chosen_card = _select_card_by_difficulty(playable_cards, state, bot_id, difficulty)
     return _build_play_action(chosen_card, state, bot_id, difficulty)
 
-
-# ------------------ Strategy Helpers ------------------ #
 
 def _check_catch_opportunity(state: GameState, bot_id: str, difficulty: str) -> Catch | None:
     # Because ai_timer checks every 0.5 seconds:

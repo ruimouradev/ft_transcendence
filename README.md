@@ -18,8 +18,8 @@ API, and a full monitoring stack with live game dashboards.
 
 ## Instructions
 
-Prerequisites: Docker with the compose plugin, make, and a free 8443
-port.
+Prerequisites: Docker with the compose plugin, make, and the ports 80
+and 8443 free, 80 only redirects to 8443.
 
 1. Copy the sample environment file and adjust it for your machine:
 
@@ -43,7 +43,6 @@ port.
      created on the first start, it can log in right away with the
      sample values
    - `GRAFANA_ADMIN_USER`, `GRAFANA_ADMIN_PASSWORD`: Grafana login
-   - `WATCHPACK_POLLING`: useful for frontend hot reload inside Docker
 
 2. Start the whole stack with one command:
 
@@ -67,8 +66,8 @@ Services:
 
 - Frontend: `https://localhost:8443`
 - Backend API docs: `https://localhost:8443/docs`
-- Adminer: `http://localhost:8081` (local only, it is not published by
-  nginx)
+- Adminer: `http://localhost:8081` (only with `make dev`, local only,
+  it is not published by nginx)
 - Grafana: `http://localhost:3001` (local only, never exposed by nginx)
 
 ## Team Information
@@ -76,12 +75,12 @@ Services:
 All four members are Developers. The role column is the lead
 responsibility each one also holds.
 
-| Member | Role | Area | Responsibilities |
-| --- | --- | --- | --- |
-| Vinicius | Product Owner | Frontend | Lobby, game room, card rendering, WebSocket client, settings panel, card backs, design system |
-| Rui | Project Manager | Game core and monitoring | Rules engine (official rules, +4 challenge), game customization, engine-realtime contract, Prometheus and Grafana monitoring, live testing across the project |
-| Bin | Tech Lead | Platform | Repo skeleton, one-command Docker, DB schema and ORM, auth, OAuth, 2FA, public API, stats and match history |
-| Alexandre | Developer | Real-time and AI | WebSocket layer, per-client views, reconnection, remote players, AI opponent |
+| Member | Login | Role | Area | Responsibilities |
+| --- | --- | --- | --- | --- |
+| Vinicius | vloureir | Product Owner | Frontend | Lobby, game room, card rendering, WebSocket client, settings panel, card backs, design system |
+| Rui | rusilva- | Project Manager | Game core and monitoring | Rules engine (official rules, +4 challenge), game customization, engine-realtime contract, Prometheus and Grafana monitoring, live testing across the project |
+| Bin | bliu | Tech Lead | Platform | Repo skeleton, one-command Docker, DB schema and ORM, auth, OAuth, 2FA, public API, stats and match history |
+| Alexandre | acaldeir | Developer | Real-time and AI | WebSocket layer, per-client views, reconnection, remote players, AI opponent |
 
 Shared by all four: Docker one-command startup, Privacy Policy and
 Terms pages, and the multi-user testing.
@@ -103,10 +102,9 @@ running stack and sent back short reports of what broke and why.
 - **Backend: FastAPI (Python).** Async-friendly, first-class WebSocket
   support and pydantic validation on every message, which is the
   backbone of the game protocol.
-- **Frontend: React with Material UI, plus Tailwind utility classes.**
-  A component model that suits a live game board, MUI for accessible
-  ready-made components under one shared theme, and Tailwind utilities
-  where a small layout tweak beats a styled component.
+- **Frontend: React with Material UI.** A component model that suits a
+  live game board, MUI for accessible ready-made components under one
+  shared theme, and Tailwind only for the global base styles.
 - **Database: PostgreSQL with SQLModel/SQLAlchemy (ORM).** Relational
   data (users, games, participations) with real constraints, inspected
   via Adminer.
@@ -135,9 +133,9 @@ the SQLModel ORM. The tables:
   and score, that feed the leaderboards.
 - **RecoveryCode**: the single-use codes handed out when 2FA is armed.
 
-A user has many games through GamePlayer, a UserStatistic row from the
-first finished game on, many
-friendships, and its OAuth and recovery links:
+A user has many games through GamePlayer, a UserStatistic row from
+the first finished game on, many friendships, and its OAuth and
+recovery links:
 
 ```mermaid
 erDiagram
@@ -174,7 +172,7 @@ erDiagram
 | Module | Type | Points | Who |
 | --- | --- | --- | --- |
 | Web game (play against each other) | major | 2 | Rui, Alexandre, Vinicius |
-| Multiplayer (3+ players) | major | 2 | shared (Uno is natively 2-4) |
+| Multiplayer (3+ players) | major | 2 | Rui, Alexandre, Vinicius |
 | Remote players | major | 2 | Alexandre |
 | AI opponent | major | 2 | Alexandre |
 | Frameworks, frontend + backend | major | 2 | Bin, Vinicius |
@@ -208,8 +206,6 @@ One line each, for the defense:
 - **Design system**: reusable components with a palette and typography.
 - **OAuth**: sign in with your 42 account.
 - **Two-factor**: TOTP codes with single-use recovery codes.
-
-
 
 ## Individual Contributions
 
@@ -270,7 +266,7 @@ play at a human rhythm without blocking the room for anyone else.
 
 ## Resources
 
-The shared set below.
+The references the team worked from.
 
 - Official Uno rules: <https://www.mattelgames.com/en-us/cards/uno>,
   what the engine implements, +4 challenge included.
@@ -286,7 +282,7 @@ The shared set below.
 - SQLModel: <https://sqlmodel.tiangolo.com/>, the ORM over SQLAlchemy.
 - PostgreSQL: <https://www.postgresql.org/docs/>.
 - React: <https://react.dev/>, Material UI: <https://mui.com/>, and
-  Tailwind CSS: <https://tailwindcss.com/docs>, the frontend stack.
+  Tailwind CSS: <https://tailwindcss.com/docs>, the base styles.
 - MDN WebSocket API: <https://developer.mozilla.org/en-US/docs/Web/API/WebSocket>,
   the client side of the realtime connection.
 - Prometheus: <https://prometheus.io/docs/> and Grafana provisioning:
