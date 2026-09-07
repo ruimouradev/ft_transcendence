@@ -115,8 +115,6 @@ function Reset2FA({ open, onClose, onSuccess }: Reset2FADialogProps)
         setLoading(true);
         setError(null);
 
-		// DEL
-		console.log(user);
 		if (!user)
 			return ;
         try {

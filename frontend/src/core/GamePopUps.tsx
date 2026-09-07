@@ -28,23 +28,7 @@ function GamePopUps({ children }: { children: React.ReactNode })
 		setErrorMessage(new_error);
 		setPopUp('error');
 	}
-	
-	// function resetPopUpStates()
-	// {
-	// 	if (popUpBackup.popUp !== 'disabled')
-	// 	{
-	// 		setPopUp(popUpBackup.popUp);
-	// 		setIdentifierID(popUpBackup.identifierID);
-	// 		setErrorMessage(null);
-	// 		setPopUpBackup({popUp: 'disabled', identifierID: null});
-	// 		return ;
-	// 	}
-	// 	setPopUp('disabled');
-	// 	setIdentifierID(null);
-	// 	setErrorMessage(null);
-	// }
 
-	// Trying this !!!! Maybe DEL !!!
 	const resetPopUpStates = useCallback(() => {
 		if (popUpBackup.popUp !== 'disabled')
 		{

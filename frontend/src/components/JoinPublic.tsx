@@ -11,7 +11,7 @@ import Rotate90DegreesCwOutlinedIcon from '@mui/icons-material/Rotate90DegreesCw
 
 function PrintRoom({room, room_flag, onSelect}: {room: Room, room_flag: boolean | null, onSelect: () => void })
 {
-	const bg = room_flag ? '#0f172a' : 'primary.color';
+	const bg = room_flag ? '#0f172a' : 'primary.main';
 	const icons_font = { fontSize: 'clamp(25px, 3vw, 35px)' };
 
 	return (

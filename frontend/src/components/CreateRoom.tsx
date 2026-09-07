@@ -60,7 +60,7 @@ function CreateRoom({ rooms }: { rooms: Room[]})
 	return (
 		<Box sx={{ width: '100%', height: '100%' }}>
 			<Box sx={{ width: '60%', height: '85%', display: 'flex', flexDirection: 'column', justifyContent: 'center', mx: 'auto' }}>
-				<Box sx={{ height: '25%', borderBottom: '1pxsolid', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'auto', whiteSpace: 'pre-line', textAlign: 'center' }} >
+				<Box sx={{ height: '25%', borderBottom: '1px solid', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'auto', whiteSpace: 'pre-line', textAlign: 'center' }} >
 					<Typography sx={{ fontSize: 'clamp(0.8rem, 1.15vw, 2rem)' }}>{optionsTooltip}</Typography>
 				</Box>
 				<HandCountSettings handCount={handCount} setHandCount={setHandCount} defaultTooltip={defaultTooltip} setOptionsTooltip={setOptionsTooltip} />
