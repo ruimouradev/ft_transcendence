@@ -58,7 +58,10 @@ Useful targets (`make help` lists them all): `make re` restarts
 everything, `make dev` runs the site in the foreground with the logs
 attached and without the monitoring stack, `make ps` and `make log`
 inspect the containers, `make down` stops them, `make clean` also
-removes images and persistent data.
+removes the images and the data of this project. With the stack up,
+`make data` fills it with demo accounts, friendships and finished
+games so the friends list and the leaderboards have content, and
+`make data_clean` removes exactly what it created.
 
 Services:
 

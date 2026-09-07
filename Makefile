@@ -38,6 +38,13 @@ down:
 	docker compose -f ./docker-compose.yml down
 	@echo "[INFO] Docker containers stopped and removed."
 
+data:
+	docker compose -f ./docker-compose.yml exec backend python -m app.scripts.seed_friends
+	@echo "[INFO] Demo accounts created on @ex.pt."
+
+data_clean:
+	docker compose -f ./docker-compose.yml exec backend python -m app.scripts.seed_friends --delete
+
 clean:
 	docker compose -f ./docker-compose.yml down --rmi local -v
 	@echo "[INFO] Containers, images and data of this project removed."
@@ -54,10 +61,12 @@ help:
 	@echo "  build          - Build Docker images without using cache."
 	@echo "  re             - Stop everything and start it again."
 	@echo "  dev            - Start part of the stack in the foreground, for development."
-	@echo "  vinit          - Initialize host directories for persistent data."
+	@echo "  vinit          - Create the folder the nginx build writes into."
 	@echo "  down           - Stop and remove the containers."
+	@echo "  data           - Fill the running stack with demo accounts, friends and games."
+	@echo "  data_clean     - Remove what data created."
 	@echo "  clean          - Stop services and remove the containers, images and data of this project."
 	@echo "  ps             - List the running containers."
 	@echo "  log            - View the logs of every service."
 
-.PHONY: all build vinit dev re down clean ps log help
+.PHONY: all build vinit dev re down data data_clean clean ps log help

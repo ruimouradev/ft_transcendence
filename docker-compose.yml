@@ -188,13 +188,16 @@ services:
       - ft_network
 
   grafana:
-    image: grafana/grafana:11.1.0
+    image: grafana/grafana:11.6.6
     container_name: grafana
     restart: unless-stopped
     ports:
       - "127.0.0.1:3001:3000"
     volumes:
-      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning
+      # only our two folders, mounting the whole provisioning directory
+      # would hide the ones the image ships, alerting and plugins
+      - ./monitoring/grafana/provisioning/datasources:/etc/grafana/provisioning/datasources
+      - ./monitoring/grafana/provisioning/dashboards:/etc/grafana/provisioning/dashboards
       - ./monitoring/grafana/dashboards:/var/lib/grafana/dashboards
       - grafana_data:/var/lib/grafana
     environment:
@@ -206,12 +209,11 @@ services:
       - ft_network
 
   postgres-exporter:
-    image: prometheuscommunity/postgres-exporter:v0.15.0
+    image: prometheuscommunity/postgres-exporter:v0.17.1
     container_name: postgres-exporter
     restart: unless-stopped
-    # postgres 18 dropped the columns this collector reads, and it logged
-    # an error every 15 seconds on both sides
-    command: ["--no-collector.stat_bgwriter"]
+    volumes:
+      - ./monitoring/postgres_exporter.yml:/postgres_exporter.yml:ro
     environment:
       - DATA_SOURCE_NAME=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}?sslmode=disable
     depends_on:

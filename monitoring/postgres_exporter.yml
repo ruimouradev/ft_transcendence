@@ -1,0 +1,2 @@
+# no extra auth modules, the connection comes from DATA_SOURCE_NAME
+auth_modules: {}
