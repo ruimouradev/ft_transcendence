@@ -44,12 +44,13 @@ class Settings(BaseSettings):
 
     EMAILS_ENABLED: bool = True
     ALGORITHM: str = "HS256"
+    POSTGRES_PASSWORD: str
     MAIL_USERNAME: str
     MAIL_PASSWORD: str
     MAIL_FROM: str
     MAIL_PORT: int = 587
     MAIL_SERVER: str = "smtp.gmail.com"
-    O42_CLIENT_ID: str ="need to be seted"
+    O42_CLIENT_ID: str ="change-me"
     O42_CLIENT_SECRET: str = "change-me" 
     O42_REDIRECT_URI : str = "change-me" 
     O42_TOKEN_URL : str = "change-me"
@@ -58,11 +59,13 @@ class Settings(BaseSettings):
     @model_validator(mode="after")
     def _refuse_placeholders(self) -> Self:
         secrets = {
-            "SECRET_KEY": self.SECRET_KEY,
-            "O42_CLIENT_SECRET": self.O42_CLIENT_SECRET,
+            "POSTGRES_PASSWORD": self.POSTGRES_PASSWORD,
             "MAIL_PASSWORD": self.MAIL_PASSWORD,
+            "SECRET_KEY": self.SECRET_KEY,
+            "O42_CLIENT_ID": self.O42_CLIENT_ID,
+            "O42_CLIENT_SECRET": self.O42_CLIENT_SECRET,
         }
-        left = [name for name, value in secrets.items() if value == PLACEHOLDER]
+        left = [name for name, value in secrets.items() if value == PLACEHOLDER or "request" in value]
         if left:
             raise ValueError(
                 f"{', '.join(left)} still {'has' if len(left) == 1 else 'have'} "
