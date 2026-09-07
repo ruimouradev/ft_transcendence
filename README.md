@@ -39,9 +39,6 @@ and 8443 free, 8080 only redirects to 8443.
    - `MAIL_USERNAME`, `MAIL_PASSWORD`: a Gmail account and its app
      password, used for the activation and recovery emails, without
      them a new account never gets its activation email and cannot log in
-   - `FIRST_SUPERUSER`, `FIRST_SUPERUSER_PASSWORD`: admin account
-     created on the first start, it can log in right away with the
-     sample values
    - `GRAFANA_ADMIN_USER`, `GRAFANA_ADMIN_PASSWORD`: Grafana login
 
 2. Start the whole stack with one command:
