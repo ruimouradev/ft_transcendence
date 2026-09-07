@@ -11,12 +11,8 @@ from pwdlib.hashers.argon2 import Argon2Hasher
 from pwdlib.hashers.bcrypt import BcryptHasher
 from app.models.all import LoginTokenType, APIError, APIErrorCode, EmailVerificationType
 
-password_hash = PasswordHash(
-    (
-        Argon2Hasher(),
-        BcryptHasher(),
-    )
-)
+# argon2 for every new hash, bcrypt still accepted for the old ones
+password_hash = PasswordHash((Argon2Hasher(), BcryptHasher()))
 
 ALGORITHM = "HS256"
 
@@ -38,12 +34,14 @@ def create_temporary_access_token(subject: str | Any, expires_delta: timedelta) 
     encoded_jwt = jwt.encode(to_encode, settings.SECRET_KEY, algorithm=ALGORITHM)
     return encoded_jwt
 
-def verify_password(plain_password: str, hashed_password: str) -> tuple[bool, str | None]:
-    return password_hash.verify_and_update(plain_password, hashed_password)
-
-
 def get_password_hash(password: str) -> str:
     return password_hash.hash(password)
+
+
+def verify_password(plain_password: str, hashed_password: str) -> tuple[bool, str | None]:
+    # the second value is a fresh hash when the stored one uses older
+    # parameters, the caller stores it
+    return password_hash.verify_and_update(plain_password, hashed_password)
 
 async def consume_verification_token(token: str, verifyType: EmailVerificationType) -> None:
     """Verify the token and return the email if valid, otherwise raise APIError."""
