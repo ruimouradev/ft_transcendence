@@ -15,7 +15,7 @@ function PrintRoom({room, room_flag, onSelect}: {room: Room, room_flag: boolean 
 		? { border: '2px solid', borderColor: 'primary.main', outline: '2px solid', outlineColor: 'primary.main' } 
 		: { borderTop: '3px solid white' };
 	const icons_font = { fontSize: 'clamp(25px, 3vw, 35px)' };
-
+ 
 	return (
 		<Card onClick={onSelect} sx={{ margin: 0.4, width: '97%', height: '10vh', bgcolor: '#0f172a', ...selected_border }}>
 			<Box sx={{width: '100%', height: '50%', position: 'relative'}}>
