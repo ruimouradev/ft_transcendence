@@ -1,4 +1,4 @@
-all: vinit
+all: envcheck vinit
 	docker compose -f ./docker-compose.yml build frontend_prod
 	docker compose -f ./docker-compose.yml run --rm frontend_prod
 	docker image rm frontend_prod:latest
@@ -16,11 +16,16 @@ re: down all
 vinit:
 	@mkdir -p ./nginx/dist
 
-dev: vinit
+envcheck:
+	@test -f .env || { echo "No .env found, copy .env.example to .env and fill it in"; exit 1; }
+	@left=$$(grep -E '^(POSTGRES_PASSWORD|O42_CLIENT_ID|O42_CLIENT_SECRET|MAIL_PASSWORD|SECRET_KEY|GRAFANA_ADMIN_PASSWORD|)=' .env | grep -E '=(change-me|request .*)$$' | cut -d= -f1); \
+	if [ -n "$$left" ]; then echo "Set a real value in .env for:\n$$left"; exit 1 ; fi
+
+dev: envcheck vinit
 	docker compose -f ./docker-compose.yml build frontend backend nginx
 	docker compose -f ./docker-compose.yml up db redis backend frontend adminer nginx
 
-prod: vinit
+prod: envcheck vinit
 	docker compose -f ./docker-compose.yml build frontend_prod
 	docker compose -f ./docker-compose.yml run --rm frontend_prod
 	docker image rm frontend_prod:latest
@@ -69,4 +74,4 @@ help:
 	@echo "  ps             - List the running containers."
 	@echo "  log            - View the logs of every service."
 
-.PHONY: all build vinit dev re down data data_clean clean ps log help
+.PHONY: all build vinit envcheck dev re down data data_clean clean ps log help
