@@ -13,12 +13,12 @@ else:
 def init_db(session: Session)-> None:
     SQLModel.metadata.create_all(engine)
 
-    user = session.exec(select(User).where(User.email == settings.FIRST_SUPERUSER)).first()
-    if user is None:
-        # the admin account from .env, active from the first start
-        admin = {"email": settings.FIRST_SUPERUSER, "password": settings.FIRST_SUPERUSER_PASSWORD,
-                 "nick_name": "Superuser", "is_superuser": True, "is_active": True}
-        user = userservice.create_user(session=session, user_create=UserCreate(**admin))
+    # user = session.exec(select(User).where(User.email == settings.FIRST_SUPERUSER)).first()
+    # if user is None:
+    #     # the admin account from .env, active from the first start
+    #     admin = {"email": settings.FIRST_SUPERUSER, "password": settings.FIRST_SUPERUSER_PASSWORD,
+    #              "nick_name": "Superuser", "is_superuser": True, "is_active": True}
+    #     user = userservice.create_user(session=session, user_create=UserCreate(**admin))
     bot_user_email = [{"email": "iamrobot1@localhost.com", "password": generate_password(), "nick_name": "Bot1", "is_superuser": False, "is_active": False},
                       {"email": "iamrobot2@localhost.com", "password": generate_password(), "nick_name": "Bot2", "is_superuser": False, "is_active": False},
                       {"email": "iamrobot3@localhost.com", "password": generate_password(), "nick_name": "Bot3", "is_superuser": False, "is_active": False}]

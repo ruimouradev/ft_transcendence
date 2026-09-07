@@ -43,8 +43,8 @@ class Settings(BaseSettings):
 
     PROJECT_NAME: str = "UNOpposed"
 
-    FIRST_SUPERUSER: EmailStr ="not set"
-    FIRST_SUPERUSER_PASSWORD: str = "changethis"
+    # FIRST_SUPERUSER: EmailStr ="not set"
+    # FIRST_SUPERUSER_PASSWORD: str = "changethis"
     EMAILS_ENABLED: bool = True
     ALGORITHM: str = "HS256"
     MAIL_USERNAME: str
@@ -62,7 +62,7 @@ class Settings(BaseSettings):
     def _refuse_placeholders(self) -> Self:
         secrets = {
             "SECRET_KEY": self.SECRET_KEY,
-            "FIRST_SUPERUSER_PASSWORD": self.FIRST_SUPERUSER_PASSWORD,
+            # "FIRST_SUPERUSER_PASSWORD": self.FIRST_SUPERUSER_PASSWORD,
         }
         left = [name for name, value in secrets.items() if value == PLACEHOLDER]
         if left:
