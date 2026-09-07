@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { useAuth } from '../core/AuthContext';
 import { Box, Container, Paper, Button, Typography, TextField } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
@@ -13,6 +13,14 @@ function Verify2fa()
     const [loading, setLoading] = useState(false);
     const { login } = useAuth();
     const navigate = useNavigate();
+
+	const twoFAChipRef = useRef<HTMLButtonElement | null>(null);
+
+    const restore2FAChipFocus = () => {
+        requestAnimationFrame(() => {
+            twoFAChipRef.current?.focus();
+        });
+    };
 
     const handleSubmit = async (e: React.SubmitEvent<HTMLFormElement>) => {
         e.preventDefault();
@@ -70,14 +78,11 @@ function Verify2fa()
                     <Box sx={{ mt: 1, textAlign: 'center' }}>
                         <Typography variant="body2" color="text.secondary">
                             Forgot your authenticator?{' '}
-                            {/* <Link href="#" onClick={handleAuthenticatorReset} underline="hover" sx={{ fontWeight: 600 }}>
-                                Reset authenticator
-                            </Link> */}
-                            <Button type="button" onClick={handleAuthenticatorReset} variant="text" sx={{ p: 0, minWidth: 0, fontWeight: 600, textTransform: 'none', verticalAlign: 'baseline', }}>Reset authenticator</Button>
-
+                            <Button ref={twoFAChipRef} type="button" onClick={handleAuthenticatorReset} variant="text"
+							sx={{ p: 0, minWidth: 0, fontWeight: 600, textTransform: 'none', verticalAlign: 'baseline', }}>Reset authenticator</Button>
                         </Typography>
                     </Box>
-                    <Reset2FA open={userecoverCode} onClose={() => setUserRecoverCode(false)} onSuccess={() => {}} />
+                    <Reset2FA open={userecoverCode} onClose={() => setUserRecoverCode(false)} onSuccess={() => {}} onClosed={restore2FAChipFocus} />
                 </Paper>
             </Container>
         </Box>

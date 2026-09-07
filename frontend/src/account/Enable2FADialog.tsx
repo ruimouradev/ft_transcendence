@@ -10,7 +10,7 @@ import type { Enable2FADialogProps, Setup2FAResponse, Verify2FAResponse } from '
 
 const steps = [ 'Confirm', 'Verify identity', 'Authenticator', 'Verify code', 'Recovery codes', ];
 
-function Enable2FADialog({ open, onClose, onSuccess }: Enable2FADialogProps)
+function Enable2FADialog({ open, onClose, onSuccess, onClosed }: Enable2FADialogProps)
 {
     const [activeStep, setActiveStep] = useState(0);
     const { user, login } = useAuth();
@@ -75,7 +75,6 @@ function Enable2FADialog({ open, onClose, onSuccess }: Enable2FADialogProps)
 		else
 			return;
 	}
-
 
     const handleSetup2FA = async () => {
         if (!password) {
@@ -174,8 +173,8 @@ function Enable2FADialog({ open, onClose, onSuccess }: Enable2FADialogProps)
     };
 
     return (
-        <Dialog open={open} onClose={handleClose} fullWidth maxWidth="sm" aria-labelledby="enable-2fa-dialog-title" aria-describedby="enable-2fa-dialog-description"
-			slotProps={{ transition: { unmountOnExit: true, onEnter: handleOpen} }}>
+        <Dialog open={open} onClose={handleClose} disableRestoreFocus fullWidth maxWidth="sm" aria-labelledby="enable-2fa-dialog-title" aria-describedby="enable-2fa-dialog-description"
+			slotProps={{ transition: { unmountOnExit: true, onEnter: handleOpen, onExited: onClosed } }}>
 			<Box component="form" onSubmit={handleSubmit} sx={{ width: '100%', height: '100%' }}>
 				<DialogTitle id="enable-2fa-dialog-title" sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', pb: 1, }}>
 					<Typography variant="h6" component="span" sx={{ fontWeight: 600 }}>

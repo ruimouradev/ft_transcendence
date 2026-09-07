@@ -283,6 +283,7 @@ export type Reset2FADialogProps = {
     open: boolean;
     onClose: () => void;
     onSuccess: () => void;
+	onClosed?: () => void;
 }
 
 export type Disable2FADialogProps = {

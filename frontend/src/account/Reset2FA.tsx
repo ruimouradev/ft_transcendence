@@ -11,7 +11,7 @@ import type { Reset2FADialogProps, Setup2FAResponse, Verify2FAResponse } from '.
 
 const steps = [ 'Reset Confirm', 'Verify', 'Authenticator', 'Verify code', 'Recovery codes', ];
 
-function Reset2FA({ open, onClose, onSuccess }: Reset2FADialogProps)
+function Reset2FA({ open, onClose, onSuccess, onClosed }: Reset2FADialogProps)
 {
 	const { user, login } = useAuth();
     const navigate = useNavigate();
@@ -162,7 +162,6 @@ function Reset2FA({ open, onClose, onSuccess }: Reset2FADialogProps)
         if (!savedRecoveryCodes) 
 			return;
         onSuccess();
-        // resetWizard();
         onClose();
         navigate('/', { replace: true });
     };
@@ -179,8 +178,8 @@ function Reset2FA({ open, onClose, onSuccess }: Reset2FADialogProps)
 	}
 
     return (
-        <Dialog open={open} onClose={handleClose} fullWidth maxWidth="sm" aria-labelledby="enable-2fa-dialog-title" aria-describedby="enable-2fa-dialog-description"
-			slotProps={{ transition: { unmountOnExit: true, onEnter: handleOpen} }}>
+        <Dialog open={open} onClose={handleClose} disableRestoreFocus fullWidth maxWidth="sm" aria-labelledby="enable-2fa-dialog-title" aria-describedby="enable-2fa-dialog-description"
+			slotProps={{ transition: { unmountOnExit: true, onEnter: handleOpen, onExited: onClosed}}}>
 			<Box component="form" onSubmit={handleSubmit} sx={{ width: '100%', height: '100%' }}>
 				<DialogTitle id="enable-2fa-dialog-title" sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', pb: 1, }}>
 					<Typography variant="h6" component="span" sx={{ fontWeight: 600 }}>
