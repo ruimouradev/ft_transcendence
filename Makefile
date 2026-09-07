@@ -102,7 +102,7 @@ help:
 	@echo "  data           - Fill the running stack with demo accounts, friends and games."
 	@echo "  data_clean     - Remove what data created."
 	@echo "  clean          - Stop services and remove the containers, images and data of this project."
-	@echo " fclean - clean plus the frontend build output."
+	@echo " fclean 			- clean plus the frontend build output."
 	@echo "  ps             - List the running containers."
 	@echo "  log            - View the logs of every service."
 
