@@ -2,15 +2,13 @@ services:
   db:
     image: postgres:18-alpine
     container_name: db
+    restart: unless-stopped
     environment:
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       POSTGRES_DB: ${POSTGRES_DB}
-    # ports:
-    #   - "5432:5432"
     volumes:
       - pgdata:/var/lib/postgresql
-      # - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
       interval: 5s
@@ -40,10 +38,9 @@ services:
     image: backend
     pull_policy: never
     container_name: backend
+    restart: unless-stopped
     volumes:
       - ./backend:/app
-    # ports:
-    #   - "8000:8000"
     environment:
       - API_V1_STR=${API_V1_STR}
       - ACCESS_TOKEN_EXPIRE_MINUTES=${ACCESS_TOKEN_EXPIRE_MINUTES}
@@ -104,8 +101,6 @@ services:
       - ./frontend:/app
       - /app/node_modules
       - ./nginx/dist:/output
-    environment:
-      - WATCHPACK_POLLING=${WATCHPACK_POLLING}
     command:
       - sh
       - -ec
@@ -126,10 +121,6 @@ services:
     volumes:
       - ./frontend:/app
       - /app/node_modules
-    environment:
-      - WATCHPACK_POLLING=${WATCHPACK_POLLING}
-    # ports:
-    #   - "5173:5173"
     healthcheck:
       test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:5173/"]
       interval: 5s
@@ -165,7 +156,8 @@ services:
       dockerfile: Dockerfile
     image: nginx_prod
     pull_policy: never
-    container_name: nginx_prod   
+    container_name: nginx_prod
+    restart: unless-stopped
     ports:
       - "80:80"
       - "8443:443"
@@ -180,6 +172,7 @@ services:
   prometheus:
     image: prom/prometheus:v2.53.0
     container_name: prometheus
+    restart: unless-stopped
     command:
       - "--config.file=/etc/prometheus/prometheus.yml"
       - "--storage.tsdb.path=/prometheus"
@@ -191,12 +184,16 @@ services:
       - ft_network
 
   grafana:
-    image: grafana/grafana:11.1.0
+    image: grafana/grafana:11.6.6
     container_name: grafana
+    restart: unless-stopped
     ports:
       - "127.0.0.1:3001:3000"
     volumes:
-      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning
+      # only our two folders, mounting the whole provisioning directory
+      # would hide the ones the image ships, alerting and plugins
+      - ./monitoring/grafana/provisioning/datasources:/etc/grafana/provisioning/datasources
+      - ./monitoring/grafana/provisioning/dashboards:/etc/grafana/provisioning/dashboards
       - ./monitoring/grafana/dashboards:/var/lib/grafana/dashboards
       - grafana_data:/var/lib/grafana
     environment:
@@ -208,8 +205,11 @@ services:
       - ft_network
 
   postgres-exporter:
-    image: prometheuscommunity/postgres-exporter:v0.15.0
+    image: prometheuscommunity/postgres-exporter:v0.17.1
     container_name: postgres-exporter
+    restart: unless-stopped
+    volumes:
+      - ./monitoring/postgres_exporter.yml:/postgres_exporter.yml:ro
     environment:
       - DATA_SOURCE_NAME=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}?sslmode=disable
     depends_on:
@@ -224,11 +224,5 @@ networks:
 
 volumes:
   pgdata:
-    driver: local
-    driver_opts:
-      type: none
-      o: bind
-      device: ${DBDATAPATH}
   prometheus_data:
   grafana_data:
-  redis_data:

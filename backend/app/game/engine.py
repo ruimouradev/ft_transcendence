@@ -3,7 +3,7 @@ The Uno game. It owns the whole state (deck, hands, whose turn, the
 direction, the active color) and is the only place a move is accepted or
 refused. It reads the intents from contract.py, applies the rules from
 rules.py, and builds each player's own view of the state. The websocket
-layer only carries these messages, it holds no game logic.
+layer only carries these messages, it holds no card rules.
 
 A refused move raises GameError, which carries the code the websocket
 layer sends back to that one player. An accepted move mutates the state

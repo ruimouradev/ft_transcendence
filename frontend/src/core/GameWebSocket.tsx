@@ -10,6 +10,8 @@ sessionStorage.setItem = function (key, value) {
     return originalSetItem.call(this, key, value);
 };
 
+const MAX_REJOIN_TRIES = 5;
+
 function GameWebSocket({ children }: { children: React.ReactNode }) {
 	const [roomID, setRoomID] = useState<string | null>(null);
 	const [gameState, setGameState] = useState<GameState | null>(null);
@@ -20,6 +22,8 @@ function GameWebSocket({ children }: { children: React.ReactNode }) {
 
 	const socketRef = useRef<WebSocket | null>(null);
 	const pendingRoomRef = useRef<string | null>(null);
+	const rejoinTimerRef = useRef<number | null>(null);
+	const rejoinTriesRef = useRef<number>(0);
 	const gameStateRef = useRef<GameState | null>(null);
 	const winnerRef = useRef<string | null>(null);
 
@@ -27,13 +31,29 @@ function GameWebSocket({ children }: { children: React.ReactNode }) {
 	const { handleNewError, handleNewID } = usePopUpContext();
 	
 	useEffect(() => {
-		if (!isAuthenticated && socketRef.current)
+		if (!isAuthenticated)
 		{
+			clearRejoin();
+			rejoinTriesRef.current = 0;
 			pendingRoomRef.current = null;
 			sessionStorage.removeItem('roomID');
 			socketRef.current?.close();
 		}
 	}, [isAuthenticated])
+
+	// Drop a scheduled rejoin when this provider goes away
+	useEffect(() => {
+		return () => clearRejoin();
+	}, [])
+
+	function clearRejoin()
+	{
+		if (rejoinTimerRef.current !== null)
+		{
+			clearTimeout(rejoinTimerRef.current);
+			rejoinTimerRef.current = null;
+		}
+	}
 
 	function joinRoom(roomID: string, message: object)
 	{
@@ -66,6 +86,7 @@ function GameWebSocket({ children }: { children: React.ReactNode }) {
 
 				switch (type) {
 					case 'welcome':
+						rejoinTriesRef.current = 0;
 						setRoomID(roomID);
 						setConnected(true);
 						sessionStorage.setItem('roomID', roomID);
@@ -106,6 +127,21 @@ function GameWebSocket({ children }: { children: React.ReactNode }) {
 				const room = pendingRoomRef.current;
 				pendingRoomRef.current = null;
 				joinRoom(room, {"type": "join", "name": user.nick_name})
+				return ;
+			}
+
+			// A short drop comes back on its own, a backend that stays down
+			// must not be retried forever
+			const savedRoom = sessionStorage.getItem('roomID');
+			if (savedRoom && user && rejoinTriesRef.current < MAX_REJOIN_TRIES)
+			{
+				const delay = 500 * 2 ** rejoinTriesRef.current;
+				rejoinTriesRef.current += 1;
+				clearRejoin();
+				rejoinTimerRef.current = window.setTimeout(() => {
+					rejoinTimerRef.current = null;
+					joinRoom(savedRoom, {"type": "join", "name": user.nick_name})
+				}, delay);
 			}
 		}
 	}

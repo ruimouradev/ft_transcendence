@@ -1,13 +1,10 @@
-import logging
 from fastapi import APIRouter
 
 from app.platform.service import userStatisticService
 from app.platform.deps import CurrentUser, SessionDep
-from app.models.all import APIErrorCode, Game, GamePlayer, GamePlayerDetail, UserGameDetail, UserStatisticInfo, UserStatisticLeaderboardEntry, APIError, uuid_check
+from app.models.all import GamePlayerDetail, UserGameDetail, UserStatisticInfo, UserStatisticLeaderboardEntry, uuid_check
 
 router = APIRouter(prefix="/static", tags=["static"], include_in_schema=False)
-logger = logging.getLogger("uvicorn.error")
-
 @router.get("/maininfo", response_model=UserStatisticInfo)
 async def get_main_info(session: SessionDep, current_user: CurrentUser) -> UserStatisticInfo:
     return userStatisticService.get_user_statistic_info(session=session, current_user=current_user)
@@ -34,8 +31,3 @@ async def get_friend_leaderboard(session: SessionDep, current_user: CurrentUser)
 async def get_global_leaderboard(session: SessionDep, current_user: CurrentUser):
     global_leaderboard = userStatisticService.get_global_leaderboard(session=session, current_user=current_user)
     return global_leaderboard
-
-# @router.post("/save_game_result")
-# async def save_game_result(session: SessionDep, current_user: CurrentUser, game:Game, game_players: list[GamePlayer]):
-#     userStatisticService.save_game_result(session=session, game=game, game_players=game_players)
-#     return {"message": "Game result saved successfully."}

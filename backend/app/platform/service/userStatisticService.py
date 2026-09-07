@@ -1,5 +1,4 @@
 import math
-import logging
 
 from sqlmodel import select, func, or_, Session
 from app.platform.deps import CurrentUser, SessionDep
@@ -7,7 +6,6 @@ from app.models.all import APIError, APIErrorCode, GamePlayerDetail, User, UserG
 from app.robots_manager import robots_user_manager
 
 
-logger=logging.getLogger("uvicorn.error")
 
 def calculate_level_data(total_xp: int) -> UserStatisticLevel:
     """
@@ -61,39 +59,6 @@ def calculate_level_data(total_xp: int) -> UserStatisticLevel:
         total_xp_for_next_level=xp_for_next_level,
         title=title
     )
-
-
-# def get_user_statistic_info_by_user_id(session: SessionDep, user_id: str) -> UserStatisticInfo:
-#     '''
-#     gets the user statistic info for a specific user by their user_id, including total games, wins, losses, total score, and level information.
-#     If the user statistic info does not exist, it creates a new entry with default values.
-#     '''
-#     userstatement = select(User).where(User.id == user_id)
-#     user = session.exec(userstatement).first()
-#     if not user:
-#         return None
-    
-#     statement = select(UserStatistic).where(UserStatistic.user_id == user_id)
-#     user_xp_info = session.exec(statement).first()
-#     if not user_xp_info:
-#         user_xp_info = UserStatistic(user_id=user_id, total_games=0, wins=0, losses=0, total_score=0)
-#         session.add(user_xp_info)
-#         session.commit()
-#         session.refresh(user_xp_info)
-    
-#     total_xp = user_xp_info.total_score
-#     level_data = calculate_level_data(int(total_xp))
-
-#     user = session.get(User, user_id)
-
-#     return UserStatisticInfo(
-#         user=UserPublic.model_validate(user),
-#         total_games=user_xp_info.total_games,
-#         wins=user_xp_info.wins,
-#         losses=user_xp_info.losses,
-#         total_score=total_xp,
-#         level_info=level_data
-#     )
 
 
 def get_user_statistic_info(session: SessionDep, current_user: CurrentUser) -> UserStatisticInfo:
@@ -235,7 +200,6 @@ def get_friend_leaderboard(session: SessionDep, current_user: CurrentUser):
                               ).where(
                                         User.is_superuser == False,
                                         User.is_active == True,
-                                        # User.id != current_user.id,
                                         or_(
                                             User.id == current_user.id,
                                         User.id.in_(

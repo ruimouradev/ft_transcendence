@@ -160,7 +160,7 @@ export type AuthContextType = {
   user: User | null;
   isAuthenticated: boolean;
   isLoading: boolean;
-  logout: () => void;
+  logout: () => Promise<void>;
   login: (userData: User) => void;
 }
 
@@ -237,7 +237,7 @@ export type LeaderboardRow = {
 }
 
 export type LeaderboardTableProps = {
-    // texto simples ou um nó (as tabs do ecrã das estatísticas)
+    // Plain text or a node, the statistics tabs pass a node
     title: React.ReactNode;
     rows: LeaderboardRow[];
     currentUserId: string;

@@ -13,7 +13,7 @@ import Disable2FADialog from './Disable2FADialog';
 import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
 import type { NotificationState } from '../core/types.ts';
 
-const MAX_SIZE = 3 * 1024 * 1024; // 3MB
+const MAX_SIZE = 2 * 1024 * 1024; // 2MB, the same limit as the backend
 const cardBackUrls = Object.values(cardBacks);
 
 function ProfileCard()
@@ -39,15 +39,13 @@ function ProfileCard()
         fileInputRef.current?.click();
     };
 
-    // Upload do avatar: mostra logo a pré-visualização local, envia o
-    // ficheiro, e se o servidor recusar volta ao avatar antigo.
     const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (!file || !user)
 			return;
 
 		if (file.size > MAX_SIZE) {
-			setNotification(({ open: true, message: 'Avatar maximum size is 3MB.', severity: 'error', }))
+			setNotification(({ open: true, message: 'Avatar maximum size is 2MB.', severity: 'error', }))
 			return ;
 		}
 			
@@ -63,8 +61,7 @@ function ProfileCard()
                 headers: { 'Content-Type': 'multipart/form-data' },
             });
 
-            // o ?v= força o browser a ir buscar a imagem nova, o nome
-            // do ficheiro no servidor é sempre o mesmo
+            // Cache buster, the file name on the server never changes
             const uploadedUrl = response.data?.url || tempPreviewUrl;
             login({ ...user, avatar: uploadedUrl + `?v=${Date.now()}` });
             setNotification({ open: true, message: 'Avatar updated successfully.', severity: 'success', });
@@ -247,7 +244,6 @@ function ProfileCard()
     );
 }
 
-// Lê o status HTTP de um erro sem importar o axios só para isto.
 function axiosStatus(error: unknown): number | undefined {
     if (typeof error === 'object' && error !== null && 'response' in error) {
         const response = (error as { response?: { status?: number } }).response;

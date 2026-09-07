@@ -9,9 +9,6 @@ class RobotsManager:
     def set_robots(self, robot_list: list[User]):
         self.robots = robot_list
 
-    def get_all_robots(self):
-        return self.robots
-
     def is_robot(self, user_id: UUID) -> bool:
         return any(str(robot.id) == str(user_id) for robot in self.robots)
 

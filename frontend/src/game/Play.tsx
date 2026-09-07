@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
 import GameRoom from './GameRoom'
 import Lobby from './Lobby'
 import { useAuth } from '../core/AuthContext';
@@ -9,13 +9,16 @@ function Play()
 	const {user} = useAuth();
 	const { connected, joinRoom } = useGameContext();
 
+	const restoredRef = useRef(false);
+
 	useEffect(() => {
 		const room = sessionStorage.getItem('roomID');
-		const message = {"type": "join", "name": user?.nick_name};
 
-		if (room !== null)
-			joinRoom(room, message);
-	}, [joinRoom, user?.nick_name]);
+		if (restoredRef.current || !user || room === null)
+			return ;
+		restoredRef.current = true;
+		joinRoom(room, {"type": "join", "name": user.nick_name});
+	}, [joinRoom, user]);
 
 	return (connected === true ? <GameRoom /> : <Lobby />);
 }

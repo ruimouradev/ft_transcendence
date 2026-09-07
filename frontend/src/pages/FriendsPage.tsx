@@ -28,8 +28,8 @@ function FriendsPage() {
     const handleAcceptRequest = (request: FriendEntry) => {
         api.post(`/friends/${request.id}/accepted`)
             .then(() => {
-                setFriends([...friends, { ...request, status: 'accepted' }]);
-                setRequests(requests.filter((r) => r.id !== request.id));
+                setFriends((prev) => [...prev, { ...request, status: 'accepted' }]);
+                setRequests((prev) => prev.filter((r) => r.id !== request.id));
             })
             .catch(() => {
                 showNotification('Failed to accept the request. Please try again.', 'error');
@@ -57,7 +57,7 @@ function FriendsPage() {
     const handleDeclineRequest = (id: string) => {
         api.post(`/friends/${id}/rejected`)
             .then(() => {
-                setRequests(requests.filter((r) => r.id !== id));
+                setRequests((prev) => prev.filter((r) => r.id !== id));
             })
             .catch(() => {
                 showNotification('Failed to decline the request. Please try again.', 'error');
@@ -67,7 +67,7 @@ function FriendsPage() {
     const handleSendRequest = (suggestion: FriendEntry) => {
         api.post(`/friends/add/${suggestion.id}`)
             .then(() => {
-                setSuggestions(suggestions.map((s) =>
+                setSuggestions((prev) => prev.map((s) =>
                     s.id === suggestion.id ? { ...s, status: 'pending' } : s
                 ));
             })

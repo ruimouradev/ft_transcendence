@@ -10,7 +10,7 @@ function Error()
 	const align = {display: 'flex', justifyContent: 'center', alignItems: 'center'};
 
 	return (
-		<Box className="no-select" sx={{ width: '35vw', aspectRatio: '1.6 / 1', ...align, border: '0.3vw solid',
+		<Box className="no-select" sx={{ width: 'clamp(280px, 35vw, 560px)', aspectRatio: '1.6 / 1', ...align, border: '0.3vw solid',
 			borderColor: 'primary.main', borderRadius: 2, bgcolor: 'background.default', flexDirection: 'column' }}>
 			<Box sx={{ width: '100%', height: '15%', ...align, borderBottom: '0.1vh solid', borderBottomColor: 'primary.main'  }}>
 				<Typography sx={{ ...text_size }}>ERROR</Typography>

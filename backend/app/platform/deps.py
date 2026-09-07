@@ -2,7 +2,6 @@ from collections.abc import Generator
 from typing import Annotated, Optional
 
 import jwt
-import logging
 from app.platform.service import userservice
 from fastapi import Depends, HTTPException, status, Request, Header
 from fastapi.security import OAuth2, APIKeyHeader
@@ -16,8 +15,6 @@ from app.platform.config import settings
 from app.models.database import engine
 from app.models.all import APIError, APIErrorCode, ProviderType, TokenPayload, User, LoginTokenType, uuid_check
 
-
-logger = logging.getLogger("uvicorn.error")
 
 class OAuth2PasswordBearerWithCookie(OAuth2):
     def __init__(

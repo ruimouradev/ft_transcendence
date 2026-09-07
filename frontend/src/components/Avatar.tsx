@@ -72,7 +72,7 @@ function Avatar({player, position}: {player: PublicPlayer, position: string})
 		<Box sx={{ position: 'absolute', inset: 0, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
 			<EmoticonsMenu anchor={anchor} handleClose={handleClose} startCooldown={startCooldown}/>
 			<Card className={`avatar-${position} `} elevation={0} onClick={function_call}
-				sx={{ width: '4vw', aspectRatio: '1 / 1', overflow: 'visible', bgcolor: 'rgba(255, 255, 255, 0)', display: 'flex',
+				sx={{ width: 'clamp(34px, 4vw, 64px)', aspectRatio: '1 / 1', overflow: 'visible', bgcolor: 'rgba(255, 255, 255, 0)', display: 'flex',
 				justifyContent: 'center', border: 0, position: 'relative', zIndex: 5,
 				filter: bg_color, pointerEvents: position === 'south' && cooldown ? 'none' : 'auto' }}>
 				<CardMedia className={turn_class} component="img" sx={{ border: 1, width: '100%', height: '100%', aspectRatio: '1 / 1',

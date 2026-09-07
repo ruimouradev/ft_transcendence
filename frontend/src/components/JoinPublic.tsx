@@ -62,7 +62,7 @@ function JoinPublic({rooms}: {rooms: Room[]})
 	return (
 		<Box sx={{ width: '50%', height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
 			<Box sx={{ height: '85%', width: '100%' }}>
-				<ul style={{ flex: 1, overflowY: 'hidden' }}>
+				<ul style={{ height: '100%', margin: 0, overflowY: 'auto' }}>
 					{rooms.map((room) => (
 						<li key={room.code}>
 							<PrintRoom room={room} room_flag={room.code === selected} 

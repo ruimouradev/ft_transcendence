@@ -11,7 +11,7 @@ function WildCardPopUp()
 	const { identifierID, resetPopUpStates } = usePopUpContext();
 
 	const message = {"type": "play", "card": identifierID}
-	const box_options = {width: '6vw', aspectRatio: '1 / 1'}
+	const box_options = {width: 'clamp(48px, 6vw, 96px)', aspectRatio: '1 / 1'}
 	const align = {display: 'flex', justifyContent: 'center', alignItems: 'center'};
 	const image_styles: React.CSSProperties = {width: '100%', aspectRatio: '1 / 1', objectFit: 'fill', border: '0.1vw solid black', borderRadius: '10%'};
 
@@ -21,7 +21,7 @@ function WildCardPopUp()
 	}, [gameState, gameState?.turn, gameState?.you.id, resetPopUpStates]);
 
 	return (
-			<Box sx={{ width: '40vw', aspectRatio: '3 / 1', ...align, border: '0.1vw solid', borderColor: 'divider',
+			<Box sx={{ width: 'clamp(300px, 40vw, 640px)', aspectRatio: '3 / 1', ...align, border: '0.1vw solid', borderColor: 'divider',
 				borderRadius: 2, bgcolor: 'background.default', gap: '3vw', position: 'relative' }}>
 				<Box onClick={() => {resetPopUpStates(); sendMessage({...message, "color": "red"})}} sx={{ ...box_options, ...align }}>
 					<img src={color_red} draggable={false} style={image_styles}/>

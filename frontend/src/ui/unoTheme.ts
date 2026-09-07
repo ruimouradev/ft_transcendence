@@ -3,10 +3,10 @@ import { createTheme } from '@mui/material';
 export const unoTheme = createTheme({
     palette: {
         mode: 'dark',
-        primary: { main: '#f44336' },   // vermelho UNO
-        secondary: { main: '#ffeb3b' }, // amarelo UNO
-        success: { main: '#4caf50' },   // verde UNO
-        info: { main: '#2196f3' },      // azul UNO
+        primary: { main: '#f44336' },   // UNO red
+        secondary: { main: '#ffeb3b' }, // UNO yellow
+        success: { main: '#4caf50' },   // UNO green
+        info: { main: '#2196f3' },      // UNO blue
         background: {
             default: '#0f172a',
             paper: '#1e293b',

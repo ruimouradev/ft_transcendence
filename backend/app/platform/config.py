@@ -1,16 +1,13 @@
-import secrets
-import warnings
-from typing import Annotated, Any, Literal
+from typing import Annotated, Any
 
 from pydantic import (
     AnyUrl,
     BeforeValidator,
     EmailStr,
-    HttpUrl,
     computed_field,
     model_validator,
 )
-from pydantic_settings import BaseSettings, SettingsConfigDict
+from pydantic_settings import BaseSettings
 from typing_extensions import Self
 
 
@@ -41,7 +38,6 @@ class Settings(BaseSettings):
         ]
 
     PROJECT_NAME: str = "UNOpposed"
-    EMAIL_RESET_TOKEN_EXPIRE_HOURS: int = 48
 
     FIRST_SUPERUSER: EmailStr ="not set"
     FIRST_SUPERUSER_PASSWORD: str = "changethis"

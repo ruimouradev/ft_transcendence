@@ -72,8 +72,7 @@ function Login()
 		
         setLoading(true);
         try {
-            // o endpoint segue o formato clássico do OAuth2: um form
-            // com username e password, não JSON
+            // The token endpoint expects an OAuth2 form, not JSON
             const params = new URLSearchParams();
             params.append('username', formData.email);
             params.append('password', formData.password);
@@ -115,7 +114,6 @@ function Login()
         }
     };
     
-    // sem fundo próprio: o cartão assenta no fundo do site
     return (
         <Box sx={{ minHeight: '80vh', display: 'flex', alignItems: 'center', justifyContent: 'center', p: 2 }}>
             <Container component="main" maxWidth="xs">
@@ -160,8 +158,7 @@ function Login()
                             </Typography>
                         </Divider>
 
-                        {/* o OAuth é uma viagem de página inteira: vamos ao
-                            backend, ele leva-nos ao intra e traz-nos de volta */}
+                        {/* OAuth is a full page trip through the backend and the intra */}
                         <Box sx={{ display: 'flex', gap: 2 }}>
                             <Button fullWidth variant="outlined" startIcon={<img src={icon42} alt="42" style={{ width: 20, height: 20 }} />} onClick={() => { window.location.href = 'api/v1/auth/42/login'; }} sx={{ textTransform: 'none', borderRadius: 2 }}>
                                 Login 42
