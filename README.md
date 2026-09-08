@@ -50,11 +50,14 @@ and 8443 free, 8080 only redirects to 8443.
 3. Open https://localhost:8443. The certificate is self-signed, so the
    browser asks you to trust it once.
 
-Useful targets (`make help` lists them all): `make re` restarts
-everything, `make dev` runs the site in the foreground with the logs
-attached and without the monitoring stack, `make ps` and `make log`
-inspect the containers, `make down` stops them, `make clean` also
-removes the images and the data of this project. With the stack up,
+Useful targets (`make help` lists them all): `make dev` runs the site
+in the foreground with the logs attached and without the monitoring
+stack, `make ps` and `make log` inspect the containers, `make down`
+stops them, `make clean` also removes the images and the data of this
+project, and `make fclean` removes the frontend build output on top of
+that. `make re` is a full rebuild, it runs `fclean` and then `all`, so
+it deletes the accounts and the games as well and builds every image
+again. With the stack up,
 `make data` fills it with demo accounts, friendships and finished
 games so the friends list and the leaderboards have content, and
 `make data_clean` removes exactly what it created.
