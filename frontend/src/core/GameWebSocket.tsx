@@ -25,11 +25,13 @@ function GameWebSocket({ children }: { children: React.ReactNode }) {
 	const gameStateRef = useRef<GameState | null>(null);
 	const winnerRef = useRef<string | null>(null);
 
-	const { user, isAuthenticated  } = useAuth();
+	const { user, isAuthenticated, isLoading } = useAuth();
 	const { handleNewError, handleNewID } = usePopUpContext();
 	
 	useEffect(() => {
-		if (!isAuthenticated)
+		// On a reload the session is only known a moment later, and
+		// throwing the room away before that costs the player the seat
+		if (!isLoading && !isAuthenticated)
 		{
 			clearRejoin();
 			rejoinTriesRef.current = 0;
@@ -37,7 +39,7 @@ function GameWebSocket({ children }: { children: React.ReactNode }) {
 			sessionStorage.removeItem('roomID');
 			socketRef.current?.close();
 		}
-	}, [isAuthenticated])
+	}, [isAuthenticated, isLoading])
 
 	// Drop a scheduled rejoin when this provider goes away
 	useEffect(() => {
