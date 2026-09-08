@@ -74,6 +74,30 @@ def get_current_user(session: SessionDep, token: TokenDep) -> User:
 
 CurrentUser = Annotated[User, Depends(get_current_user)]
 
+optional_oauth2 = OAuth2PasswordBearerWithCookie(
+    tokenUrl=f"{settings.API_V1_STR}/login/access-token", auto_error=False
+)
+
+OptionalTokenDep = Annotated[Optional[str], Depends(optional_oauth2)]
+
+
+def get_user_or_none(session: SessionDep, token: OptionalTokenDep) -> Optional[User]:
+    """The signed in user, or nobody.
+
+    A first visit carries no cookie. Answering with an empty body
+    instead of a 401 keeps the browser console clean on the pages
+    anyone is allowed to open.
+    """
+    if not token:
+        return None
+    try:
+        return get_current_user(session, token)
+    except (APIError, HTTPException):
+        return None
+
+
+OptionalUser = Annotated[Optional[User], Depends(get_user_or_none)]
+
 
 def get_current_active_superuser(current_user: CurrentUser) -> User:
     if not current_user.is_superuser:
