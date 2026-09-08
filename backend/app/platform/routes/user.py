@@ -15,7 +15,7 @@ from sqlmodel import Session
 from app.models.database import engine
 from pathlib import Path
 
-from app.platform.deps import (CurrentUser, SessionDep,)
+from app.platform.deps import (CurrentUser, OptionalUser, SessionDep,)
 from app.platform.config import settings
 from app.platform.security import get_password_hash, verify_password
 from app.models.all import (APIError, APIErrorCode,APIKeyContext,APIKeyStatus,EmailVerificationType,Message,OAuthAccountCreate,ProviderType,UpdatePassword,User,UserCreate,UserPublic,UserRegister,UserUpdate,UserUpdateMe, nickname_validator,)
@@ -76,6 +76,15 @@ def update_password_me(*, session: SessionDep, body: UpdatePassword, current_use
 @router.get("/me", response_model=UserPublic)
 def read_user_me(current_user: CurrentUser) -> Any:
     """The signed in account, as the frontend shows it."""
+    return current_user
+
+@router.get("/me/session", response_model=UserPublic | None)
+def read_session(current_user: OptionalUser) -> Any:
+    """Who is signed in, empty when nobody is.
+
+    The pages open to everyone ask this on load, so it answers 200
+    either way and the browser console stays clean.
+    """
     return current_user
 
 @router.post("/signup", response_model=Message)
