@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useAuth } from './AuthContext';
 import { usePopUpContext } from '../core/GamePopUpsContext';
 import { GameContext } from './GameWebSocketContext'
@@ -240,14 +240,13 @@ function GameWebSocket({ children }: { children: React.ReactNode }) {
 		}))
 	}
 
-	function resetNotices(id: string)
-	{
+	const resetNotices = useCallback((id: string) => {
 		setNotices(prev => {
 			const tmp = {...prev};
 			delete tmp[id];
 			return tmp;
 		})
-	}
+	}, []);
 
 	function resetAllNotices()
 	{
