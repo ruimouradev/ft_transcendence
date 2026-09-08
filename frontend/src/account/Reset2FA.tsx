@@ -340,24 +340,14 @@ function Reset2FA({ open, onClose, onSuccess, onClosed }: Reset2FADialogProps)
 						</>
 					)}
 					{activeStep === 1 && (
-						<>
-							<Button onClick={handleBack} >
-								Back
-							</Button>
 							<Button type="submit" variant="contained" disabled={!password || !recoverCode || loading} startIcon={loading ? (<CircularProgress size={18} color="inherit" />) : undefined} >
 								{loading ? 'Setting up...' : 'Continue'}
 							</Button>
-						</>
 					)}
 					{activeStep === 2 && (
-						<>
-							<Button onClick={handleBack} >
-								Back
-							</Button>
 							<Button variant="contained" onClick={handleAuthenticatorContinue} >
 								Continue
 							</Button>
-						</>
 					)}
 					{activeStep === 3 && (
 						<>
