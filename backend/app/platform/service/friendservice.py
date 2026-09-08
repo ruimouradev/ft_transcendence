@@ -20,7 +20,7 @@ def get_suggested_friends(session: Session, current_user: CurrentUser)-> list[Fr
                                     ),
                                     User.id.not_in(
                                         select(Friendship.requester_id).where(Friendship.addressee_id == current_user.id)
-                                    )).limit(42)
+                                    )).order_by(User.created_at.desc()).limit(42)
     users_result = session.exec(statement).all()
     user_requested_result = session.exec(
         select(User, UserStatistic).join(Friendship, and_(User.id == Friendship.addressee_id, Friendship.status == FriendshipStatus.PENDING,Friendship.requester_id == current_user.id)).join(UserStatistic, User.id == UserStatistic.user_id, isouter=True).where(User.is_superuser == False,User.is_active == True)
