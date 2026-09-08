@@ -13,7 +13,7 @@
       "type": "stat",
       "title": "Active rooms",
       "description": "Rooms that exist right now, lobby and playing.",
-      "gridPos": { "h": 6, "w": 3, "x": 0, "y": 0 },
+      "gridPos": { "h": 6, "w": 5, "x": 0, "y": 0 },
       "fieldConfig": {
         "defaults": {
           "unit": "short",
@@ -24,7 +24,7 @@
       "options": {
         "reduceOptions": { "calcs": ["lastNotNull"] },
         "colorMode": "value",
-        "graphMode": "area",
+        "graphMode": "none",
         "text": { "valueSize": 80 }
       },
       "targets": [
@@ -34,9 +34,9 @@
     {
       "id": 2,
       "type": "stat",
-      "title": "Players connected",
+      "title": "Active players",
       "description": "Humans with a socket open right now, bots not counted.",
-      "gridPos": { "h": 6, "w": 3, "x": 3, "y": 0 },
+      "gridPos": { "h": 6, "w": 5, "x": 5, "y": 0 },
       "fieldConfig": {
         "defaults": {
           "unit": "short",
@@ -47,7 +47,7 @@
       "options": {
         "reduceOptions": { "calcs": ["lastNotNull"] },
         "colorMode": "value",
-        "graphMode": "area",
+        "graphMode": "none",
         "text": { "valueSize": 80 }
       },
       "targets": [
@@ -59,7 +59,7 @@
       "type": "stat",
       "title": "Games last 24h",
       "description": "How many games reached a winner in the last day.",
-      "gridPos": { "h": 6, "w": 3, "x": 9, "y": 0 },
+      "gridPos": { "h": 6, "w": 5, "x": 15, "y": 0 },
       "fieldConfig": {
         "defaults": {
           "unit": "short",
@@ -83,7 +83,7 @@
       "type": "stat",
       "title": "Games last week",
       "description": "How many games reached a winner in the last seven days.",
-      "gridPos": { "h": 6, "w": 3, "x": 12, "y": 0 },
+      "gridPos": { "h": 6, "w": 4, "x": 20, "y": 0 },
       "fieldConfig": {
         "defaults": {
           "unit": "short",
@@ -107,7 +107,7 @@
       "type": "timeseries",
       "title": "Games finished per hour",
       "description": "The pace games end at, as an hourly rate.",
-      "gridPos": { "h": 6, "w": 9, "x": 15, "y": 0 },
+      "gridPos": { "h": 7, "w": 6, "x": 0, "y": 6 },
       "fieldConfig": {
         "defaults": {
           "unit": "short",
@@ -132,7 +132,7 @@
       "type": "timeseries",
       "title": "Moves per second, by kind",
       "description": "Accepted actions split by what they were.",
-      "gridPos": { "h": 7, "w": 8, "x": 0, "y": 6 },
+      "gridPos": { "h": 7, "w": 6, "x": 6, "y": 6 },
       "fieldConfig": {
         "defaults": {
           "unit": "ops",
@@ -158,9 +158,9 @@
     {
       "id": 6,
       "type": "timeseries",
-      "title": "+4 challenges per hour: bluffs caught vs wrong calls",
+      "title": "+4 challenges per hour",
       "description": "Green is justice, the +4 was a bluff and the challenger caught it. Red is a wrong call, the challenger drew six.",
-      "gridPos": { "h": 7, "w": 8, "x": 8, "y": 6 },
+      "gridPos": { "h": 7, "w": 6, "x": 12, "y": 6 },
       "fieldConfig": {
         "defaults": {
           "unit": "short",
@@ -200,9 +200,9 @@
     {
       "id": 7,
       "type": "timeseries",
-      "title": "Refused moves per minute, by error code",
+      "title": "Refused moves, by code",
       "description": "Actions the engine turned down, by the reason it gave. A spike usually means a confused client, not a cheater.",
-      "gridPos": { "h": 7, "w": 8, "x": 16, "y": 6 },
+      "gridPos": { "h": 7, "w": 6, "x": 18, "y": 6 },
       "fieldConfig": {
         "defaults": {
           "unit": "short",
@@ -228,9 +228,9 @@
     {
       "id": 8,
       "type": "stat",
-      "title": "Database recording failures, last 24h",
-      "description": "Finished games the server could not write to the database. The table itself never breaks because of this, but anything above zero deserves a look at the backend logs.",
-      "gridPos": { "h": 6, "w": 3, "x": 6, "y": 0 },
+      "title": "Games not saved",
+      "description": "Finished games in the last day the server could not write to the database. The table itself never breaks because of this, but anything above zero deserves a look at the backend logs.",
+      "gridPos": { "h": 6, "w": 5, "x": 10, "y": 0 },
       "fieldConfig": {
         "defaults": {
           "unit": "short",
