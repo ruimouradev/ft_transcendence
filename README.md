@@ -316,5 +316,3 @@ AI was used to support specific aspects of the project, namely:
   to likely causes.
 - Suggesting possible optimizations to some parts of the code.
 - Structuring and drafting the README.
-
-<!-- TODO(each member): add the tasks where you used AI in your area -->
