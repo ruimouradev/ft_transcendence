@@ -1,7 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { Container, Card, CardContent, Box, Avatar, Typography, Stack, Chip, Tooltip, TextField, Button, } from '@mui/material';
 import { Email as EmailIcon, CheckCircle as ActiveIcon, Cancel as InactiveIcon, } from '@mui/icons-material';
-import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../core/AuthContext';
 import { api, getErrorMessage } from '../core/client';
 import axios from 'axios';
@@ -23,7 +22,6 @@ function ProfileCard()
         message: '',
         severity: 'success',
     });
-    const navigate = useNavigate();
     const { user, login } = useAuth();
 
     const [nickName, setNickName] = useState('');
@@ -67,12 +65,9 @@ function ProfileCard()
             setNotification({ open: true, message: 'Avatar updated successfully.', severity: 'success', });
         } catch (error) {
 			if (axios.isAxiosError(error)) {
-				if (axiosStatus(error) === 403) {
-					navigate('/login');
-				} else {
-					login({ ...user, avatar: oldAvatarUrl });
-					setNotification({ open: true, message: error.response?.data?.detail || 'Failed to upload avatar. Please try again.', severity: 'error', });
-				}
+				// an expired session is already handled by the client interceptor
+				login({ ...user, avatar: oldAvatarUrl });
+				setNotification({ open: true, message: error.response?.data?.detail || 'Failed to upload avatar. Please try again.', severity: 'error', });
 			}
         } finally {
             setUploading(false);
@@ -228,14 +223,6 @@ function ProfileCard()
             <Disable2FADialog open={disable2FADialogOpen} onClose={() => { setDisable2FADialogOpen(false); }} onSuccess={handle2FADisabled} onClosed={restore2FAChipFocus} />
         </Container>
     );
-}
-
-function axiosStatus(error: unknown): number | undefined {
-    if (typeof error === 'object' && error !== null && 'response' in error) {
-        const response = (error as { response?: { status?: number } }).response;
-        return response?.status;
-    }
-    return undefined;
 }
 
 export default ProfileCard
