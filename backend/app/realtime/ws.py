@@ -62,6 +62,8 @@ class Room:
     # when a hand last dropped to one undeclared card, for the grace
     solo_at: float = 0.0
     started_at: datetime | None = None  # when the cards were dealt
+    # when the room went back to the lobby for a rematch, 0 when nobody waits
+    waiting_since: float = 0.0
 
 
 rooms: dict[str, Room] = {}
@@ -69,10 +71,13 @@ rooms: dict[str, Room] = {}
 TURN_TIMEOUT = 60  # seconds an idle turn is allowed to sit
 OFFLINE_TURN_TIMEOUT = 15  # shorter clock when the seat on turn is gone
 TIMER_TICK = 5  # how often each room looks at its clock
-UNO_GRACE = 0.5  # seconds a fresh one-card hand is safe from the catch
+UNO_GRACE = 1.25  # seconds a fresh one-card hand is safe from the catch
 SEAT_GRACE = 5  # seconds a lobby chair waits for its player to come back
 EMOTE_COOLDOWN = 1.0  # seconds a player must wait between emotes
 ROOM_GRACE = 5  # seconds an empty room waits before it is dropped
+
+# seconds a rematch waits for the players still on the result screen
+RESULT_TIMEOUT = 60
 ROOM_CODE = re.compile(r"[A-Z0-9]{5}")  # the shape of every room code
 
 
@@ -212,6 +217,32 @@ def host_of(room: Room) -> Player | None:
     return owner or next((p for p in seated if p.connected), None)
 
 
+async def drop_idle_seats(room: Room) -> None:
+    """Free the chairs of the players who never left the result screen.
+
+    A rematch waits for everyone to come back, so one player who walked
+    away holds the whole table. After RESULT_TIMEOUT their chair goes
+    the same way a leave frees it, and the others can deal again.
+    """
+    if time.monotonic() - room.waiting_since < RESULT_TIMEOUT:
+        return
+    room.waiting_since = 0.0
+    idle = [p for p in room.players if not p.bot and not p.ready]
+    if not idle:
+        return
+    for p in idle:
+        if p in room.players:
+            room.players.remove(p)
+        if p.ws:
+            # the same goodbye a kick gives, so their own screen says
+            # why and does not try to take the chair back
+            await tell(p.ws, ErrorCode.KICKED,
+                       "the room moved on without you")
+            await hang_up(p.ws)
+    reseat(room)
+    await broadcast(room)
+
+
 async def room_timer(room_id: str, room: Room) -> None:
     # One clock per room, so a sleeping or gone player never freezes
     # the table: an untouched turn is closed for them after the limit.
@@ -220,8 +251,12 @@ async def room_timer(room_id: str, room: Room) -> None:
     while rooms.get(room_id) is room:
         await asyncio.sleep(TIMER_TICK)
         game = room.game
-        if game is None or game.phase != "playing":
+        if game is None:
+            continue
+        if game.phase != "playing":
             mark = None
+            if game.phase == "lobby" and room.waiting_since:
+                await drop_idle_seats(room)
             continue
         if mark is None or mark[0] != turn_key(game):
             mark = (turn_key(game), time.monotonic())
@@ -512,6 +547,8 @@ async def apply(room: Room, player: Player, action: PlayerAction) -> Error | Non
                 # the others come back with a start of their own
                 for p in room.players:
                     p.ready = p.bot or p is player
+                # the clock for the seats still on the result screen
+                room.waiting_since = time.monotonic()
                 reseat(room)
                 return None
             if room.game.phase == "lobby" and not player.ready:
@@ -536,6 +573,7 @@ async def apply(room: Room, player: Player, action: PlayerAction) -> Error | Non
                 return err(ErrorCode.INVALID_MESSAGE, "game already started")
             room.game.start()
             room.started_at = datetime.now(timezone.utc)
+            room.waiting_since = 0.0
         elif isinstance(action, Play):
             before = {h.id: len(h.cards) for h in room.game.hands}
             room.game.play(player.id, action.card, action.color,

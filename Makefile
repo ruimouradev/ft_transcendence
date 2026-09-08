@@ -29,7 +29,7 @@ build: vinit
 	docker compose -f ./docker-compose.yml run --rm frontend_prod
 	docker compose -f ./docker-compose.yml build --no-cache
 
-re: down all
+re: fclean all
 
 vinit:
 	@mkdir -p ./nginx/dist
@@ -95,14 +95,14 @@ help:
 	@echo "Available Makefile targets:"
 	@echo "  all            - Build and start the whole stack in the background."
 	@echo "  build          - Build Docker images without using cache."
-	@echo "  re             - Stop everything and start it again."
+	@echo "  re             - Full rebuild, fclean then all. It deletes the database too."
 	@echo "  dev            - Start part of the stack in the foreground, for development."
 	@echo "  vinit          - Create the folder the nginx build writes into."
 	@echo "  down           - Stop and remove the containers."
 	@echo "  data           - Fill the running stack with demo accounts, friends and games."
 	@echo "  data_clean     - Remove what data created."
 	@echo "  clean          - Stop services and remove the containers, images and data of this project."
-	@echo "  fclean 		- clean plus the frontend build output."
+	@echo "  fclean         - clean plus the frontend build output."
 	@echo "  ps             - List the running containers."
 	@echo "  log            - View the logs of every service."
 
