@@ -2,8 +2,6 @@
 __pycache__
 backend/app/static/*
 
-docs
-
 dbdata/
 
 data/
