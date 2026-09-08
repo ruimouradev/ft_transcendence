@@ -76,10 +76,6 @@ function Reset2FA({ open, onClose, onSuccess, onClosed }: Reset2FADialogProps)
         setError(null);
         try {
             const response = await api.post<Setup2FAResponse>('/2fa/reset', { password, recovery_code: recoverCode },);
-
-			// DEL
-			// const userResponse = await api.get('/users/me');
-			// login(userResponse.data);
             
 			setSecret(response.data.secret);
             setOtpauthUrl(response.data.otpauth_url);
@@ -176,6 +172,11 @@ function Reset2FA({ open, onClose, onSuccess, onClosed }: Reset2FADialogProps)
 		else
 			return;
 	}
+
+	const handleBack = () => {
+        setError(null);
+        setActiveStep( (currentStep) => currentStep - 1, );
+    };
 
     return (
         <Dialog open={open} onClose={handleClose} disableRestoreFocus fullWidth maxWidth="sm" aria-labelledby="enable-2fa-dialog-title" aria-describedby="enable-2fa-dialog-description"
@@ -339,19 +340,34 @@ function Reset2FA({ open, onClose, onSuccess, onClosed }: Reset2FADialogProps)
 						</>
 					)}
 					{activeStep === 1 && (
+						<>
+							<Button onClick={handleBack} >
+								Back
+							</Button>
 							<Button type="submit" variant="contained" disabled={!password || !recoverCode || loading} startIcon={loading ? (<CircularProgress size={18} color="inherit" />) : undefined} >
 								{loading ? 'Setting up...' : 'Continue'}
 							</Button>
+						</>
 					)}
 					{activeStep === 2 && (
+						<>
+							<Button onClick={handleBack} >
+								Back
+							</Button>
 							<Button variant="contained" onClick={handleAuthenticatorContinue} >
 								Continue
 							</Button>
+						</>
 					)}
 					{activeStep === 3 && (
+						<>
+							<Button onClick={handleBack} >
+								Back
+							</Button>
 							<Button type="submit" variant="contained" disabled={code.length !== 6 || loading} startIcon={loading ? (<CircularProgress size={18} color="inherit" />) : undefined} >
 								{loading ? 'Verifying...' : 'Verify'}
 							</Button>
+						</>
 					)}
 					{activeStep === 4 && (
 						<Button variant="contained" onClick={handleFinish} disabled={!savedRecoveryCodes} startIcon={<CheckCircle />} >
