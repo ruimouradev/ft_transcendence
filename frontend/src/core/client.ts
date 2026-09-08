@@ -17,7 +17,7 @@ api.interceptors.request.use((config) => {
 api.interceptors.response.use(
 	(response) => response,
 	(error) => {
-    if (error.response?.status === 401 && !error.config?.url?.includes('/users/me')) {
+    if (error.response?.status === 401 && !error.config?.url?.includes('/users/me/session')) {
     	if (window.location.pathname !== '/login') {
         // Login reads returnTo after a successful sign in
     		sessionStorage.setItem('returnTo', window.location.pathname);

@@ -60,9 +60,9 @@ def get_current_user(session: SessionDep, token: TokenDep) -> User:
         payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[security.ALGORITHM])
         token_data = TokenPayload(**payload)
     except (InvalidTokenError, ValidationError):
-        raise APIError(status_code=403, code=APIErrorCode.INVALID_TOKEN, msg="Could not validate credentials.")
+        raise APIError(status_code=401, code=APIErrorCode.INVALID_TOKEN, msg="Could not validate credentials.")
     if token_data.type != LoginTokenType.ACCESS.value:
-        raise APIError(status_code=403, code=APIErrorCode.INVALID_TOKEN, msg="Invalid token type.")
+        raise APIError(status_code=401, code=APIErrorCode.INVALID_TOKEN, msg="Invalid token type.")
     
     user = session.get(User, token_data.sub)
     if not user:
