@@ -52,7 +52,7 @@ function DeckArea()
 	function handleUno()
 	{
 		const player = gameState?.you;
-		if (player && player.hand.length > 1 && player?.id !== gameState?.turn)
+		if (player && (player.hand.length > 2 || (player.hand.length === 2 && player?.id !== gameState?.turn)))
 			return ;
 		sendMessage(uno_click);
 	}

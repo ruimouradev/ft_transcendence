@@ -10,7 +10,7 @@ import type { Disable2FADialogProps, Message} from '../core/types.ts'
 
 const steps = [ 'Disable Confirm', 'Disable 2FA', ];
 
-function Disable2FADialog({ open, onClose, onSuccess }: Disable2FADialogProps)
+function Disable2FADialog({ open, onClose, onSuccess, onClosed }: Disable2FADialogProps)
 {
     const [activeStep, setActiveStep] = useState(0);
     const { user, login } = useAuth();
@@ -67,10 +67,10 @@ function Disable2FADialog({ open, onClose, onSuccess }: Disable2FADialogProps)
             setError('The authentication code must be exactly 6 digits long.');
             return;
         }
-        setLoading(true);
-        setError(null);
 		if (!user)
 			return ;
+        setLoading(true);
+        setError(null);
         try {
             await api.post<Message>('/2fa/disable', { password, code },);
             if (!user)
@@ -93,8 +93,8 @@ function Disable2FADialog({ open, onClose, onSuccess }: Disable2FADialogProps)
     };
 
     return (
-        <Dialog open={open} onClose={handleClose} fullWidth maxWidth="sm" aria-labelledby="enable-2fa-dialog-title" aria-describedby="enable-2fa-dialog-description"
-			slotProps={{ transition: { unmountOnExit: true, onEnter: handleOpen }}}>
+        <Dialog open={open} onClose={handleClose} disableRestoreFocus fullWidth maxWidth="sm" aria-labelledby="enable-2fa-dialog-title" aria-describedby="enable-2fa-dialog-description"
+			slotProps={{ transition: { unmountOnExit: true, onEnter: handleOpen, onExited: onClosed }}}>
 			<Box component="form" onSubmit={handleSetup2FA} sx={{ width: '100%', height: '100%' }}>
 				<DialogTitle id="enable-2fa-dialog-title" sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', pb: 1, }}>
 					<Typography variant="h6" component="span" sx={{ fontWeight: 600}}>

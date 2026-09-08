@@ -11,7 +11,7 @@ import type { Reset2FADialogProps, Setup2FAResponse, Verify2FAResponse } from '.
 
 const steps = [ 'Reset Confirm', 'Verify', 'Authenticator', 'Verify code', 'Recovery codes', ];
 
-function Reset2FA({ open, onClose, onSuccess }: Reset2FADialogProps)
+function Reset2FA({ open, onClose, onSuccess, onClosed }: Reset2FADialogProps)
 {
 	const { user, login } = useAuth();
     const navigate = useNavigate();
@@ -76,10 +76,6 @@ function Reset2FA({ open, onClose, onSuccess }: Reset2FADialogProps)
         setError(null);
         try {
             const response = await api.post<Setup2FAResponse>('/2fa/reset', { password, recovery_code: recoverCode },);
-
-			// DEL
-			// const userResponse = await api.get('/users/me');
-			// login(userResponse.data);
             
 			setSecret(response.data.secret);
             setOtpauthUrl(response.data.otpauth_url);
@@ -162,7 +158,6 @@ function Reset2FA({ open, onClose, onSuccess }: Reset2FADialogProps)
         if (!savedRecoveryCodes) 
 			return;
         onSuccess();
-        // resetWizard();
         onClose();
         navigate('/', { replace: true });
     };
@@ -178,9 +173,14 @@ function Reset2FA({ open, onClose, onSuccess }: Reset2FADialogProps)
 			return;
 	}
 
+	const handleBack = () => {
+        setError(null);
+        setActiveStep( (currentStep) => currentStep - 1, );
+    };
+
     return (
-        <Dialog open={open} onClose={handleClose} fullWidth maxWidth="sm" aria-labelledby="enable-2fa-dialog-title" aria-describedby="enable-2fa-dialog-description"
-			slotProps={{ transition: { unmountOnExit: true, onEnter: handleOpen} }}>
+        <Dialog open={open} onClose={handleClose} disableRestoreFocus fullWidth maxWidth="sm" aria-labelledby="enable-2fa-dialog-title" aria-describedby="enable-2fa-dialog-description"
+			slotProps={{ transition: { unmountOnExit: true, onEnter: handleOpen, onExited: onClosed}}}>
 			<Box component="form" onSubmit={handleSubmit} sx={{ width: '100%', height: '100%' }}>
 				<DialogTitle id="enable-2fa-dialog-title" sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', pb: 1, }}>
 					<Typography variant="h6" component="span" sx={{ fontWeight: 600 }}>
@@ -350,9 +350,14 @@ function Reset2FA({ open, onClose, onSuccess }: Reset2FADialogProps)
 							</Button>
 					)}
 					{activeStep === 3 && (
+						<>
+							<Button onClick={handleBack} >
+								Back
+							</Button>
 							<Button type="submit" variant="contained" disabled={code.length !== 6 || loading} startIcon={loading ? (<CircularProgress size={18} color="inherit" />) : undefined} >
 								{loading ? 'Verifying...' : 'Verify'}
 							</Button>
+						</>
 					)}
 					{activeStep === 4 && (
 						<Button variant="contained" onClick={handleFinish} disabled={!savedRecoveryCodes} startIcon={<CheckCircle />} >

@@ -214,9 +214,9 @@ function ProfileCard()
                             
                             <Tooltip title="Click to manage 2FA settings" arrow>
                                 {user.use2fa ? (
-                                        <Chip icon={<ActiveIcon />} label="2FA Enabled" color="success" onClick={handle2FAClick} variant="filled" size="small" />
+                                        <Chip ref={twoFAChipRef} icon={<ActiveIcon />} label="2FA Enabled" color="success" onClick={handle2FAClick} variant="filled" size="small" />
                                     ) : (
-                                        <Chip icon={<InactiveIcon />} label="2FA Disabled" color="warning" onClick={handle2FAClick} variant="outlined" size="small" />
+                                        <Chip ref={twoFAChipRef} icon={<InactiveIcon />} label="2FA Disabled" color="warning" onClick={handle2FAClick} variant="outlined" size="small" />
                                     )}
                             </Tooltip>
                             
